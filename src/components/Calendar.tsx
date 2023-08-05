@@ -1,0 +1,42 @@
+export default function admin() {
+  return (
+    <main>
+      <nav>
+        <p>CICS</p>
+      </nav>
+      <ul>
+        <p>MENU</p>
+        <li>
+          <span>
+            <i></i>
+          </span>
+          <span>Dashboard</span>
+        </li>
+        <li>
+          <span>
+            <i></i>
+          </span>
+          <span>Complaints/Concerns</span>
+        </li>
+        <li>
+          <span>
+            <i></i>
+          </span>
+          <span>Announcements</span>
+        </li>
+        <li>
+          <span>
+            <i></i>
+          </span>
+          <span>Special Class</span>
+        </li>
+        <li>
+          <span>
+            <i></i>
+          </span>
+          <span>About</span>
+        </li>
+      </ul>
+    </main>
+  );
+}
