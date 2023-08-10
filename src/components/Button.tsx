@@ -1,16 +1,17 @@
-import React, { type HTMLAttributes } from "react";
+import React, { type ReactNode, type HTMLAttributes } from "react";
 
 interface ButtonType extends HTMLAttributes<HTMLButtonElement> {
-  text: string;
+  text?: string;
   primary?: boolean;
   error?: boolean;
   success?: boolean;
   type?: "reset" | "submit" | "button";
   rounded?: boolean;
+  children?: ReactNode;
 }
 
 const Button = (props: ButtonType) => {
-  const { primary, error, success, text, rounded, ...rest } = props;
+  const { primary, error, children, success, text, rounded, ...rest } = props;
   let base = "p-2 px-4 capitalize";
 
   function style() {
@@ -23,7 +24,7 @@ const Button = (props: ButtonType) => {
 
   return (
     <button {...rest} className={style()}>
-      {text}
+      {text ? text : children}
     </button>
   );
 };

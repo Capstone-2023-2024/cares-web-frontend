@@ -5,3 +5,5 @@ export const imageDimension = (size: number) => {
     height: DIMENSION,
   };
 };
+
+export const icon = 24;
