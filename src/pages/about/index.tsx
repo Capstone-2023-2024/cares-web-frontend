@@ -60,7 +60,7 @@ const About = () => {
       }
     }
     if (unsub) {
-      setup;
+      setup();
     }
     return () => {
       unsub = true;
