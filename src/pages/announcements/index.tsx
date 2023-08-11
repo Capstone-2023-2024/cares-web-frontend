@@ -15,18 +15,10 @@ import { months } from "~/utils/date";
 import { db } from "~/utils/firebase";
 import { icon, imageDimension } from "~/utils/image";
 
-interface AnnouncementsPropType {
-  docId?: string;
-  message: string;
-  bannerSrc?: string;
-  department: "cite";
-  state?: "unpin" | "pin";
-  dateCreated: number;
-  dateEdited?: number;
-}
+import { type AnnouncementType } from "../../../../shared/types";
 
 interface MonthValuesType {
-  data: AnnouncementsPropType[];
+  data: AnnouncementType[];
   isEditing?: boolean;
 }
 
@@ -52,7 +44,7 @@ const Form = () => {
       const url =
         "https://images.unsplash.com/photo-1529778873920-4da4926a72c2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8Y3V0ZSUyMGNhdHxlbnwwfHwwfHx8MA%3D%3D&w=1000&q=80";
 
-      const announcement: AnnouncementsPropType = {
+      const announcement: AnnouncementType = {
         message: input?.value ?? "",
         bannerSrc: srcClicked ? url : "",
         state: "pin",
@@ -131,12 +123,12 @@ const Month = () => {
       onSnapshot(
         query(collection(db, "announcements"), orderBy("dateCreated")),
         (snapshot) => {
-          const placeholder: AnnouncementsPropType[] = [];
+          const placeholder: AnnouncementType[] = [];
           snapshot.docs.forEach((doc) => {
             placeholder.push({
               ...doc.data(),
               docId: doc.id,
-            } as AnnouncementsPropType);
+            } as AnnouncementType);
           });
           setValues((prevState) => ({
             ...prevState,
