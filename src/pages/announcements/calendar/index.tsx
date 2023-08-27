@@ -1,6 +1,6 @@
 import React from "react";
 import Main from "~/components/Main";
-import Map from "shared/calendar/Map";
+import { Map } from "~/components/Calendar";
 import { useDate } from "~/contexts/DateContext";
 
 const Calendar = () => {
