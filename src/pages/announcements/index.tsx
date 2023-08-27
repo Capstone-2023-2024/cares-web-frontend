@@ -11,11 +11,11 @@ import Image from "next/image";
 import { useState, type MouseEvent, useEffect } from "react";
 import Button from "~/components/Button";
 import Main from "~/components/Main";
-import { months } from "~/utils/date";
+import { currentMonth } from "~/utils/date";
 import { db } from "~/utils/firebase";
 import { icon, imageDimension } from "~/utils/image";
 
-import { type AnnouncementType } from "../../../../shared/types";
+import type { AnnouncementType } from "shared/types";
 
 interface MonthValuesType {
   data: AnnouncementType[];
@@ -24,7 +24,7 @@ interface MonthValuesType {
 
 const Announcements = () => {
   return (
-    <Main>
+    <Main withPathName moreThanOne>
       <div className="grid">
         <Form />
         <Month />
@@ -46,8 +46,8 @@ const Form = () => {
 
       const announcement: AnnouncementType = {
         message: input?.value ?? "",
-        bannerSrc: srcClicked ? url : "",
-        state: "pin",
+        photoUrl: srcClicked ? url : "",
+        state: "unpinned",
         department: "cite",
         dateCreated: new Date().getTime(),
       };
@@ -142,9 +142,10 @@ const Month = () => {
   return (
     <div>
       <div className="flex items-center justify-center">
-        <h2 className="flex-1 capitalize">{`Month of ${
-          months[new Date().getMonth()]
-        }`}</h2>
+        <h2 className="flex-1 capitalize">{`Month of ${currentMonth({
+          month: new Date().getMonth(),
+          year: new Date().getFullYear(),
+        })}`}</h2>
         <div className="flex gap-2">
           <Button type="button" onClick={toggleEdit}>
             <Image src="/pencil.png" alt="" {...imageDimension(icon)} />
@@ -153,7 +154,7 @@ const Month = () => {
       </div>
       <div className="mx-auto flex w-5/6 gap-2 overflow-x-auto rounded-xl bg-black/10 p-4">
         {values?.data?.map(
-          ({ dateCreated, message, bannerSrc, department, docId }) => {
+          ({ dateCreated, message, photoUrl, department, docId }) => {
             const newDate = new Date();
             newDate.setTime(dateCreated);
 
@@ -194,8 +195,8 @@ const Month = () => {
                     <span className="absolute inset-x-0 bottom-0 text-xs">{`Date Created: ${newDate.toLocaleString()}`}</span>
                   </p>
                 </div>
-                {bannerSrc ? (
-                  <Image src={bannerSrc} alt="" {...imageDimension(80)} />
+                {photoUrl ? (
+                  <Image src={photoUrl} alt="" {...imageDimension(80)} />
                 ) : (
                   <div className="h-32 w-32  rounded-xl bg-primary"></div>
                 )}

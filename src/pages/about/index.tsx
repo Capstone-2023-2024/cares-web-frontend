@@ -68,7 +68,7 @@ const About = () => {
   }, []);
 
   return (
-    <Main>
+    <Main withPathName>
       <Paragraph
         {...isValueEmpty(
           Object.keys({ summary })[0] as ParagraphType["keyName"]

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import Nav from "~/components/Nav";
+import Main from "~/components/Main";
 
 interface FolderType {
   name: string;
@@ -67,58 +67,52 @@ const AdminPage = () => {
   };
 
   return (
-    <div className="flex flex-col">
-      <header className="fixed left-0 top-0 z-10 w-full bg-red-700 px-4 py-2 text-paper">
-        <h1 className="m-0">HITES</h1>
-      </header>
-      <div className="mt-16 flex flex-1">
-        <Nav />
-        <div className="flex-1 p-4">
-          <h2>Bulacan State University</h2>
-          <p>{/* Your content here */}</p>
-          <button
-            className="mb-4 cursor-pointer rounded-md bg-blue-500 px-4 py-2 text-paper"
-            onClick={createFolder}
-          >
-            Create Folder
-          </button>
-          <div>
-            {folders.map((folder, index) => (
-              <div key={index} className="mb-4">
-                <div
-                  className={`${
-                    folder.state === "open"
-                      ? "bg-blue-500 text-paper"
-                      : "bg-gray-100 text-charcoal"
-                  } cursor-pointer rounded-md px-2 py-1`}
-                  onClick={() => toggleFolder(index)}
-                >
-                  {folder.name}
-                </div>
-                {folder.state === "open" && (
-                  <div
-                    className="ml-4 mt-2 rounded-md border-dashed border-gray-300 p-4"
-                    onDragOver={handleDragOver}
-                    onDrop={(event) => handleDrop(event, index)}
-                  >
-                    {folder.files.map((file, fileIndex) => (
-                      <span
-                        key={fileIndex}
-                        className="mr-2 inline-block cursor-move rounded-md bg-blue-500 px-2 py-1 text-paper"
-                        draggable
-                        onDragStart={(event) => handleDragStart(event, file)}
-                      >
-                        {file}
-                      </span>
-                    ))}
-                  </div>
-                )}
+    <Main withPathName>
+      <div className="flex-1 p-4">
+        <h2>Bulacan State University</h2>
+        <p>{/* Your content here */}</p>
+        <button
+          className="mb-4 cursor-pointer rounded-md bg-blue-500 px-4 py-2 text-paper"
+          onClick={createFolder}
+        >
+          Create Folder
+        </button>
+        <div>
+          {folders.map((folder, index) => (
+            <div key={index} className="mb-4">
+              <div
+                className={`${
+                  folder.state === "open"
+                    ? "bg-blue-500 text-paper"
+                    : "bg-gray-100 text-charcoal"
+                } cursor-pointer rounded-md px-2 py-1`}
+                onClick={() => toggleFolder(index)}
+              >
+                {folder.name}
               </div>
-            ))}
-          </div>
+              {folder.state === "open" && (
+                <div
+                  className="ml-4 mt-2 rounded-md border-dashed border-gray-300 p-4"
+                  onDragOver={handleDragOver}
+                  onDrop={(event) => handleDrop(event, index)}
+                >
+                  {folder.files.map((file, fileIndex) => (
+                    <span
+                      key={fileIndex}
+                      className="mr-2 inline-block cursor-move rounded-md bg-blue-500 px-2 py-1 text-paper"
+                      draggable
+                      onDragStart={(event) => handleDragStart(event, file)}
+                    >
+                      {file}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       </div>
-    </div>
+    </Main>
   );
 };
 

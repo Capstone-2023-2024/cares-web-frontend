@@ -1,0 +1,66 @@
+import React, {
+  createContext,
+  useContext,
+  useState,
+  type ReactNode,
+} from "react";
+import type { WeekNameType } from "shared/types";
+import { weekNames } from "~/utils/date";
+
+interface initialDateType {
+  date: number;
+  month: number;
+  year: number;
+  weekName?: WeekNameType;
+}
+interface DateContextType extends initialDateType {
+  changeDate: (date: number) => void;
+  changeMonth: (month: number) => void;
+  changeYear: (year: number) => void;
+  changeWeek: (weekName: WeekNameType) => void;
+}
+interface DateProviderType {
+  children: ReactNode;
+}
+
+const initDate = new Date();
+const initialDate: initialDateType = {
+  date: initDate.getDate(),
+  month: initDate.getMonth(),
+  year: initDate.getFullYear(),
+  weekName: weekNames[initDate.getDay()],
+};
+
+const DateContext = createContext<DateContextType>({
+  ...initialDate,
+  changeDate: () => null,
+  changeMonth: () => null,
+  changeYear: () => null,
+  changeWeek: () => null,
+});
+
+const DateProvider = ({ children }: DateProviderType) => {
+  const [state, setState] = useState(initialDate);
+
+  function handleState(name: string, value: number | WeekNameType) {
+    setState((previousState) => ({ ...previousState, [name]: value }));
+  }
+  function changeDate(date: number) {
+    handleState("date", date);
+  }
+  function changeMonth(month: number) {
+    handleState("month", month);
+  }
+  function changeYear(year: number) {
+    handleState("year", year);
+  }
+  function changeWeek(weekName: WeekNameType) {
+    handleState("weekName", weekName);
+  }
+
+  const values = { ...state, changeDate, changeMonth, changeYear, changeWeek };
+  return <DateContext.Provider value={values}>{children}</DateContext.Provider>;
+};
+
+export const useDate = () => useContext(DateContext);
+export default DateProvider;

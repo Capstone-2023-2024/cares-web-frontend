@@ -1,7 +1,7 @@
 import Main from "~/components/Main";
 
 const Index = () => {
-  return <Main>Main</Main>;
+  return <Main withPathName>Main</Main>;
 };
 
 export default Index;
