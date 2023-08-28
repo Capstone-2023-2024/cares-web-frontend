@@ -1,6 +1,7 @@
 import React, { type ReactNode } from "react";
 import AuthProvider from "./AuthContext";
 import DateProvider from "./DateContext";
+import ToggleProvider from "./ToggleContext";
 
 interface ContextProviders {
   children: ReactNode;
@@ -9,7 +10,9 @@ interface ContextProviders {
 const ContextProviders = (props: ContextProviders) => {
   return (
     <AuthProvider>
-      <DateProvider>{props.children}</DateProvider>
+      <ToggleProvider>
+        <DateProvider>{props.children}</DateProvider>
+      </ToggleProvider>
     </AuthProvider>
   );
 };

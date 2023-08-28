@@ -1,10 +1,16 @@
 import { useRouter } from "next/router";
 import React from "react";
+import { useToggle } from "~/contexts/ToggleContext";
 import type { HeaderPathType } from "~/utils/types";
 
 const HeaderPath = (props: Partial<HeaderPathType>) => {
-  const { pathname, push } = useRouter();
+  const { pathname } = useRouter();
+  const { showCalendar, toggleCalendar } = useToggle();
   const { moreThanOne } = props;
+
+  function handleCalendar() {
+    toggleCalendar();
+  }
 
   return (
     <div
@@ -16,7 +22,9 @@ const HeaderPath = (props: Partial<HeaderPathType>) => {
         {pathname.substring(1, pathname.length).replace(/_/g, " ")}
       </h1>
       {pathname === "/announcements" && (
-        <button onClick={() => push(`.${pathname}/calendar`)}>Calendar</button>
+        <button onClick={handleCalendar}>
+          {showCalendar ? "Post" : "Calendar"}
+        </button>
       )}
     </div>
   );

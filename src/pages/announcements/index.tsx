@@ -8,7 +8,7 @@ import {
   query,
 } from "firebase/firestore";
 import Image from "next/image";
-import { useState, type MouseEvent, useEffect } from "react";
+import { useState, type MouseEvent, useEffect, type ReactNode } from "react";
 import Button from "~/components/Button";
 import Main from "~/components/Main";
 import { currentMonth } from "~/utils/date";
@@ -16,18 +16,36 @@ import { db } from "~/utils/firebase";
 import { icon, imageDimension } from "~/utils/image";
 
 import type { AnnouncementType } from "shared/types";
+import { useDate } from "~/contexts/DateContext";
+import { Map } from "~/components/Calendar";
+import { useToggle } from "~/contexts/ToggleContext";
 
 interface MonthValuesType {
   data: AnnouncementType[];
   isEditing?: boolean;
 }
 
+interface ToggleWrapperType {
+  children: ReactNode;
+  condition: boolean;
+}
+
 const Announcements = () => {
+  const { showCalendar } = useToggle();
   return (
     <Main withPathName moreThanOne>
       <div className="grid">
-        <Form />
-        <Month />
+        <div className="relative">
+          <ToggleWrapper condition={showCalendar}>
+            <Form />
+          </ToggleWrapper>
+          <ToggleWrapper condition={!showCalendar}>
+            <Calendar />
+          </ToggleWrapper>
+          <div className="relative top-64">
+            <Month />
+          </div>
+        </div>
       </div>
     </Main>
   );
@@ -96,6 +114,11 @@ const Form = () => {
 
 const Month = () => {
   const [values, setValues] = useState<MonthValuesType>();
+  const initDate = new Date();
+  const monthName = currentMonth({
+    month: initDate.getMonth(),
+    year: initDate.getFullYear(),
+  })?.name;
 
   function toggleEdit() {
     setValues((prevState) => {
@@ -141,11 +164,8 @@ const Month = () => {
 
   return (
     <div>
-      <div className="flex items-center justify-center">
-        <h2 className="flex-1 capitalize">{`Month of ${currentMonth({
-          month: new Date().getMonth(),
-          year: new Date().getFullYear(),
-        })}`}</h2>
+      <div className="mt-12 flex items-center justify-center">
+        <h2 className="flex-1 capitalize">{`Month of ${monthName}`}</h2>
         <div className="flex gap-2">
           <Button type="button" onClick={toggleEdit}>
             <Image src="/pencil.png" alt="" {...imageDimension(icon)} />
@@ -205,6 +225,28 @@ const Month = () => {
           }
         )}
       </div>
+    </div>
+  );
+};
+
+const Calendar = () => {
+  const { month, year } = useDate();
+
+  return (
+    <section className="mx-auto my-10 flex w-2/3 flex-col gap-2 rounded-xl ">
+      <Map {...{ month, year }} />
+    </section>
+  );
+};
+
+const ToggleWrapper = ({ condition, children }: ToggleWrapperType) => {
+  return (
+    <div
+      className={`${
+        condition ? "translate-x-0 opacity-100" : "translate-x-3/4 opacity-0 "
+      } absolute inset-0 duration-300 ease-in-out`}
+    >
+      {children}
     </div>
   );
 };

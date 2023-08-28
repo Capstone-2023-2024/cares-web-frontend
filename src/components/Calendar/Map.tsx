@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   calendarInArray,
   currentMonth,
@@ -7,12 +7,22 @@ import {
 } from "~/utils/date";
 import type { DateType } from "shared/types";
 
-function baseStyle(today: number, month: number, year: number) {
+const noValue = -1;
+
+function baseStyle({
+  today,
+  month,
+  year,
+}: {
+  today: number;
+  month: number;
+  year: number;
+}) {
   let style = "duration-300 ease-in-out h-full text-right select-none";
   const todayParsed = new Date();
   const selectedDate = new Date();
-  const exactMonthTime = 0;
-  const afterMonthTime = 2678400000;
+  // const exactMonthTime = 0;
+  // const afterMonthTime = 2678400000;
   const getDateToday = today === new Date().getDate() && today;
 
   if (typeof getDateToday === "number") {
@@ -22,35 +32,98 @@ function baseStyle(today: number, month: number, year: number) {
   selectedDate.setMonth(month);
   selectedDate.setFullYear(year);
 
-  const selectedDateTime = selectedDate.getTime();
-  const todayParsedTime = todayParsed.getTime();
+  // const selectedDateTime = selectedDate.getTime();
+  // const todayParsedTime = todayParsed.getTime();
 
-  if (
-    selectedDateTime - todayParsedTime >= exactMonthTime &&
-    selectedDateTime - todayParsedTime < afterMonthTime &&
-    today === todayParsed.getDate()
-  )
-    style += " font-black text-red-300 text-xl sm:text-2xl bg-white shadow-md";
-  if (today === -1) return `${style} text-black dark:text-black`;
-  return `${style} dark:text-white`;
+  // if (
+  //   selectedDateTime - todayParsedTime >= exactMonthTime &&
+  //   selectedDateTime - todayParsedTime < afterMonthTime &&
+  //   today === todayParsed.getDate()
+  // )
+  //   style += " font-black text-xl sm:text-2xl bg-white shadow-md";
+  if (today === noValue) return `${style} text-transparent`;
+  return `${style}`;
 }
 
 const Map = ({ month, year }: Omit<DateType, "date">) => {
-  const currentMon = currentMonth({ month, year });
-  const maxDays = currentMon !== undefined ? currentMon.maxDays : -1;
+  const selectedMonth = currentMonth({ month, year });
+  const maxDays = selectedMonth !== undefined ? selectedMonth.maxDays : -1;
   const { value } = currentWeekDay({ month, year }, weekNames);
   const dateMap = calendarInArray({ ...value, maxDays });
+  const [selectedDates, setSelectedDates] = useState<number[]>([]);
+  const [isSelectionEnable, setEnableSelection] = useState<boolean>(false);
+
+  function arrayFirstLastChild(array: any[]) {
+    return {
+      firstChild: array[0] ?? noValue,
+      lastChild: array[array.length - 1] ?? noValue,
+    };
+  }
+
+  function handleMouseDown(
+    event: React.MouseEvent<HTMLButtonElement>,
+    today: number
+  ) {
+    event.preventDefault();
+    setSelectedDates([today]);
+    setEnableSelection(true);
+  }
+
+  function handleMouseUp(event: React.MouseEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    setEnableSelection(false);
+  }
+
+  function handleMouseOver(
+    event: React.MouseEvent<HTMLButtonElement>,
+    today: number
+  ) {
+    event.preventDefault();
+    today > 0 &&
+      isSelectionEnable &&
+      setSelectedDates((prevState) => {
+        const holder = prevState;
+        const { firstChild, lastChild } = arrayFirstLastChild(prevState);
+
+        if (firstChild < today && lastChild + 1 === today) {
+          holder.push(today);
+        }
+        return [...new Set(holder)].sort();
+      });
+  }
 
   return (
     <div className="grid grid-cols-7 text-center">
       {dateMap.map(({ today }, index) => {
+        const isOverNoValue = today > noValue;
+        const arrayContainsSelectedDate = selectedDates.filter(
+          (value) => value === today
+        )[0];
         return (
-          <div
-            className="md:w-34 sm:w-26 border-2 border-y-transparent duration-300 ease-in-out sm:h-28 md:h-36"
+          <button
+            disabled={!isOverNoValue}
+            onMouseDown={(e) => handleMouseDown(e, today)}
+            onMouseUp={handleMouseUp}
+            onMouseOver={(e) => handleMouseOver(e, today)}
+            className={`${
+              arrayContainsSelectedDate ? "border-blue-400 shadow-md" : ""
+            } sm:h-26 border duration-300 ease-in-out`}
             key={index}
           >
-            <p className={`bg-transparent p-3 text-black`}>{today}</p>
-          </div>
+            <p
+              className={`${baseStyle({
+                today,
+                month,
+                year,
+              })} ${
+                arrayContainsSelectedDate
+                  ? "bg-blue-400 text-white"
+                  : "bg-transparent"
+              } ${today > noValue ? "text-black" : ""} p-2`}
+            >
+              {today}
+            </p>
+          </button>
         );
       })}
     </div>
