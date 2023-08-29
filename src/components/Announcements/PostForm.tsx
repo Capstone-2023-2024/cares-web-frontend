@@ -1,43 +1,47 @@
-import { addDoc, collection } from "firebase/firestore";
+import { ref, uploadBytes } from "firebase/storage";
 import Image from "next/image";
-import React, { useState } from "react";
+import React, { MutableRefObject, useRef, useState } from "react";
 import { AnnouncementType } from "shared/types";
-import { db } from "~/utils/firebase";
+import { storage } from "~/utils/firebase";
 import { imageDimension } from "~/utils/image";
 import Button from "../Button";
 
-const PostForm = () => {
-  const [srcClicked, setSrcClick] = useState(false);
+type InputRef = MutableRefObject<HTMLInputElement | null>;
+type FileState = File | null;
+type SetFile = React.Dispatch<React.SetStateAction<FileState>>;
 
+interface CustomUploadButtonType {
+  inputRef: InputRef;
+  setFile: SetFile;
+}
+
+const PostForm = () => {
+  const [file, setFile] = useState<FileState>(null);
+  const inputRef: InputRef = useRef(null);
   async function handleSubmit(event: React.MouseEvent<HTMLFormElement>) {
     try {
       event.preventDefault();
       const form: HTMLFormElement = event.currentTarget;
       const input = form.querySelector("input");
-      const url =
-        "https://images.unsplash.com/photo-1529778873920-4da4926a72c2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8Y3V0ZSUyMGNhdHxlbnwwfHwwfHx8MA%3D%3D&w=1000&q=80";
 
       const announcement: AnnouncementType = {
         message: input?.value ?? "",
-        photoUrl: srcClicked ? url : "",
+        photoUrl: "",
         state: "unpinned",
         department: "cite",
         dateCreated: new Date().getTime(),
       };
-
-      await addDoc(collection(db, "announcements"), announcement);
+      console.log(announcement);
+      // await addDoc(collection(db, "announcements"), announcement);
     } catch (err) {
       console.log(err);
     }
   }
 
-  function handleImgSrc(event: React.MouseEvent<HTMLButtonElement>) {
-    event.preventDefault();
-    setSrcClick((p) => !p);
-  }
-
   return (
     <form
+      method="post"
+      encType="multipart/form-data"
       onSubmit={(e: React.MouseEvent<HTMLFormElement>) => {
         //eslint-disable-next-line @typescript-eslint/no-floating-promises
         handleSubmit(e);
@@ -59,11 +63,44 @@ const PostForm = () => {
         />
         <div className="absolute bottom-0 right-0 flex">
           <Button type="button" text="emoji" id="emoji" />
-          <Button type="button" text="imgup" onClick={(e) => handleImgSrc(e)} />
+          <CustomUploadButton {...{ inputRef, setFile }} />
         </div>
       </div>
-      <Button text="Post" primary rounded />
+      <Button type="submit" text="Post" primary rounded />
     </form>
+  );
+};
+
+const CustomUploadButton = (props: CustomUploadButtonType) => {
+  const { inputRef, setFile } = props;
+
+  async function handleFilePick() {
+    try {
+      const fileHolder = inputRef.current?.files?.[0];
+      if (fileHolder !== undefined) {
+        setFile(fileHolder);
+        const upload = await uploadBytes(ref(storage, "images"), fileHolder);
+        console.log(upload.metadata);
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  return (
+    <div className="relative flex overflow-hidden rounded-xl bg-blue-400 px-4 text-white">
+      <label className="absolute inset-0 m-auto w-max translate-y-1/4 self-center text-center text-xs">
+        Choose File
+      </label>
+      <input
+        ref={inputRef}
+        type="file"
+        required
+        className="h-6 w-16 scale-150 cursor-pointer self-center opacity-0"
+        accept=".jpg, .jpeg, .png"
+        onChange={handleFilePick}
+      />
+    </div>
   );
 };
 

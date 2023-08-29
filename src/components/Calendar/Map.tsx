@@ -33,15 +33,6 @@ function baseStyle({
   selectedDate.setMonth(month);
   selectedDate.setFullYear(year);
 
-  // const selectedDateTime = selectedDate.getTime();
-  // const todayParsedTime = todayParsed.getTime();
-
-  // if (
-  //   selectedDateTime - todayParsedTime >= exactMonthTime &&
-  //   selectedDateTime - todayParsedTime < afterMonthTime &&
-  //   today === todayParsed.getDate()
-  // )
-  //   style += " font-black text-xl sm:text-2xl bg-white shadow-md";
   if (today === noValue) return `${style} text-transparent`;
   return `${style}`;
 }
@@ -85,13 +76,14 @@ const Map = ({ month, year }: Omit<DateType, "date">) => {
     today > 0 &&
       isSelectionEnable &&
       setSelectedDates((prevState) => {
-        const holder = prevState;
+        const valueSort = (a: number, b: number) => a - b;
+        const holder = prevState.sort(valueSort);
         const { firstChild, lastChild } = arrayFirstLastChild(prevState);
-
+        console.log(holder);
         if (firstChild < today && lastChild + 1 === today) {
           holder.push(today);
         }
-        return [...new Set(holder)].sort();
+        return [...new Set(holder)].sort(valueSort);
       });
   }
 
