@@ -10,9 +10,9 @@ interface ContextProviders {
 const ContextProviders = (props: ContextProviders) => {
   return (
     <AuthProvider>
-      <ToggleProvider>
-        <DateProvider>{props.children}</DateProvider>
-      </ToggleProvider>
+      <DateProvider>
+        <ToggleProvider>{props.children}</ToggleProvider>
+      </DateProvider>
     </AuthProvider>
   );
 };

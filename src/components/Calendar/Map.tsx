@@ -6,6 +6,7 @@ import {
   weekNames,
 } from "~/utils/date";
 import type { DateType } from "shared/types";
+import { useToggle } from "~/contexts/ToggleContext";
 
 const noValue = -1;
 
@@ -50,6 +51,7 @@ const Map = ({ month, year }: Omit<DateType, "date">) => {
   const maxDays = selectedMonth !== undefined ? selectedMonth.maxDays : -1;
   const { value } = currentWeekDay({ month, year }, weekNames);
   const dateMap = calendarInArray({ ...value, maxDays });
+  const { toggleCalendar } = useToggle();
   const [selectedDates, setSelectedDates] = useState<number[]>([]);
   const [isSelectionEnable, setEnableSelection] = useState<boolean>(false);
 
@@ -72,6 +74,7 @@ const Map = ({ month, year }: Omit<DateType, "date">) => {
   function handleMouseUp(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
     setEnableSelection(false);
+    toggleCalendar();
   }
 
   function handleMouseOver(
