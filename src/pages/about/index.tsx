@@ -53,14 +53,18 @@ const About = () => {
     let unsub = true;
 
     async function setup() {
-      const { docs } = await getDocs(collection(db, "about"));
-      const docsHasData = docs.length > 0;
-      if (docsHasData) {
-        setState(docs[0]?.data() as AboutType);
+      try {
+        const { docs } = await getDocs(collection(db, "about"));
+        const docsHasData = docs.length > 0;
+        if (docsHasData) {
+          setState(docs[0]?.data() as AboutType);
+        }
+      } catch (err) {
+        console.log(err);
       }
     }
     if (unsub) {
-      setup();
+      void setup();
     }
     return () => {
       unsub = true;

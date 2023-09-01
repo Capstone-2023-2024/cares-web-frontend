@@ -1,6 +1,7 @@
+import child_process from "child_process";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { readdir } from "node:fs/promises";
-import { exec } from "child_process";
+import os from "os";
 import path from "path";
 
 type ResponseData = {
@@ -8,28 +9,24 @@ type ResponseData = {
 };
 
 function openExplorerin(path: string, callback: (error: Error) => void) {
-  let cmd = ``;
+  let cmd = "";
   switch (
-    require(`os`)
-      .platform()
-      .toLowerCase()
-      .replace(/[0-9]/g, ``)
-      .replace(`darwin`, `macos`)
+    os.platform().toLowerCase().replace(/[0-9]/g, "").replace(`darwin`, `macos`)
   ) {
     case `win`:
-      path = path || "=";
+      path = path ?? "=";
       cmd = `explorer`;
       break;
     case `linux`:
-      path = path || "/";
+      path = path ?? "/";
       cmd = `xdg-open`;
       break;
     case `macos`:
-      path = path || "/";
+      path = path ?? "/";
       cmd = `open`;
       break;
   }
-  const p = require(`child_process`).spawn(cmd, [path]);
+  const p = child_process.spawn(cmd, [path]);
   p.on("error", (err: Error) => {
     p.kill();
     return callback(err);

@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
-import { getStorage } from "firebase/storage";
+import { getStorage, ref } from "firebase/storage";
 
 const firebaseApp = initializeApp({
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -16,3 +16,19 @@ const firebaseApp = initializeApp({
 export const db = getFirestore(firebaseApp);
 export const auth = getAuth(firebaseApp);
 export const storage = getStorage(firebaseApp);
+
+export const storageRef = (path: "images") => ref(storage, path);
+
+export function intToStringTwoChar(integer: number) {
+  return integer > 9 ? `${integer}` : `0${integer}`;
+}
+
+export function retrieveImageFBStorage(photoUrl: string) {
+  const BASE = "https://firebasestorage.googleapis.com";
+  const BASE_DIVIDER = "/v0/b/";
+  const STORAGE_BUCKET = "cics-a78de.appspot.com";
+  const PATH_DIVIDER = "/o/";
+  const PARAMS = "?alt=media";
+  const PATH = photoUrl.replace(/\//g, "%2F");
+  return `${BASE}${BASE_DIVIDER}${STORAGE_BUCKET}${PATH_DIVIDER}${PATH}${PARAMS}`;
+}

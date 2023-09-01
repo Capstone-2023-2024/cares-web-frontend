@@ -7,6 +7,7 @@ import {
 } from "~/utils/date";
 import type { DateType } from "shared/types";
 import { useToggle } from "~/contexts/ToggleContext";
+import { useDate } from "~/contexts/DateContext";
 
 const noValue = -1;
 
@@ -19,7 +20,7 @@ function baseStyle({
   month: number;
   year: number;
 }) {
-  let style = "duration-300 ease-in-out h-full text-right select-none";
+  const style = "duration-300 ease-in-out h-full text-right select-none";
   const todayParsed = new Date();
   const selectedDate = new Date();
   // const exactMonthTime = 0;
@@ -43,10 +44,11 @@ const Map = ({ month, year }: Omit<DateType, "date">) => {
   const { value } = currentWeekDay({ month, year }, weekNames);
   const dateMap = calendarInArray({ ...value, maxDays });
   const { toggleCalendar } = useToggle();
+  const { changeSelectedDateArray } = useDate();
   const [selectedDates, setSelectedDates] = useState<number[]>([]);
   const [isSelectionEnable, setEnableSelection] = useState<boolean>(false);
 
-  function arrayFirstLastChild(array: any[]) {
+  function arrayFirstLastChild(array: number[]) {
     return {
       firstChild: array[0] ?? noValue,
       lastChild: array[array.length - 1] ?? noValue,
@@ -65,6 +67,7 @@ const Map = ({ month, year }: Omit<DateType, "date">) => {
   function handleMouseUp(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
     setEnableSelection(false);
+    changeSelectedDateArray(selectedDates);
     toggleCalendar();
   }
 
@@ -79,7 +82,7 @@ const Map = ({ month, year }: Omit<DateType, "date">) => {
         const valueSort = (a: number, b: number) => a - b;
         const holder = prevState.sort(valueSort);
         const { firstChild, lastChild } = arrayFirstLastChild(prevState);
-        console.log(holder);
+
         if (firstChild < today && lastChild + 1 === today) {
           holder.push(today);
         }

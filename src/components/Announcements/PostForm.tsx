@@ -1,8 +1,10 @@
-import { ref, uploadBytes } from "firebase/storage";
+import { addDoc, collection } from "firebase/firestore";
+import { uploadBytes } from "firebase/storage";
 import Image from "next/image";
-import React, { MutableRefObject, useRef, useState } from "react";
-import { AnnouncementType } from "shared/types";
-import { storage } from "~/utils/firebase";
+import React, { useRef, useState, type MutableRefObject } from "react";
+import type { AnnouncementType } from "shared/types";
+import { useDate } from "~/contexts/DateContext";
+import { db, intToStringTwoChar, storageRef } from "~/utils/firebase";
 import { imageDimension } from "~/utils/image";
 import Button from "../Button";
 
@@ -17,22 +19,43 @@ interface CustomUploadButtonType {
 
 const PostForm = () => {
   const [file, setFile] = useState<FileState>(null);
+  const { selectedDateArray, announceNameRef, year, month } = useDate();
   const inputRef: InputRef = useRef(null);
+
+  async function uploadImage(image: File) {
+    try {
+      const { metadata } = await uploadBytes(storageRef("images"), image);
+      return metadata.name;
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
   async function handleSubmit(event: React.MouseEvent<HTMLFormElement>) {
     try {
       event.preventDefault();
       const form: HTMLFormElement = event.currentTarget;
-      const input = form.querySelector("input");
+      const textarea = form.querySelector("textarea");
+      const markedDates = selectedDateArray.map(
+        (value) =>
+          `${year}-${intToStringTwoChar(month + 1)}-${intToStringTwoChar(
+            value
+          )}`
+      );
 
-      const announcement: AnnouncementType = {
-        message: input?.value ?? "",
-        photoUrl: "",
-        state: "unpinned",
-        department: "cite",
-        dateCreated: new Date().getTime(),
-      };
-      console.log(announcement);
-      // await addDoc(collection(db, "announcements"), announcement);
+      if (file !== null) {
+        const photoUrl = await uploadImage(file);
+        const announcement: AnnouncementType = {
+          message: textarea?.value ?? "",
+          photoUrl: photoUrl ?? "",
+          state: "unpinned",
+          department: "cite",
+          dateCreated: new Date().getTime(),
+          markedDates,
+        };
+        await addDoc(collection(db, announceNameRef), announcement);
+      }
+      setFile(null);
     } catch (err) {
       console.log(err);
     }
@@ -43,8 +66,7 @@ const PostForm = () => {
       method="post"
       encType="multipart/form-data"
       onSubmit={(e: React.MouseEvent<HTMLFormElement>) => {
-        //eslint-disable-next-line @typescript-eslint/no-floating-promises
-        handleSubmit(e);
+        void handleSubmit(e);
       }}
       className="mx-auto my-10 flex w-3/4 flex-col items-center justify-center gap-2 rounded-xl bg-primary/50 py-4"
     >
@@ -56,13 +78,13 @@ const PostForm = () => {
         CITE Department
       </p>
       <div className="relative w-3/4">
-        <input
+        <textarea
           required
           className="w-full rounded-xl p-4 pb-16"
           placeholder="What's happening in our campus?"
         />
         <div className="absolute bottom-0 right-0 flex">
-          <Button type="button" text="emoji" id="emoji" />
+          {/* <Button type="button" text="emoji" id="emoji" /> */}
           <CustomUploadButton {...{ inputRef, setFile }} />
         </div>
       </div>
@@ -74,13 +96,11 @@ const PostForm = () => {
 const CustomUploadButton = (props: CustomUploadButtonType) => {
   const { inputRef, setFile } = props;
 
-  async function handleFilePick() {
+  function handleFilePick() {
     try {
       const fileHolder = inputRef.current?.files?.[0];
       if (fileHolder !== undefined) {
         setFile(fileHolder);
-        const upload = await uploadBytes(ref(storage, "images"), fileHolder);
-        console.log(upload.metadata);
       }
     } catch (err) {
       console.log(err);
@@ -96,7 +116,7 @@ const CustomUploadButton = (props: CustomUploadButtonType) => {
         ref={inputRef}
         type="file"
         required
-        className="h-6 w-16 scale-150 cursor-pointer self-center opacity-0"
+        className="h-6 w-16 scale-150 self-center opacity-0"
         accept=".jpg, .jpeg, .png"
         onChange={handleFilePick}
       />

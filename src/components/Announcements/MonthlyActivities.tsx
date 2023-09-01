@@ -9,9 +9,10 @@ import {
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import type { AnnouncementType } from "shared/types";
-import { db } from "~/utils/firebase";
+import { db, retrieveImageFBStorage } from "~/utils/firebase";
 import { icon, imageDimension } from "~/utils/image";
 import Button from "../Button";
+import { useDate } from "~/contexts/DateContext";
 
 interface MonthlyActivitiesValuesType {
   data: AnnouncementType[];
@@ -20,6 +21,7 @@ interface MonthlyActivitiesValuesType {
 
 const MonthlyActivities = () => {
   const [values, setValues] = useState<MonthlyActivitiesValuesType>();
+  const { announceNameRef } = useDate();
 
   function toggleEdit() {
     setValues((prevState) => {
@@ -39,29 +41,28 @@ const MonthlyActivities = () => {
     docId: string
   ) {
     event.preventDefault();
-    await deleteDoc(doc(db, `announcements/${docId}`));
+    await deleteDoc(doc(db, `${announceNameRef}/${docId}`));
   }
 
-  useEffect(
-    () =>
-      onSnapshot(
-        query(collection(db, "announcements"), orderBy("dateCreated")),
-        (snapshot) => {
-          const placeholder: AnnouncementType[] = [];
-          snapshot.docs.forEach((doc) => {
-            placeholder.push({
-              ...doc.data(),
-              docId: doc.id,
-            } as AnnouncementType);
-          });
-          setValues((prevState) => ({
-            ...prevState,
-            data: placeholder,
-          }));
-        }
-      ),
-    []
-  );
+  useEffect(() => {
+    const unsub = onSnapshot(
+      query(collection(db, announceNameRef), orderBy("dateCreated")),
+      (snapshot) => {
+        const placeholder: AnnouncementType[] = [];
+        snapshot.docs.forEach((doc) => {
+          placeholder.push({
+            ...doc.data(),
+            docId: doc.id,
+          } as AnnouncementType);
+        });
+        setValues((prevState) => ({
+          ...prevState,
+          data: placeholder,
+        }));
+      }
+    );
+    return () => unsub();
+  }, [announceNameRef]);
 
   return (
     <div>
@@ -94,7 +95,7 @@ const MonthlyActivities = () => {
                       } px-1 capitalize duration-300 ease-in-out`}
                       onClick={(e) => {
                         //eslint-disable-next-line @typescript-eslint/no-floating-promises
-                        handleDelete(e, docId ? docId : "");
+                        void handleDelete(e, docId ?? "");
                       }}
                     >
                       del
@@ -116,7 +117,11 @@ const MonthlyActivities = () => {
                   </p>
                 </div>
                 {photoUrl ? (
-                  <Image src={photoUrl} alt="" {...imageDimension(80)} />
+                  <Image
+                    src={retrieveImageFBStorage(photoUrl)}
+                    alt=""
+                    {...imageDimension(80)}
+                  />
                 ) : (
                   <div className="h-32 w-32  rounded-xl bg-primary"></div>
                 )}

@@ -1,8 +1,4 @@
-import type {
-  CalendarInArrayType,
-  DateType,
-  WeekNameType,
-} from "shared/types";
+import type { CalendarInArrayType, DateType, WeekNameType } from "shared/types";
 
 export function currentMonth({ month, year }: Omit<DateType, "date">) {
   const months = [
@@ -24,7 +20,7 @@ export function currentMonth({ month, year }: Omit<DateType, "date">) {
 }
 export function currentWeekDay(props: DateType, weekNames: WeekNameType[]) {
   const date = new Date();
-  date.setDate(props.date || 1);
+  date.setDate(props.date ?? 1);
   date.setMonth(props.month);
   date.setFullYear(props.year);
 
@@ -36,7 +32,7 @@ export function currentWeekDay(props: DateType, weekNames: WeekNameType[]) {
 export function calendarInArray(props: CalendarInArrayType) {
   const datePosition: { today: number; week: number }[] = [];
   const maxLength = 42;
-  let week = props.week;
+  const week = props.week;
   let weekPlaceHolder = props.week;
 
   const checkWeek = (weekProps: number) => {

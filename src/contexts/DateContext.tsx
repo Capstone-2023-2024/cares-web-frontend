@@ -5,19 +5,22 @@ import React, {
   type ReactNode,
 } from "react";
 import type { WeekNameType } from "shared/types";
-import { weekNames } from "~/utils/date";
+import { currentMonth, weekNames } from "~/utils/date";
 
 interface initialDateType {
   date: number;
   month: number;
   year: number;
   weekName?: WeekNameType;
+  selectedDateArray: number[];
+  announceNameRef: string;
 }
 interface DateContextType extends initialDateType {
   changeDate: (date: number) => void;
   changeMonth: (month: number) => void;
   changeYear: (year: number) => void;
   changeWeek: (weekName: WeekNameType) => void;
+  changeSelectedDateArray: (dateArray: number[]) => void;
 }
 interface DateProviderType {
   children: ReactNode;
@@ -29,6 +32,8 @@ const initialDate: initialDateType = {
   month: initDate.getMonth(),
   year: initDate.getFullYear(),
   weekName: weekNames[initDate.getDay()],
+  selectedDateArray: [],
+  announceNameRef: "",
 };
 
 const DateContext = createContext<DateContextType>({
@@ -37,12 +42,29 @@ const DateContext = createContext<DateContextType>({
   changeMonth: () => null,
   changeYear: () => null,
   changeWeek: () => null,
+  changeSelectedDateArray: () => null,
 });
 
 const DateProvider = ({ children }: DateProviderType) => {
   const [state, setState] = useState(initialDate);
+  const { year, month } = useDate();
+  const MONTH = currentMonth({ year, month })?.name.toUpperCase();
+  const announceNameRef = `announcement/${MONTH}/${year}`;
 
-  function handleState(name: string, value: number | WeekNameType) {
+  const values = {
+    ...state,
+    announceNameRef,
+    changeDate,
+    changeMonth,
+    changeYear,
+    changeWeek,
+    changeSelectedDateArray,
+  };
+
+  function handleState(
+    name: keyof initialDateType,
+    value: number | WeekNameType | number[]
+  ) {
     setState((previousState) => ({ ...previousState, [name]: value }));
   }
   function changeDate(date: number) {
@@ -57,8 +79,10 @@ const DateProvider = ({ children }: DateProviderType) => {
   function changeWeek(weekName: WeekNameType) {
     handleState("weekName", weekName);
   }
+  function changeSelectedDateArray(dateArray: number[]) {
+    handleState("selectedDateArray", dateArray);
+  }
 
-  const values = { ...state, changeDate, changeMonth, changeYear, changeWeek };
   return <DateContext.Provider value={values}>{children}</DateContext.Provider>;
 };
 
