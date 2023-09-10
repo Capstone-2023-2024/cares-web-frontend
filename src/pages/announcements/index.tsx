@@ -22,19 +22,15 @@ const Announcements = () => {
         <h2 className="text-center capitalize">{monthName}</h2>
         <h2 className="text-center capitalize">{year}</h2>
       </div>
-      <div className="relative top-0">
-        <div className="">
-          <ToggleWrapper condition={showCalendar}>
-            <PostForm />
-          </ToggleWrapper>
-          <ToggleWrapper condition={!showCalendar}>
-            <Calendar />
-          </ToggleWrapper>
-        </div>
+      <div className=" relative h-96 overflow-hidden">
+        <ToggleWrapper condition={showCalendar}>
+          <PostForm />
+        </ToggleWrapper>
+        <ToggleWrapper condition={!showCalendar}>
+          <Calendar />
+        </ToggleWrapper>
       </div>
-      <div className="relative top-64">
-        <MonthlyActivities />
-      </div>
+      <MonthlyActivities />
     </Main>
   );
 };

@@ -11,13 +11,13 @@ interface MainType extends Partial<HeaderPathType> {
 
 const Main = ({ children, withPathName, ...rest }: MainType) => {
   return (
-    <div className="flex flex-col">
+    <div>
       <Header />
-      <div className="flex">
+      <div className="flex h-screen">
         <Nav />
-        <div className="flex flex-1 flex-col">
+        <div className="inline-block w-2/3">
           {withPathName && <HeaderPath {...rest} />}
-          <div className="h-full text-charcoal">{children}</div>
+          <div className="text-charcoal">{children}</div>
         </div>
       </div>
     </div>

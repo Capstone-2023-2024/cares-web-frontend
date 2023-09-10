@@ -18,6 +18,9 @@ interface MonthlyActivitiesValuesType {
   data: AnnouncementType[];
   isEditing?: boolean;
 }
+interface DeleteProps extends Required<MonthlyActivitiesValuesType> {
+  docId?: string;
+}
 
 const MonthlyActivities = () => {
   const [values, setValues] = useState<MonthlyActivitiesValuesType>();
@@ -34,14 +37,6 @@ const MonthlyActivities = () => {
         return placeholder;
       }
     });
-  }
-
-  async function handleDelete(
-    event: React.MouseEvent<HTMLButtonElement>,
-    docId: string
-  ) {
-    event.preventDefault();
-    await deleteDoc(doc(db, `${announceNameRef}/${docId}`));
   }
 
   useEffect(() => {
@@ -66,71 +61,90 @@ const MonthlyActivities = () => {
 
   return (
     <div>
-      <div className="mt-12 flex items-center justify-center">
+      <div className="flex items-center justify-center">
         <div className="flex gap-2">
           <Button type="button" onClick={toggleEdit}>
             <Image src="/pencil.png" alt="" {...imageDimension(icon)} />
           </Button>
         </div>
       </div>
-      <div className="mx-auto flex w-5/6 gap-2 overflow-x-auto rounded-xl bg-black/10 p-4">
-        {values?.data?.map(
-          ({ dateCreated, message, photoUrl, department, docId }) => {
-            const newDate = new Date();
-            newDate.setTime(dateCreated);
-
-            return (
-              <div
-                className="flex w-64 gap-2 rounded-xl bg-primary/70 p-4"
-                key={docId}
-              >
-                <div className="relative">
-                  <div className="absolute right-0 top-0 overflow-hidden rounded-full capitalize">
-                    <button
-                      disabled={!values.isEditing}
-                      className={`${
-                        values.isEditing
-                          ? "bg-red-500 text-white"
-                          : "bg-primary text-black/40"
-                      } px-1 capitalize duration-300 ease-in-out`}
-                      onClick={(e) => {
-                        //eslint-disable-next-line @typescript-eslint/no-floating-promises
-                        void handleDelete(e, docId ?? "");
-                      }}
-                    >
-                      del
-                    </button>
-                  </div>
-                  <div className="flex items-center justify-center gap-2">
-                    <Image
-                      src="/CICS.png"
-                      alt=""
-                      {...imageDimension(icon * 2)}
-                    />
-                    <h2 className="flex flex-col text-center font-bold uppercase">
-                      <span>{department}</span>department
-                    </h2>
-                  </div>
-                  <p className="flex flex-col p-2">
-                    {message}
-                    <span className="absolute inset-x-0 bottom-0 text-xs">{`Date Created: ${newDate.toLocaleString()}`}</span>
-                  </p>
-                </div>
-                {photoUrl ? (
-                  <Image
-                    src={retrieveImageFBStorage(photoUrl)}
-                    alt=""
-                    {...imageDimension(80)}
-                  />
-                ) : (
-                  <div className="h-32 w-32  rounded-xl bg-primary"></div>
-                )}
-              </div>
-            );
-          }
-        )}
+      <div className="mx-2 flex gap-2 overflow-x-auto rounded-xl bg-black/10 p-4">
+        {values?.data?.map(({ docId, ...rest }) => (
+          <Card key={docId} {...rest} />
+        ))}
       </div>
     </div>
+  );
+};
+
+const Card = ({
+  dateCreated,
+  photoUrl,
+  department,
+  message,
+}: Omit<AnnouncementType, "docId">) => {
+  const newDate = new Date();
+  newDate.setTime(dateCreated);
+  return (
+    <div className="flex min-w-max rounded-xl bg-primary/70 p-4">
+      <div>
+        <Heading department={department} />
+        <p className="flex flex-col bg-yellow-300 p-2">
+          {message.substring(0, 24)}
+          <span className="text-xs">{`Date Created: ${newDate.toLocaleString()}`}</span>
+        </p>
+      </div>
+      <RenderPhoto photoUrl={photoUrl} />
+    </div>
+  );
+};
+
+const Heading = ({ department }: { department: string }) => (
+  <div className="flex w-full min-w-max items-center justify-around bg-blue-500/50">
+    <Image src="/CICS.png" alt="" {...imageDimension(icon * 2)} />
+    <h2 className="flex flex-col text-center font-bold uppercase">
+      <span>{department}</span>department
+    </h2>
+  </div>
+);
+
+const RenderPhoto = ({ photoUrl }: { photoUrl?: string }) => {
+  return (
+    <div className="h-full w-24 rounded-xl">
+      <Image
+        alt=""
+        priority
+        quality={5}
+        className="h-full w-full object-cover"
+        src={photoUrl ? retrieveImageFBStorage(photoUrl) : "/Image.png"}
+        {...imageDimension(120)}
+      />
+    </div>
+  );
+};
+
+const DeleteButton = ({ isEditing, docId }: DeleteProps) => {
+  const { announceNameRef } = useDate();
+  async function handleDelete(
+    event: React.MouseEvent<HTMLButtonElement>,
+    docId: string
+  ) {
+    event.preventDefault();
+    await deleteDoc(doc(db, `${announceNameRef}/${docId}`));
+  }
+
+  return (
+    <button
+      disabled={!isEditing}
+      className={`${
+        isEditing ? "bg-red-500 text-white" : "bg-primary text-black/40"
+      } px-1 capitalize duration-300 ease-in-out`}
+      onClick={(e) => {
+        void handleDelete(e, docId ?? "");
+      }}
+    >
+      del
+    </button>
   );
 };
 
