@@ -24,8 +24,8 @@ const PostForm = () => {
 
   async function uploadImage(image: File) {
     try {
-      const { metadata } = await uploadBytes(storageRef("images"), image);
-      return metadata.name;
+      await uploadBytes(storageRef("images", image.name), image);
+      return image.name;
     } catch (err) {
       console.log(err);
     }

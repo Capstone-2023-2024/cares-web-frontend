@@ -17,7 +17,8 @@ export const db = getFirestore(firebaseApp);
 export const auth = getAuth(firebaseApp);
 export const storage = getStorage(firebaseApp);
 
-export const storageRef = (path: "images") => ref(storage, path);
+export const storageRef = (path: "images", name: string) =>
+  ref(storage, `${path}/${name}`);
 
 export function intToStringTwoChar(integer: number) {
   return integer > 9 ? `${integer}` : `0${integer}`;
@@ -30,5 +31,5 @@ export function retrieveImageFBStorage(photoUrl: string) {
   const PATH_DIVIDER = "/o/";
   const PARAMS = "?alt=media";
   const PATH = photoUrl.replace(/\//g, "%2F");
-  return `${BASE}${BASE_DIVIDER}${STORAGE_BUCKET}${PATH_DIVIDER}${PATH}${PARAMS}`;
+  return `${BASE}${BASE_DIVIDER}${STORAGE_BUCKET}${PATH_DIVIDER}images%2F${PATH}${PARAMS}`;
 }

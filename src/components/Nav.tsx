@@ -11,11 +11,7 @@ const Nav = () => {
     <nav className="inline-block w-1/3 bg-secondary p-2 text-paper">
       <h2 className="font-bold">MENU</h2>
       <ul className="m-0 list-none p-0">
-        <Path pathname="dashboard" />
-        <Path pathname="concerns" />
         <Path pathname="announcements" />
-        <Path pathname="special_class" />
-        <Path pathname="gold_gear_awards" />
         <Path pathname="about" />
       </ul>
     </nav>

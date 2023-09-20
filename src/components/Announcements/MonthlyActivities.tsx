@@ -18,9 +18,11 @@ interface MonthlyActivitiesValuesType {
   data: AnnouncementType[];
   isEditing?: boolean;
 }
-interface DeleteProps extends Required<MonthlyActivitiesValuesType> {
+interface DeleteProps extends Omit<MonthlyActivitiesValuesType, "data"> {
   docId?: string;
 }
+
+interface CardProps extends AnnouncementType, DeleteProps {}
 
 const MonthlyActivities = () => {
   const [values, setValues] = useState<MonthlyActivitiesValuesType>();
@@ -69,8 +71,8 @@ const MonthlyActivities = () => {
         </div>
       </div>
       <div className="mx-2 flex gap-2 overflow-x-auto rounded-xl bg-black/10 p-4">
-        {values?.data?.map(({ docId, ...rest }) => (
-          <Card key={docId} {...rest} />
+        {values?.data?.map((props) => (
+          <Card key={props.docId} isEditing={values.isEditing} {...props} />
         ))}
       </div>
     </div>
@@ -78,15 +80,19 @@ const MonthlyActivities = () => {
 };
 
 const Card = ({
+  docId,
+  isEditing,
   dateCreated,
   photoUrl,
   department,
   message,
-}: Omit<AnnouncementType, "docId">) => {
+  ...rest
+}: CardProps) => {
   const newDate = new Date();
   newDate.setTime(dateCreated);
   return (
     <div className="flex min-w-max rounded-xl bg-primary/70 p-4">
+      <DeleteButton docId={docId} isEditing={isEditing} />
       <div>
         <Heading department={department} />
         <p className="flex flex-col bg-yellow-300 p-2">
@@ -109,8 +115,9 @@ const Heading = ({ department }: { department: string }) => (
 );
 
 const RenderPhoto = ({ photoUrl }: { photoUrl?: string }) => {
+  console.log({ photoUrl });
   return (
-    <div className="h-full w-24 rounded-xl">
+    <div className="h-24 w-24 rounded-xl">
       <Image
         alt=""
         priority
