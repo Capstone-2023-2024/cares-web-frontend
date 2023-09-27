@@ -33,3 +33,8 @@ export function retrieveImageFBStorage(photoUrl: string) {
   const PATH = photoUrl.replace(/\//g, "%2F");
   return `${BASE}${BASE_DIVIDER}${STORAGE_BUCKET}${PATH_DIVIDER}images%2F${PATH}${PARAMS}`;
 }
+
+export const validateEmail = (email: string) => {
+  const bulsuRegex = /^[a-z]+(\.[a-z]+)*@bulsu\.edu\.ph$/;
+  return bulsuRegex.test(email);
+};

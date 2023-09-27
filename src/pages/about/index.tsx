@@ -1,13 +1,16 @@
 import { collection, doc, getDocs, runTransaction } from "firebase/firestore";
 import Image from "next/image";
+import { useRouter } from "next/router";
 import {
-  type ReactNode,
   useEffect,
   useState,
   type ChangeEvent,
   type MouseEvent,
+  type ReactNode,
 } from "react";
+import Loading from "~/components/Loading";
 import Main from "~/components/Main";
+import { useAuth } from "~/contexts/AuthContext";
 import { db } from "~/utils/firebase";
 
 interface AboutType {
@@ -32,18 +35,26 @@ interface ContainerType {
 }
 
 const About = () => {
-  const noValue = "";
+  const NOVALUE = "";
+  const { currentUser } = useAuth();
+  const router = useRouter();
   const [state, setState] = useState<AboutType>({
-    summary: noValue,
-    vision: noValue,
-    mission: noValue,
+    summary: NOVALUE,
+    vision: NOVALUE,
+    mission: NOVALUE,
   });
   const { summary, vision, mission } = state;
 
+  useEffect(() => {
+    if (currentUser === null) {
+      router.push("/login");
+    }
+  }, [currentUser]);
+
   const isValueEmpty = (keyName: ParagraphType["keyName"]): ParagraphType => {
-    const condition = state[keyName] === noValue;
+    const condition = state[keyName] === NOVALUE;
     const data = {
-      content: condition ? noValue : state[keyName],
+      content: condition ? NOVALUE : state[keyName],
       keyName,
     };
     return data;
@@ -71,7 +82,7 @@ const About = () => {
     };
   }, []);
 
-  return (
+  return currentUser !== null ? (
     <Main withPathName>
       <Paragraph
         {...isValueEmpty(
@@ -91,6 +102,8 @@ const About = () => {
         />
       </div>
     </Main>
+  ) : (
+    <Loading />
   );
 };
 

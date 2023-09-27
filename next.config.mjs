@@ -11,7 +11,7 @@ const config = {
     return [
       {
         source: "/",
-        destination: "/dashboard",
+        destination: "/about",
         permanent: false,
       },
     ];
