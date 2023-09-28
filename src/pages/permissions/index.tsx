@@ -285,7 +285,7 @@ const RoleModal = () => {
         </div>
         <input
           required
-          className="rounded-xl border p-2"
+          className={`${validateEmail(email) ? 'border-green-500' : email === '' ? 'border-slate-300' : 'border-red-500'} rounded-lg border p-4 shadow-sm outline-none duration-300 ease-in-out`}
           value={email}
           onChange={handleChange}
           placeholder="Enter a email to add"

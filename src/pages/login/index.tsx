@@ -4,6 +4,7 @@ import type { InitialAuthProps, InitialAuthPropsType } from "./types";
 import { useRouter } from "next/router";
 import Loading from "~/components/Loading";
 import { type UserCredential } from "firebase/auth";
+import { validateEmail } from "~/utils/firebase";
 
 const initialProps: InitialAuthProps = {
   email: "",
@@ -15,6 +16,7 @@ const Login = () => {
   const [error, setError] = useState(false);
   const { emailAndPassSignin, currentUser, loading } = useAuth();
   const router = useRouter();
+  const inputBaseStyle = 'rounded-lg border p-4 shadow-sm outline-none duration-300 ease-in-out'
 
   function handleState(
     key: keyof InitialAuthProps,
@@ -25,7 +27,7 @@ const Login = () => {
 
   function handleEmail(e: ChangeEvent<HTMLInputElement>) {
     e.preventDefault();
-    handleState("email", e.target.value);
+    handleState("email", e.target.value)
   }
   function handlePassword(e: ChangeEvent<HTMLInputElement>) {
     e.preventDefault();
@@ -68,14 +70,15 @@ const Login = () => {
       >
         <h2 className="text-center text-3xl font-semibold">Login</h2>
         <input
-          className="rounded-lg border p-4 shadow-sm"
+          className={`border-slate-300 ${inputBaseStyle}`}
+          // className={`${(state.email) ? 'border-green-500' : state.email === '' ? 'border-slate-300' : 'border-red-500'} ${inputBaseStyle}`}
           required
-          type="text"
+          type="email"
           onChange={handleEmail}
           placeholder="email"
         />
         <input
-          className="rounded-lg border p-4 shadow-sm"
+          className={`border-slate-300 ${inputBaseStyle}`}
           required
           type="password"
           onChange={handlePassword}
@@ -88,9 +91,8 @@ const Login = () => {
           Login
         </button>
         <p
-          className={`${
-            error ? "opacity-100" : "opacity-0"
-          } select-none text-red-500 duration-300 ease-in-out`}
+          className={`${error ? "opacity-100" : "opacity-0"
+            } select-none text-red-500 duration-300 ease-in-out`}
         >
           Authentication Error
         </p>

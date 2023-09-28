@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { useAuth } from "~/contexts/AuthContext";
 
 interface PathType {
   pathname: string;
@@ -7,6 +8,11 @@ interface PathType {
 }
 
 const Nav = () => {
+  const {signout} = useAuth()
+  function handleLogout() {
+    void signout()
+  }
+
   return (
     <nav className="inline-block w-1/3 bg-secondary p-2 text-paper">
       <h2 className="font-bold">MENU</h2>
@@ -14,6 +20,9 @@ const Nav = () => {
         <Path pathname="about" />
         <Path pathname="announcements" />
         <Path pathname="permissions" />
+        <button className='fixed bottom-2 left-2 capitalize p-2 bg-red-500 text-white rounded-xl' onClick={handleLogout}>
+          logout
+        </button>
       </ul>
     </nav>
   );

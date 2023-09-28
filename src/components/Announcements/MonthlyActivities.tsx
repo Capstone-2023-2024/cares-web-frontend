@@ -95,7 +95,7 @@ const Card = ({
       <DeleteButton docId={docId} isEditing={isEditing} />
       <div>
         <Heading department={department} />
-        <p className="flex flex-col bg-yellow-300 p-2">
+        <p className="flex flex-col p-2">
           {message.substring(0, 24)}
           <span className="text-xs">{`Date Created: ${newDate.toLocaleString()}`}</span>
         </p>
@@ -106,7 +106,7 @@ const Card = ({
 };
 
 const Heading = ({ department }: { department: string }) => (
-  <div className="flex w-full min-w-max items-center justify-around bg-blue-500/50">
+  <div className="flex w-full min-w-max items-center justify-around">
     <Image src="/CICS.png" alt="" {...imageDimension(icon * 2)} />
     <h2 className="flex flex-col text-center font-bold uppercase">
       <span>{department}</span>department
