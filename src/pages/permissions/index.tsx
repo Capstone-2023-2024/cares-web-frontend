@@ -257,9 +257,12 @@ const RoleModal = () => {
         };
         const adminQueryRef = query(adminColRef, where("email", "==", email));
         const snapshot = await getDocs(adminQueryRef);
-        snapshot.empty
-          ? await addDoc(adminColRef, perm)
-          : alert("User already exist!");
+        if (snapshot.empty) {
+          await addDoc(adminColRef, perm);
+          await addDoc(collection(db, "faculty"), { email: perm.email });
+        } else {
+          alert("User already exist!");
+        }
         return handleState("email", "");
       }
       alert("Please enter a email");
