@@ -36,8 +36,7 @@ const initialProps: HomeStateProps = {
 
 const adminColRef = collection(db, "permission");
 const Permission = () => {
-  const ADMIN_EMAIL = "admin@cares.com";
-  const { currentUser } = useAuth();
+  const { currentUser, typeOfAccount } = useAuth();
   const [state, setState] = useState(initialProps);
   const isStateHasNoContent = state.permissionArray.length === 0;
   const router = useRouter();
@@ -99,7 +98,7 @@ const Permission = () => {
   return (
     <Main>
       <>
-        {currentUser?.email === ADMIN_EMAIL && (
+        {typeOfAccount === "admin" && (
           <>
             <AddRole />
             <div>
@@ -285,7 +284,13 @@ const RoleModal = () => {
         </div>
         <input
           required
-          className={`${validateEmail(email) ? 'border-green-500' : email === '' ? 'border-slate-300' : 'border-red-500'} rounded-lg border p-4 shadow-sm outline-none duration-300 ease-in-out`}
+          className={`${
+            validateEmail(email)
+              ? "border-green-500"
+              : email === ""
+              ? "border-slate-300"
+              : "border-red-500"
+          } rounded-lg border p-4 shadow-sm outline-none duration-300 ease-in-out`}
           value={email}
           onChange={handleChange}
           placeholder="Enter a email to add"

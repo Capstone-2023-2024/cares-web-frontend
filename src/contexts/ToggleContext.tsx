@@ -5,17 +5,17 @@ import React, {
   useState,
 } from "react";
 
-interface InitialStateType {
+interface InitialStateProps {
   showCalendar: boolean;
 }
-interface ToggleContextType extends InitialStateType {
+interface ToggleContextType extends InitialStateProps {
   toggleCalendar: () => void;
 }
 interface ToggleProviderType {
   children: ReactNode;
 }
 
-const initialState: InitialStateType = {
+const initialState: InitialStateProps = {
   showCalendar: false,
 };
 
@@ -26,8 +26,8 @@ const ToggleContext = createContext<ToggleContextType>({
 const ToggleProvider = ({ children }: ToggleProviderType) => {
   const [{ showCalendar }, setState] = useState(initialState);
   function handleState(
-    key: keyof InitialStateType,
-    value: InitialStateType["showCalendar"]
+    key: keyof InitialStateProps,
+    value: InitialStateProps["showCalendar"]
   ) {
     setState((prevState) => ({ ...prevState, [key]: value }));
   }

@@ -8,9 +8,9 @@ interface PathType {
 }
 
 const Nav = () => {
-  const {signout} = useAuth()
+  const { signout } = useAuth();
   function handleLogout() {
-    void signout()
+    void signout();
   }
 
   return (
@@ -19,8 +19,12 @@ const Nav = () => {
       <ul className="m-0 list-none p-0">
         <Path pathname="about" />
         <Path pathname="announcements" />
+        <Path pathname="dashboard" />
         <Path pathname="permissions" />
-        <button className='fixed bottom-2 left-2 capitalize p-2 bg-red-500 text-white rounded-xl' onClick={handleLogout}>
+        <button
+          className="fixed bottom-2 left-2 rounded-xl bg-red-500 p-2 capitalize text-white"
+          onClick={handleLogout}
+        >
           logout
         </button>
       </ul>

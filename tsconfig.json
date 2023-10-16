@@ -19,7 +19,7 @@
     "baseUrl": ".",
     "paths": {
       "~/*": ["./src/*"],
-      "shared/*": ["cics-web-admin/../shared/*"]
+      "shared/*": ["web/../shared/*"]
     }
   },
   "include": [

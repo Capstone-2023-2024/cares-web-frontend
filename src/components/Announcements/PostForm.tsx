@@ -2,7 +2,7 @@ import { addDoc, collection } from "firebase/firestore";
 import { uploadBytes } from "firebase/storage";
 import Image from "next/image";
 import React, { useRef, useState, type MutableRefObject } from "react";
-import type { AnnouncementType } from "shared/types";
+import type { AnnouncementProps } from "shared/types/announcement";
 import { useDate } from "~/contexts/DateContext";
 import { db, intToStringTwoChar, storageRef } from "~/utils/firebase";
 import { imageDimension } from "~/utils/image";
@@ -45,7 +45,7 @@ const PostForm = () => {
 
       if (file !== null) {
         const photoUrl = await uploadImage(file);
-        const announcement: AnnouncementType = {
+        const announcement: AnnouncementProps = {
           message: textarea?.value ?? "",
           photoUrl: photoUrl ?? "",
           state: "unpinned",
