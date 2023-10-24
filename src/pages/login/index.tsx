@@ -16,7 +16,8 @@ const Login = () => {
   const [error, setError] = useState(false);
   const { emailAndPassSignin, currentUser, loading } = useAuth();
   const router = useRouter();
-  const inputBaseStyle = 'rounded-lg border p-4 shadow-sm outline-none duration-300 ease-in-out'
+  const inputBaseStyle =
+    "rounded-lg border p-4 shadow-sm outline-none duration-300 ease-in-out";
 
   function handleState(
     key: keyof InitialAuthProps,
@@ -27,7 +28,7 @@ const Login = () => {
 
   function handleEmail(e: ChangeEvent<HTMLInputElement>) {
     e.preventDefault();
-    handleState("email", e.target.value)
+    handleState("email", e.target.value);
   }
   function handlePassword(e: ChangeEvent<HTMLInputElement>) {
     e.preventDefault();
@@ -55,7 +56,7 @@ const Login = () => {
   useEffect(() => {
     console.log(currentUser);
     if (currentUser !== null) {
-      router.push("/about");
+      router.push("/dashboard");
     }
   }, [currentUser]);
 
@@ -91,8 +92,9 @@ const Login = () => {
           Login
         </button>
         <p
-          className={`${error ? "opacity-100" : "opacity-0"
-            } select-none text-red-500 duration-300 ease-in-out`}
+          className={`${
+            error ? "opacity-100" : "opacity-0"
+          } select-none text-red-500 duration-300 ease-in-out`}
         >
           Authentication Error
         </p>

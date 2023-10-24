@@ -59,18 +59,18 @@ const ProjectSuggestion = () => {
             <h1 className="font-semibold">
               Create a Poll for Project/Event Suggestions
             </h1>
+            <textarea
+              placeholder="enter the poll question"
+              className="resize-none border p-2 shadow-sm"
+              value={state.question}
+              onChange={handleQuestion}
+            />
             <input
               placeholder="enter a poll option"
               className="resize-none border p-2 shadow-sm"
               value={state.text}
               onChange={handlePollOption}
               onKeyDown={handleEnter}
-            />
-            <textarea
-              placeholder="enter the poll question"
-              className="resize-none border p-2 shadow-sm"
-              value={state.question}
-              onChange={handleQuestion}
             />
           </div>
         </div>
