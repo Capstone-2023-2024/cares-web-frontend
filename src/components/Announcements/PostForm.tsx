@@ -2,7 +2,7 @@ import { addDoc, collection } from "firebase/firestore";
 import { uploadBytes } from "firebase/storage";
 import Image from "next/image";
 import React, { useRef, useState, type MutableRefObject } from "react";
-import type { AnnouncementProps } from "shared/types/announcement";
+import type { AnnouncementProps } from "~/types/announcement";
 import { useDate } from "~/contexts/DateContext";
 import { db, intToStringTwoChar, storageRef } from "~/utils/firebase";
 import { imageDimension } from "~/utils/image";

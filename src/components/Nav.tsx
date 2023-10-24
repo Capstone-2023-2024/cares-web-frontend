@@ -19,8 +19,11 @@ const Nav = () => {
       <ul className="m-0 list-none p-0">
         <Path pathname="about" />
         <Path pathname="announcements" />
+        <Path pathname="complaints" />
         <Path pathname="dashboard" />
+        <Path pathname="mayor" />
         <Path pathname="permissions" />
+        <Path pathname="project_suggestion" />
         <button
           className="fixed bottom-2 left-2 rounded-xl bg-red-500 p-2 capitalize text-white"
           onClick={handleLogout}

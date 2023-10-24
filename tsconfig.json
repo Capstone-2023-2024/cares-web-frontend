@@ -19,7 +19,6 @@
     "baseUrl": ".",
     "paths": {
       "~/*": ["./src/*"],
-      "shared/*": ["web/../shared/*"]
     }
   },
   "include": [

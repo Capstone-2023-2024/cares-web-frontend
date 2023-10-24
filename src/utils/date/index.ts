@@ -1,4 +1,4 @@
-import type { CalendarInArrayType, DateType, WeekNameType } from "shared/types";
+import type { CalendarInArrayType, DateType, WeekNameType } from "~/types";
 
 export function currentMonth({ month, year }: Omit<DateType, "date">) {
   const months = [

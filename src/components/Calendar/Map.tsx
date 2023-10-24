@@ -5,7 +5,7 @@ import {
   currentWeekDay,
   weekNames,
 } from "~/utils/date";
-import type { DateType } from "shared/types";
+import type { DateType } from "~/types/date";
 import { useToggle } from "~/contexts/ToggleContext";
 import { useDate } from "~/contexts/DateContext";
 

@@ -8,21 +8,21 @@ import {
 } from "firebase/firestore";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
-import type { AnnouncementType } from "shared/types";
+import type { AnnouncementProps } from "~/types/announcement";
 import { db, retrieveImageFBStorage } from "~/utils/firebase";
 import { icon, imageDimension } from "~/utils/image";
 import Button from "../Button";
 import { useDate } from "~/contexts/DateContext";
 
 interface MonthlyActivitiesValuesType {
-  data: AnnouncementType[];
+  data: AnnouncementProps[];
   isEditing?: boolean;
 }
 interface DeleteProps extends Omit<MonthlyActivitiesValuesType, "data"> {
   docId?: string;
 }
 
-interface CardProps extends AnnouncementType, DeleteProps {}
+interface CardProps extends AnnouncementProps, DeleteProps {}
 
 const MonthlyActivities = () => {
   const [values, setValues] = useState<MonthlyActivitiesValuesType>();
@@ -45,12 +45,12 @@ const MonthlyActivities = () => {
     const unsub = onSnapshot(
       query(collection(db, announceNameRef), orderBy("dateCreated")),
       (snapshot) => {
-        const placeholder: AnnouncementType[] = [];
+        const placeholder: AnnouncementProps[] = [];
         snapshot.docs.forEach((doc) => {
           placeholder.push({
             ...doc.data(),
-            docId: doc.id,
-          } as AnnouncementType);
+            id: doc.id,
+          } as AnnouncementProps);
         });
         setValues((prevState) => ({
           ...prevState,
@@ -72,7 +72,7 @@ const MonthlyActivities = () => {
       </div>
       <div className="mx-2 flex gap-2 overflow-x-auto rounded-xl bg-black/10 p-4">
         {values?.data?.map((props) => (
-          <Card key={props.docId} isEditing={values.isEditing} {...props} />
+          <Card key={props.id} isEditing={values.isEditing} {...props} />
         ))}
       </div>
     </div>

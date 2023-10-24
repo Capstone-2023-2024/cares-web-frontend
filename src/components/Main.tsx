@@ -13,11 +13,11 @@ const Main = ({ children, withPathName, ...rest }: MainType) => {
   return (
     <div>
       <Header />
-      <div className="flex h-screen">
+      <div className="flex h-screen ">
         <Nav />
         <div className="inline-block w-2/3">
           {withPathName && <HeaderPath {...rest} />}
-          <div className="text-charcoal">{children}</div>
+          <div className=" text-charcoal">{children}</div>
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import React from "react";
-import { projectName } from "shared/names";
+import { projectName } from "~/utils/names";
 
 const Header = () => {
   return (

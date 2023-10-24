@@ -4,7 +4,7 @@ import React, {
   useState,
   type ReactNode,
 } from "react";
-import type { WeekNameType } from "shared/types";
+import type { WeekNameType } from "~/types";
 import { currentMonth, weekNames } from "~/utils/date";
 
 interface initialDateType {
