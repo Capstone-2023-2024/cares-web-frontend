@@ -15,12 +15,29 @@ const Announcements = () => {
   const { currentUser } = useAuth();
   const router = useRouter();
   const { showCalendar } = useToggle();
-  const initDate = new Date();
-  const { year } = useDate();
+  const { month, year, changeMonth, changeYear } = useDate();
   const monthName = currentMonth({
-    month: initDate.getMonth(),
-    year: initDate.getFullYear(),
+    month: month,
+    year: year,
   })?.name;
+
+  function handlePrev() {
+    const newMonth = month - 1;
+    if (newMonth < 0) {
+      changeMonth(11);
+      return changeYear(year - 1);
+    }
+    changeMonth(newMonth);
+  }
+
+  function handleNext() {
+    const newMonth = month + 1;
+    if (newMonth > 11) {
+      changeMonth(0);
+      return changeYear(year + 1);
+    }
+    changeMonth(newMonth);
+  }
 
   useEffect(() => {
     if (currentUser === null) {
@@ -30,9 +47,33 @@ const Announcements = () => {
 
   return currentUser !== null ? (
     <Main withPathName moreThanOne>
-      <div className="flex items-center justify-center gap-2 text-xl font-semibold">
-        <h2 className="text-center capitalize">{monthName}</h2>
-        <h2 className="text-center capitalize">{year}</h2>
+      <div className="mx-auto mt-8 flex w-96 flex-row justify-between">
+        <button
+          disabled={showCalendar}
+          className={`${
+            showCalendar
+              ? "bg-slate-200 text-slate-300"
+              : "bg-primary text-white"
+          } rounded-lg p-1 px-2`}
+          onClick={handlePrev}
+        >
+          prev
+        </button>
+        <div className="flex items-center justify-center gap-2 text-xl font-semibold">
+          <h2 className="text-center capitalize">{monthName}</h2>
+          <h2 className="text-center capitalize">{year}</h2>
+        </div>
+        <button
+          disabled={showCalendar}
+          className={`${
+            showCalendar
+              ? "bg-slate-200 text-slate-300"
+              : "bg-primary text-white"
+          } rounded-lg p-1 px-2`}
+          onClick={handleNext}
+        >
+          next
+        </button>
       </div>
       <div className=" relative h-96 overflow-hidden">
         <ToggleWrapper condition={showCalendar}>
