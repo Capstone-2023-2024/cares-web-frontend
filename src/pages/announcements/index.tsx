@@ -54,7 +54,7 @@ const Announcements = () => {
             showCalendar
               ? "bg-slate-200 text-slate-300"
               : "bg-primary text-white"
-          } rounded-lg p-1 px-2`}
+          } rounded-lg p-2 capitalize`}
           onClick={handlePrev}
         >
           prev
@@ -69,7 +69,7 @@ const Announcements = () => {
             showCalendar
               ? "bg-slate-200 text-slate-300"
               : "bg-primary text-white"
-          } rounded-lg p-1 px-2`}
+          } rounded-lg p-2 capitalize`}
           onClick={handleNext}
         >
           next

@@ -115,7 +115,6 @@ const Heading = ({ department }: { department: string }) => (
 );
 
 const RenderPhoto = ({ photoUrl }: { photoUrl?: string }) => {
-  console.log({ photoUrl });
   return (
     <div className="h-24 w-24 rounded-xl">
       <Image

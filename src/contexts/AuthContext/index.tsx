@@ -55,8 +55,8 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   async function signout() {
     try {
       return await signOut(auth);
-    } catch (e) {
-      console.log(e);
+    } catch (err) {
+      console.log(err);
     }
   }
 

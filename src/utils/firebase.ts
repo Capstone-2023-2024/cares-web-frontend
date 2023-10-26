@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { collection, getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getStorage, ref } from "firebase/storage";
 
@@ -38,3 +38,5 @@ export const validateEmail = (email: string) => {
   const bulsuRegex = /^[a-z]+(\.[a-z]+)*@bulsu\.edu\.ph$/;
   return bulsuRegex.test(email);
 };
+
+export const permissionColRef = collection(db, "permission");

@@ -21,3 +21,4 @@ const FILE: Buffer = JSON.parse(output);
 ```
 
 for ~/components/Announcements/PostForm.tsx -> uploadImage()
+

@@ -45,7 +45,7 @@ const PostForm = () => {
 
       if (file !== null) {
         const photoUrl = await uploadImage(file);
-        const announcement: AnnouncementProps = {
+        const announcement: Omit<AnnouncementProps, "id"> = {
           message: textarea?.value ?? "",
           photoUrl: photoUrl ?? "",
           state: "unpinned",

@@ -16,8 +16,7 @@ const Nav = () => {
         <Path iconSrc="/megaphone.png" pathname="announcements" />
         <Path iconSrc="/question.png" pathname="complaints" />
         <Path iconSrc="/dashboard.png" pathname="dashboard" />
-        <Path iconSrc="/hierarchy.png" pathname="mayor" />
-        {/* <Path pathname="permissions" /> */}
+        <Path iconSrc="/hierarchy.png" pathname="permissions" />
         <Path iconSrc="/suggestion.png" pathname="project_suggestion" />
       </ul>
     </nav>

@@ -1,56 +1,68 @@
 import {
   addDoc,
   collection,
+  collectionGroup,
+  doc,
+  getDoc,
+  getDocs,
   limit,
   onSnapshot,
   orderBy,
   query,
+  updateDoc,
+  where,
 } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import ActionButton from "~/components/Actionbutton";
 import Main from "~/components/Main";
+import { useAuth } from "~/contexts/AuthContext";
 import { ConcernProps } from "~/types/complaints";
+import type { StudentWithSectionProps } from "~/types/student";
 import { db } from "~/utils/firebase";
-import type { ChatTextProps } from "./types";
+import type {
+  ChatTextProps,
+  RawDocProps,
+  TicketInfoExtended,
+  TicketInfoProps,
+} from "./types";
 
-interface IdProps {
-  id: string;
-}
-
-interface StateProps {
-  idList: IdProps[];
+interface ComplaintsStateProps {
+  students: StudentWithSectionProps[];
   concerns: ConcernProps[];
   message: string;
   collectionReference: string | null;
 }
 
-type StateValues =
-  | StateProps["idList"]
-  | StateProps["concerns"]
-  | StateProps["message"]
-  | StateProps["collectionReference"];
+type ComplaintsStateValues =
+  | ComplaintsStateProps["students"]
+  | ComplaintsStateProps["concerns"]
+  | ComplaintsStateProps["message"]
+  | ComplaintsStateProps["collectionReference"];
 
 const Complaints = () => {
-  const initialState = {
-    idList: [],
+  const initialState: ComplaintsStateProps = {
+    students: [],
     concerns: [],
     message: "",
     collectionReference: null,
   };
-  const [state, setState] = useState<StateProps>(initialState);
+  const { currentUser } = useAuth();
+  const [state, setState] = useState(initialState);
+  const studentNoSelected = state.collectionReference?.substring(8, 18);
 
-  function handleState(key: keyof StateProps, value: StateValues) {
+  function handleState(
+    key: keyof ComplaintsStateProps,
+    value: ComplaintsStateValues
+  ) {
     setState((prevState) => ({ ...prevState, [key]: value }));
   }
-
   function handleChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
     handleState("message", e.target.value);
   }
-
   async function handleEnter(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && state.message.trim() !== "") {
       const concern: Omit<ConcernProps, "id"> = {
-        sender: "admin",
+        sender: currentUser?.email ?? "admin",
         withDocument: false,
         message: state.message,
         dateCreated: new Date().getTime(),
@@ -59,25 +71,56 @@ const Complaints = () => {
       handleState("message", "");
     }
   }
-
-  function handleResolution() {
-    console.log("handleResolution");
+  async function handleResolution() {
+    const concerns: Omit<ConcernProps, "id"> = {
+      sender: "system",
+      withDocument: false,
+      dateCreated: new Date().getTime(),
+      message: "resolved",
+    };
+    await addDoc(collection(db, state.collectionReference ?? ""), concerns);
+    await updateDoc(doc(collection(db, "student"), studentNoSelected), {
+      recipient: "class_section",
+    });
+    handleState("concerns", []);
+    handleState("collectionReference", null);
   }
-  function handleTurnOver() {
-    console.log("handleTurnOver");
+  async function handleTurnOver() {
+    const recipient =
+      currentUser?.email === "bm@cares.com"
+        ? "program_chair"
+        : "department_head";
+    const concerns: Omit<ConcernProps, "id"> = {
+      sender: "system",
+      withDocument: false,
+      dateCreated: new Date().getTime(),
+      message: `turnover to ${recipient.replace(/_/, " ")}`,
+    };
+    await addDoc(collection(db, state.collectionReference ?? ""), concerns);
+    await updateDoc(doc(collection(db, "student"), studentNoSelected), {
+      recipient,
+    });
+    handleState("concerns", []);
+    handleState("collectionReference", null);
   }
-  function handleRejection() {
-    console.log("handleRejection");
+  async function handleRejection() {
+    const concerns: Omit<ConcernProps, "id"> = {
+      sender: "system",
+      withDocument: false,
+      dateCreated: new Date().getTime(),
+      message: "rejected",
+    };
+    await addDoc(collection(db, state.collectionReference ?? ""), concerns);
+    await updateDoc(doc(collection(db, "student"), studentNoSelected), {
+      recipient: "class_section",
+    });
+    handleState("concerns", []);
+    handleState("collectionReference", null);
   }
-
-  async function handleIdClicked(id: string) {
-    const year = new Date().getFullYear().toString();
-    const month = new Date().getMonth().toString();
-    const date = new Date().getDate().toString();
-    const collectionPath = `concerns/${id}/${year}-${month}-${date}`;
-    const colRef = collection(db, collectionPath);
-    const unsub = onSnapshot(
-      query(colRef, limit(12), orderBy("dateCreated")),
+  async function handleIdClicked({ id }: { id: string }) {
+    const colPath = `student/${id}/concerns`;
+    return onSnapshot(
+      query(collection(db, colPath), orderBy("dateCreated"), limit(12)),
       (snapshot) => {
         const placeholder: ConcernProps[] = [];
         snapshot.forEach((doc) => {
@@ -85,46 +128,71 @@ const Complaints = () => {
           const id = doc.id;
           placeholder.push({ ...data, id });
         });
+        handleState("collectionReference", colPath);
         handleState("concerns", placeholder);
       }
     );
-    handleState("collectionReference", collectionPath);
-    return unsub;
   }
-
-  function renderIds() {
-    return state.idList.map(({ id }) => {
+  function renderTickets() {
+    return state.students.map(({ studentNo }) => {
       return (
         <button
-          onClick={() => handleIdClicked(id)}
-          key={id}
+          onClick={() => handleIdClicked({ id: studentNo })}
+          key={studentNo}
           className={`${
-            state.collectionReference?.substring(9, 19) === id
+            studentNoSelected === studentNo
               ? "bg-green-300"
               : "odd:bg-primary/25"
           } p-2`}
         >
-          <p>{id}</p>
+          <p>{studentNo}</p>
         </button>
       );
     });
   }
-
+  const renderActionButtons = () => {
+    const student = state.students.filter(
+      ({ studentNo }) => studentNoSelected === studentNo
+    )[0];
+    return (
+      <>
+        <p>{student?.name}</p>
+        <div className="flex h-1/6 w-full items-center justify-center gap-2 bg-primary/25">
+          <ActionButton
+            onClick={handleResolution}
+            text="resolved"
+            color="green"
+          />
+          <ActionButton
+            onClick={handleTurnOver}
+            text="turn-over"
+            color="yellow"
+          />
+          <ActionButton onClick={handleRejection} text="reject" color="red" />
+        </div>
+      </>
+    );
+  };
   function renderConcerns() {
-    const authenticated = "admin";
+    const authenticated = currentUser?.email;
     return state.concerns.map(({ id, sender, message, dateCreated }) => {
       const date = new Date();
       date.setTime(dateCreated);
+      console.log(message);
       return (
         <div
           key={id}
           className={`m-2 w-max rounded-lg p-2 shadow-sm ${
             sender === authenticated
               ? "self-end bg-blue-400"
+              : sender === "system"
+              ? "self-center text-center"
               : "self-start bg-slate-200"
           }`}
         >
-          <ChatText text={sender} condition={sender === authenticated} />
+          {sender !== "system" && (
+            <ChatText text={sender} condition={sender === authenticated} />
+          )}
           <ChatText text={message} condition={sender === authenticated} />
           <ChatText
             text={date.toLocaleTimeString()}
@@ -135,47 +203,38 @@ const Complaints = () => {
     });
   }
 
-  useEffect(
-    () =>
-      onSnapshot(
-        query(
-          collection(db, "concerns"),
-          limit(6),
-          orderBy("dateUpdated", "desc")
-        ),
-        (snapshot) => {
-          const placeholder: IdProps[] = [];
-          snapshot.forEach((doc) => {
-            placeholder.push({ id: doc.id });
-          });
-          handleState("idList", placeholder);
-        }
+  useEffect(() => {
+    const unsub = onSnapshot(
+      query(
+        collection(db, "student"),
+        where("recipient", "==", currentUser?.email ?? ""),
+        limit(6)
       ),
-    []
-  );
+      (snapshot) => {
+        const placeholder: StudentWithSectionProps[] = [];
+        snapshot.forEach((doc) => {
+          const studentNo = doc.id;
+          const data = doc.data() as StudentWithSectionProps;
+          placeholder.push({ ...data, studentNo });
+        });
+        handleState("students", placeholder);
+      }
+    );
+    return () => {
+      unsub();
+    };
+  }, [currentUser]);
 
   return (
     <Main>
       <div className="inline-block h-screen w-1/4 border align-top">
         <section className="flex h-full flex-col justify-start">
-          {renderIds()}
+          {renderTickets()}
         </section>
       </div>
-      {state.collectionReference !== null && (
+      {state.concerns.length > 0 && (
         <div className="inline-block h-screen w-3/4">
-          <div className="flex h-1/6 w-full items-center justify-center gap-2 bg-primary/25">
-            <ActionButton
-              onClick={handleResolution}
-              text="resolved"
-              color="green"
-            />
-            <ActionButton
-              onClick={handleTurnOver}
-              text="turn-over"
-              color="yellow"
-            />
-            <ActionButton onClick={handleRejection} text="reject" color="red" />
-          </div>
+          {renderActionButtons()}
           <section className="flex h-4/6 flex-col overflow-y-auto">
             {renderConcerns()}
           </section>
@@ -206,7 +265,17 @@ const ChatText = ({ text, condition, textSize }: ChatTextProps) => {
   }
   return (
     <p
-      className={`${condition ? "text-white" : "text-black"} ${getTextSize()}`}
+      className={`${
+        condition
+          ? "text-white"
+          : text === "resolved"
+          ? "text-green-400"
+          : text === "rejected"
+          ? "text-red-400"
+          : text.substring(0, 4) === "turn"
+          ? "text-yellow-400"
+          : "text-black"
+      } ${getTextSize()}`}
     >
       {text}
     </p>

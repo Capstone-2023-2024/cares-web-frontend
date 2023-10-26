@@ -1,10 +1,10 @@
 export interface FirestoreDatabaseProps {
-  id: string
+  id: string;
 }
 
 export interface DateFileProps {
-  dateCreated: number
-  dateEdited: number | null
+  dateCreated: number;
+  dateEdited?: number;
 }
 
 export type CollectionPath =
@@ -12,4 +12,4 @@ export type CollectionPath =
   | "announcement"
   | "about"
   | "student"
-  | "faculty"
+  | "faculty";

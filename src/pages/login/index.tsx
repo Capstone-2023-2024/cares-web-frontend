@@ -54,7 +54,6 @@ const Login = () => {
   }
 
   useEffect(() => {
-    console.log(currentUser);
     if (currentUser !== null) {
       router.push("/dashboard");
     }
