@@ -53,9 +53,9 @@ const Permission = () => {
   const { typeOfAccount } = useAuth();
   return (
     <Main>
-      <AssignAdmin />
-      <AssignAdviser />
-      <AssignMayor />
+      {typeOfAccount === "super_admin" && <AssignAdmin />}
+      {typeOfAccount === "program_chair" && <AssignAdviser />}
+      {typeOfAccount === "board_member" && <AssignMayor />}
     </Main>
   );
 };
@@ -482,7 +482,7 @@ const AssignMayor = () => {
     studentsWithSection: [],
   };
   const [state, setState] = useState(initState);
-  const studentSectionHasContent = state.studentsWithSection.length > 1;
+  const studentSectionHasContent = state.studentsWithSection.length > 0;
   const addingMayorCondition =
     studentSectionHasContent && state.selectedMayor !== null;
   const buttonConditionalStyle = addingMayorCondition

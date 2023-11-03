@@ -5,7 +5,8 @@ import Main from "~/components/Main";
 import { useAuth } from "~/contexts/AuthContext";
 
 const Dashboard = () => {
-  const { currentUser, signout } = useAuth();
+  const { typeOfAccount, currentUser, signout } = useAuth();
+  const permission = typeOfAccount?.replace(/_/g, " ");
   const router = useRouter();
 
   function handleLogout() {
@@ -24,9 +25,10 @@ const Dashboard = () => {
     </div>
   ) : (
     <Main>
-      <div className="flex flex-col items-center justify-center gap-2">
-        <p className="capitalize">
-          account:
+      <div className="flex flex-col items-center justify-center gap-2 capitalize">
+        {permission !== null && <p>{`${permission} privileges`}</p>}
+        <p>
+          email:
           <span className="font-bold lowercase">{` ${currentUser?.email}`}</span>
         </p>
         <button

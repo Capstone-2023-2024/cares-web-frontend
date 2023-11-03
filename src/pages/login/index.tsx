@@ -1,10 +1,8 @@
-import React, { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import Loading from "~/components/Loading";
 import { useAuth } from "~/contexts/AuthContext";
 import type { InitialAuthProps, InitialAuthPropsType } from "./types";
-import { useRouter } from "next/router";
-import Loading from "~/components/Loading";
-import { type UserCredential } from "firebase/auth";
-import { validateEmail } from "~/utils/firebase";
 
 const initialProps: InitialAuthProps = {
   email: "",
@@ -14,7 +12,8 @@ const initialProps: InitialAuthProps = {
 const Login = () => {
   const [state, setState] = useState(initialProps);
   const [error, setError] = useState(false);
-  const { emailAndPassSignin, currentUser, loading } = useAuth();
+  const { emailAndPassSignin, currentUser, loading, signInWithGoogle } =
+    useAuth();
   const router = useRouter();
   const inputBaseStyle =
     "rounded-lg border p-4 shadow-sm outline-none duration-300 ease-in-out";
@@ -25,7 +24,6 @@ const Login = () => {
   ) {
     setState((prevState) => ({ ...prevState, [key]: value }));
   }
-
   function handleEmail(e: ChangeEvent<HTMLInputElement>) {
     e.preventDefault();
     handleState("email", e.target.value);
@@ -34,14 +32,14 @@ const Login = () => {
     e.preventDefault();
     handleState("password", e.target.value);
   }
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmitEmailAndPassword(e: FormEvent<HTMLFormElement>) {
     try {
       e.preventDefault();
       const response = await emailAndPassSignin({ ...state });
 
       if (response === "SUCCESS") {
         setState(initialProps);
-        return router.push("/about");
+        return router.replace("/dashboard");
       }
       setError(true);
       setTimeout(() => {
@@ -52,12 +50,15 @@ const Login = () => {
       console.log({ error });
     }
   }
+  async function handleGoogleSignIn() {
+    return await signInWithGoogle();
+  }
 
   useEffect(() => {
     if (currentUser !== null) {
-      router.push("/dashboard");
+      router.replace("/dashboard");
     }
-  }, [currentUser]);
+  });
 
   return !loading ? (
     <div className="h-screen">
@@ -65,7 +66,7 @@ const Login = () => {
         <p className="uppercase">cares</p>
       </div>
       <form
-        onSubmit={handleSubmit}
+        onSubmit={handleSubmitEmailAndPassword}
         className="flex h-full flex-col items-center justify-center gap-4"
       >
         <h2 className="text-center text-3xl font-semibold">Login</h2>
@@ -90,14 +91,18 @@ const Login = () => {
         >
           Login
         </button>
-        <p
-          className={`${
-            error ? "opacity-100" : "opacity-0"
-          } select-none text-red-500 duration-300 ease-in-out`}
-        >
-          Authentication Error
-        </p>
+        <p>or</p>
+        <button type="button" onClick={handleGoogleSignIn}>
+          Sign in with Google
+        </button>
       </form>
+      <p
+        className={`${
+          error ? "opacity-100" : "opacity-0"
+        } select-none text-red-500 duration-300 ease-in-out`}
+      >
+        Authentication Error
+      </p>
     </div>
   ) : (
     <Loading />

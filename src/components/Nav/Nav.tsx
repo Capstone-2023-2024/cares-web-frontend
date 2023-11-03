@@ -1,11 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
-
-interface PathType {
-  pathname: string;
-  iconSrc?: string;
-}
+import { PathType } from "./types";
 
 const Nav = () => {
   return (

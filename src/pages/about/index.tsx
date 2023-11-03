@@ -1,38 +1,17 @@
 import { collection, doc, getDocs, runTransaction } from "firebase/firestore";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import {
-  useEffect,
-  useState,
-  type ChangeEvent,
-  type MouseEvent,
-  type ReactNode,
-} from "react";
+import { useEffect, useState, type ChangeEvent, type MouseEvent } from "react";
 import Loading from "~/components/Loading";
 import Main from "~/components/Main";
 import { useAuth } from "~/contexts/AuthContext";
 import { db } from "~/utils/firebase";
-
-interface AboutType {
-  summary: string;
-  vision: string;
-  mission: string;
-}
-
-interface ParagraphType {
-  content: string;
-  keyName: "summary" | "vision" | "mission";
-}
-
-interface ParagaphValuesType {
-  content: string;
-  isEditing: boolean;
-}
-
-interface ContainerType {
-  children: ReactNode;
-  bg?: string;
-}
+import type {
+  AboutType,
+  ContainerType,
+  ParagaphValuesType,
+  ParagraphType,
+} from "./types";
 
 const About = () => {
   const NOVALUE = "";
@@ -44,12 +23,6 @@ const About = () => {
     mission: NOVALUE,
   });
   const { summary, vision, mission } = state;
-
-  useEffect(() => {
-    if (currentUser === null) {
-      router.push("/login");
-    }
-  }, [currentUser]);
 
   const isValueEmpty = (keyName: ParagraphType["keyName"]): ParagraphType => {
     const condition = state[keyName] === NOVALUE;
@@ -134,8 +107,7 @@ const Paragraph = ({ content, keyName }: ParagraphType) => {
       event.currentTarget.blur();
       handleState("isEditing", false);
 
-      //eslint-disable-next-line @typescript-eslint/no-floating-promises
-      runTransaction(db, async (tsx) => {
+      void runTransaction(db, async (tsx) => {
         try {
           const { docs } = await getDocs(collection(db, "about"));
           const docId = docs[0]?.id;

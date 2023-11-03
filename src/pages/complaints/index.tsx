@@ -1,10 +1,7 @@
 import {
   addDoc,
   collection,
-  collectionGroup,
   doc,
-  getDoc,
-  getDocs,
   limit,
   onSnapshot,
   orderBy,
@@ -21,23 +18,9 @@ import type { StudentWithSectionProps } from "~/types/student";
 import { db } from "~/utils/firebase";
 import type {
   ChatTextProps,
-  RawDocProps,
-  TicketInfoExtended,
-  TicketInfoProps,
+  ComplaintsStateProps,
+  ComplaintsStateValues,
 } from "./types";
-
-interface ComplaintsStateProps {
-  students: StudentWithSectionProps[];
-  concerns: ConcernProps[];
-  message: string;
-  collectionReference: string | null;
-}
-
-type ComplaintsStateValues =
-  | ComplaintsStateProps["students"]
-  | ComplaintsStateProps["concerns"]
-  | ComplaintsStateProps["message"]
-  | ComplaintsStateProps["collectionReference"];
 
 const Complaints = () => {
   const initialState: ComplaintsStateProps = {
@@ -207,7 +190,7 @@ const Complaints = () => {
     const unsub = onSnapshot(
       query(
         collection(db, "student"),
-        where("recipient", "==", currentUser?.email ?? ""),
+        where("recipient", "==", "bm"),
         limit(6)
       ),
       (snapshot) => {
@@ -220,9 +203,7 @@ const Complaints = () => {
         handleState("students", placeholder);
       }
     );
-    return () => {
-      unsub();
-    };
+    return unsub;
   }, [currentUser]);
 
   return (

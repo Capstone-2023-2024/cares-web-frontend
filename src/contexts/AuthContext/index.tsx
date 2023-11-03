@@ -1,9 +1,12 @@
 import {
+  GoogleAuthProvider,
   onAuthStateChanged,
   signInWithEmailAndPassword,
+  signInWithPopup,
   signOut,
 } from "firebase/auth";
 import { createContext, useContext, useEffect, useState } from "react";
+import accounts from "~/pages/api/authentication/accounts";
 import { auth } from "~/utils/firebase";
 import type {
   AuthContextProps,
@@ -12,8 +15,6 @@ import type {
   InitialProps,
   InitialPropsType,
 } from "./types";
-import accounts from "~/pages/api/authentication/accounts";
-import { ResponseData } from "~/pages/api/authentication/types";
 
 const PROMISECONDITION = true;
 const initialProps: InitialProps = {
@@ -43,6 +44,7 @@ const AuthContext = createContext<AuthContextProps>({
       return "ERROR";
     }
   },
+  signInWithGoogle: async () => {},
 });
 
 const AuthProvider = ({ children }: AuthProviderProps) => {
@@ -51,7 +53,6 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   function handleState(key: keyof InitialProps, value: InitialPropsType) {
     setState((prevState) => ({ ...prevState, [key]: value }));
   }
-
   async function signout() {
     try {
       return await signOut(auth);
@@ -59,7 +60,6 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       console.log(err);
     }
   }
-
   async function emailAndPassSignin({ email, password }: EmailPasswordProps) {
     try {
       await signInWithEmailAndPassword(auth, email, password);
@@ -68,28 +68,73 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       return "ERROR";
     }
   }
+  async function signInWithGoogle() {
+    try {
+      const googleProvider = new GoogleAuthProvider();
+      await signInWithPopup(auth, googleProvider);
+    } catch (err) {
+      console.log(err);
+    }
+  }
 
   useEffect(() => {
+    const superAdmin = "admin@cares.com";
+    const bm = "bm@cares.com";
     const unsub = onAuthStateChanged(auth, (user) => {
       handleState("loading", true);
       handleState("currentUser", user);
-      if (user !== null) {
-        const extractAccounts = async () => {
-          const account = await accounts();
-          return account;
-        };
-        extractAccounts();
-        const isEmailBM = user.email === "bm@cares.com";
-        handleState("typeOfAccount", isEmailBM ? "bm" : "admin");
+      async function extractAccounts() {
+        if (user !== null && user.email !== null) {
+          try {
+            switch (user.email) {
+              case superAdmin:
+                return handleState("typeOfAccount", "super_admin");
+              case bm:
+                return handleState("typeOfAccount", "board_member");
+              default:
+                break;
+            }
+            const data = await accounts(user.email);
+            if (data !== null) {
+              const { name, partial } = data.role.access_level;
+              switch (name) {
+                case "super_admin":
+                  return handleState(
+                    "typeOfAccount",
+                    partial ? "partial_super_admin" : "super_admin"
+                  );
+                case "admin":
+                  return handleState(
+                    "typeOfAccount",
+                    partial ? "admin" : "program_chair"
+                  );
+                case "sub_admin":
+                  return handleState(
+                    "typeOfAccount",
+                    partial ? "organization_president" : "board_member"
+                  );
+                // case "faculty":
+                //   return handleState("typeOfAccount", null);
+                default:
+                  return handleState("typeOfAccount", null);
+              }
+            }
+          } catch (err) {
+            handleState("typeOfAccount", null);
+          }
+        }
       }
+      void extractAccounts();
       handleState("loading", false);
     });
-    return () => unsub();
+    return unsub;
   }, [accounts]);
 
   return (
-    <AuthContext.Provider value={{ ...state, signout, emailAndPassSignin }}>
-      {children}
+    <AuthContext.Provider
+      value={{ ...state, signout, emailAndPassSignin, signInWithGoogle }}
+    >
+      {state.loading ? <p>Loading</p> : children}
     </AuthContext.Provider>
   );
 };

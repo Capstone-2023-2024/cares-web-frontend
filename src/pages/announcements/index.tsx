@@ -75,7 +75,7 @@ const Announcements = () => {
           next
         </button>
       </div>
-      <div className=" relative h-96 overflow-hidden">
+      <div className="min-h-96 relative h-[70vh] overflow-hidden">
         <ToggleWrapper condition={showCalendar}>
           <PostForm />
         </ToggleWrapper>

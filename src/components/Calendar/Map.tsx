@@ -67,7 +67,9 @@ const Map = ({ month, year }: Omit<DateType, "date">) => {
   function handleMouseUp(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
     setEnableSelection(false);
+    console.log(selectedDates);
     changeSelectedDateArray(selectedDates);
+    setSelectedDates([]);
     toggleCalendar();
   }
 

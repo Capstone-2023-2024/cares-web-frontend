@@ -1,14 +1,4 @@
-import React, { type ReactNode, type HTMLAttributes } from "react";
-
-interface ButtonType extends HTMLAttributes<HTMLButtonElement> {
-  text?: string;
-  primary?: boolean;
-  error?: boolean;
-  success?: boolean;
-  type?: "reset" | "submit" | "button";
-  rounded?: boolean;
-  children?: ReactNode;
-}
+import type { ButtonType } from "./types";
 
 const Button = (props: ButtonType) => {
   const { primary, error, children, success, text, rounded, ...rest } = props;

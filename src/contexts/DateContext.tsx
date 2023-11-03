@@ -4,7 +4,7 @@ import React, {
   useState,
   type ReactNode,
 } from "react";
-import type { WeekNameType } from "~/types";
+import type { WeekNameType } from "~/types/date";
 import { currentMonth, weekNames } from "~/utils/date";
 
 interface initialDateType {
@@ -13,7 +13,6 @@ interface initialDateType {
   year: number;
   weekName?: WeekNameType;
   selectedDateArray: number[];
-  announceNameRef: string;
 }
 interface DateContextType extends initialDateType {
   changeDate: (date: number) => void;
@@ -33,7 +32,6 @@ const initialDate: initialDateType = {
   year: initDate.getFullYear(),
   weekName: weekNames[initDate.getDay()],
   selectedDateArray: [],
-  announceNameRef: "",
 };
 
 const DateContext = createContext<DateContextType>({
@@ -47,13 +45,9 @@ const DateContext = createContext<DateContextType>({
 
 const DateProvider = ({ children }: DateProviderType) => {
   const [state, setState] = useState(initialDate);
-  const { year, month } = useDate();
-  const MONTH = currentMonth({ year, month })?.name.toUpperCase();
-  const announceNameRef = `announcement/${MONTH}/${year}`;
 
   const values = {
     ...state,
-    announceNameRef,
     changeDate,
     changeMonth,
     changeYear,

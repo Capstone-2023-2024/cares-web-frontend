@@ -3,7 +3,15 @@ import type { UserCredential, User } from "firebase/auth";
 
 export interface InitialProps {
   currentUser: User | null;
-  typeOfAccount: "bm" | "admin" | null;
+  typeOfAccount:
+    | "super_admin"
+    | "partial_super_admin"
+    | "program_chair"
+    | "admin"
+    | "organization_president"
+    | "board_member"
+    | "sub_admin"
+    | null;
   loading: boolean;
 }
 export type InitialPropsType =
@@ -20,6 +28,7 @@ export interface AuthContextProps extends InitialProps {
   emailAndPassSignin: (
     props: EmailPasswordProps
   ) => Promise<"SUCCESS" | "ERROR">;
+  signInWithGoogle: () => Promise<void>;
 }
 
 export interface AuthProviderProps {
