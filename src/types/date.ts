@@ -5,16 +5,16 @@ export type WeekNameType =
   | "wednesday"
   | "thursday"
   | "friday"
-  | "saturday"
+  | "saturday";
 
 export interface DateType {
-  date: number
-  month: number
-  year: number
+  date?: number;
+  month: number;
+  year: number;
 }
 
 export interface CalendarInArrayType {
-  week: number
-  today: number
-  maxDays: number
+  week: number;
+  today: number;
+  maxDays: number;
 }
