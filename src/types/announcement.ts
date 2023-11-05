@@ -9,7 +9,7 @@ export interface AnnouncementProps
   postedBy: string;
   tags: string[];
   message: string;
-  department: "cite";
+  department: "cics";
   state: "unpinned" | "pinned";
   markedDates: string[];
   endDate: number;

@@ -495,9 +495,12 @@ const AssignMayor = () => {
   ) {
     setState((prevState) => ({ ...prevState, [key]: value }));
   }
-  async function handleRevoke(id: string) {
+  async function handleRevoke(id: string, studentNo: string) {
     try {
       await deleteDoc(doc(collection(db, "mayor"), id));
+      await updateDoc(doc(collection(db, "student"), studentNo), {
+        recipient: "class_section",
+      });
     } catch (err) {
       console.log(err);
     }
@@ -541,6 +544,9 @@ const AssignMayor = () => {
         return alert(`There is already a mayor in ${formattedSection}`);
       }
       await addDoc(mayorColRef, mayorInfo);
+      await updateDoc(doc(collection(db, "student"), mayorInfo.studentNo), {
+        recipient: "bm",
+      });
       handleState("yearLevel", initState.yearLevel);
       handleState("section", initState.section);
       handleState("selectedMayor", initState.selectedMayor);
@@ -623,7 +629,7 @@ const AssignMayor = () => {
           </td>
           <td className="flex justify-center">
             <ActionButton
-              onClick={() => handleRevoke(id)}
+              onClick={() => handleRevoke(id, studentNo)}
               text="revoke"
               color="red"
             />

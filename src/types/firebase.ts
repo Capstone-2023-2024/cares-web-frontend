@@ -4,12 +4,17 @@ export interface FirestoreDatabaseProps {
 
 export interface DateFileProps {
   dateCreated: number;
-  dateEdited?: number;
+  dateEdited: number | null;
 }
 
 export type CollectionPath =
-  | "chat"
-  | "announcement"
   | "about"
-  | "student"
-  | "faculty";
+  | "advisers"
+  | "announcement"
+  | "chat"
+  | "concerns"
+  | "faculty"
+  | "mayor"
+  | "permission"
+  | "project_suggestion"
+  | "student";

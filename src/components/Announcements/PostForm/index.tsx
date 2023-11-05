@@ -23,8 +23,9 @@ const PostForm = () => {
     type: typesOfAnnouncement[0]?.type ?? "event",
     message: "",
     state: "unpinned",
-    department: "cite",
+    department: "cics",
     dateCreated: new Date().getTime(),
+    dateEdited: null,
     markedDates: [],
     endDate: 0,
   };
@@ -144,9 +145,9 @@ const PostForm = () => {
           state.tags.length > 0
         ) {
           const photoUrl: string[] = [];
-          state.files?.map(async ({ name, ...rest }) => {
-            photoUrl.push(name);
-            await uploadImage({ name, ...rest });
+          state.files?.map(async (props) => {
+            photoUrl.push(props.name);
+            await uploadImage(props);
           });
           const newDate = new Date();
           const lastMarkedDate = markedDates[markedDates.length - 1];
@@ -175,8 +176,9 @@ const PostForm = () => {
             tags: state.tags,
             state: state.state,
             message: textarea.value,
-            department: "cite",
+            department: "cics",
             dateCreated: new Date().getTime(),
+            dateEdited: null,
             endDate: newDate.getTime(),
             markedDates,
           };
@@ -294,7 +296,7 @@ const PostForm = () => {
         <span>
           <Image src="/CICS.png" {...imageDimension(40)} alt="" />
         </span>
-        CITE Department
+        CICS Department
       </p>
       <div className="relative w-3/4">
         <AnnouncementTypesSelection
