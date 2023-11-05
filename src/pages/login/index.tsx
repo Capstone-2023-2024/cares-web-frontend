@@ -73,7 +73,7 @@ const Login = () => {
         <p className="uppercase">cares</p>
       </div>
       <form
-        onSubmit={void handleSubmitEmailAndPassword}
+        onSubmit={(e) => void handleSubmitEmailAndPassword(e)}
         className="flex h-full flex-col items-center justify-center gap-4"
       >
         <h2 className="text-center text-3xl font-semibold">Login</h2>
@@ -99,7 +99,7 @@ const Login = () => {
           Login
         </button>
         <p>or</p>
-        <button type="button" onClick={void handleGoogleSignIn}>
+        <button type="button" onClick={() => void handleGoogleSignIn()}>
           Sign in with Google
         </button>
       </form>
