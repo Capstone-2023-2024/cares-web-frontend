@@ -20,7 +20,7 @@ import type {
   ChatTextProps,
   ComplaintsStateProps,
   ComplaintsStateValues,
-} from "./types";
+} from "~/types/complaintsPage";
 
 const Complaints = () => {
   const initialState: ComplaintsStateProps = {

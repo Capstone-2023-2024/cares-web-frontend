@@ -1,9 +1,6 @@
 import { addDoc, getDocs, query, where } from "firebase/firestore";
 import { useState, type ChangeEvent, type FormEvent } from "react";
-import type {
-  RoleModalProps,
-  RoleModalPropsValue,
-} from "~/pages/permissions/types";
+import type { RoleModalProps, RoleModalPropsValue } from "~/types/permissions";
 import { permissionColRef, validateEmail } from "~/utils/firebase";
 import { roleOptions } from "~/utils/roles";
 import type { RoleProps } from "~/utils/roles/types";

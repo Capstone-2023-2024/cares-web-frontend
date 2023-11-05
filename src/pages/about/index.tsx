@@ -10,7 +10,7 @@ import type {
   ContainerType,
   ParagaphValuesType,
   ParagraphType,
-} from "./types";
+} from "~/types/about";
 
 const About = () => {
   const NOVALUE = "";

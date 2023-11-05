@@ -2,7 +2,7 @@ import { useRouter } from "next/router";
 import { type ChangeEvent, type FormEvent, useEffect, useState } from "react";
 import Loading from "~/components/Loading";
 import { useAuth } from "~/contexts/AuthContext";
-import type { InitialAuthProps } from "./types";
+import type { InitialAuthProps } from "~/types/login";
 
 const initialProps: InitialAuthProps = {
   email: "",

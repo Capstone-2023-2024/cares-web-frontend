@@ -39,7 +39,7 @@ import type {
   AssignMayorStateProps,
   FacultyProps,
   MayorProps,
-} from "./types";
+} from "~/types/permissions";
 
 const Permission = () => {
   const { typeOfAccount } = useAuth();

@@ -2,7 +2,7 @@ import { addDoc, collection } from "firebase/firestore";
 import React, { useState, type FormEvent } from "react";
 import Main from "~/components/Main";
 import { db } from "~/utils/firebase";
-import type { EventProps, StateProps } from "./types";
+import type { EventProps, StateProps } from "~/types/project_suggestion";
 
 const ProjectSuggestion = () => {
   const initState: StateProps = {
