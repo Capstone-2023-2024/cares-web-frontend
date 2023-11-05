@@ -1,8 +1,8 @@
 import { useRouter } from "next/router";
-import { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import { type ChangeEvent, type FormEvent, useEffect, useState } from "react";
 import Loading from "~/components/Loading";
 import { useAuth } from "~/contexts/AuthContext";
-import type { InitialAuthProps, InitialAuthPropsType } from "./types";
+import type { InitialAuthProps } from "./types";
 
 const initialProps: InitialAuthProps = {
   email: "",
@@ -18,19 +18,15 @@ const Login = () => {
   const inputBaseStyle =
     "rounded-lg border p-4 shadow-sm outline-none duration-300 ease-in-out";
 
-  function handleState(
-    key: keyof InitialAuthProps,
-    value: InitialAuthPropsType
-  ) {
-    setState((prevState) => ({ ...prevState, [key]: value }));
+  function handleEmail(event: ChangeEvent<HTMLInputElement>) {
+    event.preventDefault();
+    const email = event.target.value;
+    setState((prevState) => ({ ...prevState, email }));
   }
-  function handleEmail(e: ChangeEvent<HTMLInputElement>) {
-    e.preventDefault();
-    handleState("email", e.target.value);
-  }
-  function handlePassword(e: ChangeEvent<HTMLInputElement>) {
-    e.preventDefault();
-    handleState("password", e.target.value);
+  function handlePassword(event: ChangeEvent<HTMLInputElement>) {
+    event.preventDefault();
+    const password = event.target.value;
+    setState((prevState) => ({ ...prevState, password }));
   }
   async function handleSubmitEmailAndPassword(e: FormEvent<HTMLFormElement>) {
     try {
@@ -51,14 +47,25 @@ const Login = () => {
     }
   }
   async function handleGoogleSignIn() {
-    return await signInWithGoogle();
+    try {
+      await signInWithGoogle();
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   useEffect(() => {
-    if (currentUser !== null) {
-      router.replace("/dashboard");
+    async function setup() {
+      try {
+        if (currentUser !== null) {
+          await router.replace("/dashboard");
+        }
+      } catch (err) {
+        console.log(err);
+      }
     }
-  });
+    return void setup();
+  }, [currentUser, router]);
 
   return !loading ? (
     <div className="h-screen">
@@ -66,7 +73,7 @@ const Login = () => {
         <p className="uppercase">cares</p>
       </div>
       <form
-        onSubmit={handleSubmitEmailAndPassword}
+        onSubmit={void handleSubmitEmailAndPassword}
         className="flex h-full flex-col items-center justify-center gap-4"
       >
         <h2 className="text-center text-3xl font-semibold">Login</h2>
@@ -92,7 +99,7 @@ const Login = () => {
           Login
         </button>
         <p>or</p>
-        <button type="button" onClick={handleGoogleSignIn}>
+        <button type="button" onClick={void handleGoogleSignIn}>
           Sign in with Google
         </button>
       </form>

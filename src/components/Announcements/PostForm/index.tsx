@@ -1,15 +1,20 @@
 import { addDoc, collection } from "firebase/firestore";
 import { uploadBytes } from "firebase/storage";
 import Image from "next/image";
-import React, { ChangeEvent, KeyboardEvent, useRef, useState } from "react";
+import React, {
+  type ChangeEvent,
+  type KeyboardEvent,
+  useRef,
+  useState,
+} from "react";
 import { useAuth } from "~/contexts/AuthContext";
 import { useDate } from "~/contexts/DateContext";
 import { useToggle } from "~/contexts/ToggleContext";
-import { AnnouncementProps } from "~/types/announcement";
+import type { AnnouncementProps } from "~/types/announcement";
 import { db, intToStringTwoChar, storageRef } from "~/utils/firebase";
 import { icon, imageDimension } from "~/utils/image";
 import Button from "../../Button";
-import type { InputRef, PostFormStateProps, PostFormStateValue } from "./types";
+import type { InputRef, PostFormStateProps } from "./types";
 import { typesOfAnnouncement } from "~/utils/announcement";
 import AnnouncementTypesSelection from "./AnnouncementTypesSelection";
 
@@ -41,12 +46,6 @@ const PostForm = () => {
       ? "Tell the details for the recognition"
       : "Create a summary of the University Memorandum";
 
-  function handleState(
-    key: keyof PostFormStateProps,
-    value: PostFormStateValue
-  ) {
-    setState((prevState) => ({ ...prevState, [key]: value }));
-  }
   function previewImage(file: File, index: number) {
     const oFReader = new FileReader();
     oFReader.readAsDataURL(file);
@@ -61,62 +60,70 @@ const PostForm = () => {
     };
   }
   function getImageArray(files: File[]) {
-    for (let x = 0; x < files.length; x++) {
-      const currentFile = files[x];
-      if (currentFile !== undefined) {
-        previewImage(currentFile, x);
-      }
-    }
+    files.forEach((file, index) => {
+      previewImage(file, index);
+    });
   }
   function handleFilePick() {
     try {
       const inRef = inputRef.current;
-      if (inRef !== null && inRef.files !== null) {
-        getImageArray([...inRef.files]);
-        handleState("files", [...inRef.files]);
+      if (inRef !== null) {
+        if (inRef.files !== null) {
+          const pickedFiles = [...inRef.files];
+          getImageArray(pickedFiles);
+          setState((prevState) => ({ ...prevState, files: pickedFiles }));
+        }
       }
     } catch (err) {
       console.log(err);
     }
   }
   function handleMessage(event: ChangeEvent<HTMLTextAreaElement>) {
-    handleState("message", event.target.value);
+    const message = event.target.value;
+    setState((prevState) => ({ ...prevState, message }));
   }
   function handleRemoveFromArray({
     array,
-    name,
     index,
   }: {
-    array: any[] | null;
-    name: keyof PostFormStateProps;
+    array: (File | string)[] | null;
     index: number;
   }) {
     if (array !== null) {
       const newArray = array.filter((v, i) => index !== i);
-      handleState(name, [...newArray]);
+      if (typeof newArray[0] === "string") {
+        const tags = [...newArray] as string[];
+        return setState((prevState) => ({ ...prevState, tags }));
+      }
+      const files = [...newArray] as File[];
+      return setState((prevState) => ({ ...prevState, files }));
     }
   }
   function handleTagChange(event: ChangeEvent<HTMLInputElement>) {
+    const tag = event.target.value;
     const invalidChar = "0123456789./;'[]\\/,";
     const length = invalidChar.length;
-    const tagLength = event.target.value.length;
     for (let x = 0; x < length; x++) {
-      if (event.target.value.charAt(tagLength - 1) === invalidChar[x]) {
+      if (event.target.value.charAt(tag.length - 1) === invalidChar[x]) {
         return;
       }
     }
-    handleState("tag", event.target.value);
+    setState((prevState) => ({ ...prevState, tag }));
   }
   function handleTagEnter(event: KeyboardEvent<HTMLInputElement>) {
     if (event.key.toLowerCase() === "," && state.tag?.trim() !== "") {
-      handleState("tags", [
+      const tag = "";
+      const tags = [
         ...new Set([...state.tags, state.tag.trim().toLowerCase()]),
-      ]);
-      handleState("tag", "");
+      ];
+      setState((prevState) => ({ ...prevState, tags, tag }));
     }
   }
   function handleTypeChange(event: ChangeEvent<HTMLSelectElement>) {
-    handleState("type", event.target.value);
+    const type = event.target.value;
+    if (typeof type !== "string") {
+      setState((prevState) => ({ ...prevState, type }));
+    }
   }
   async function uploadImage(image: File) {
     try {
@@ -127,6 +134,24 @@ const PostForm = () => {
     }
   }
   async function handleSubmit(event: React.MouseEvent<HTMLFormElement>) {
+    /** If it returns -1, the value passed is undefined,
+     *  It will automatically parse 4 length string to year,
+     *  so only pass stringed numbers here
+     */
+    function stringedNumDateFormatter(value?: string) {
+      const lengthOfYear = 4;
+      if (value !== undefined) {
+        if (value.length === lengthOfYear) {
+          const year = JSON.parse(value) as number;
+          return year;
+        }
+        const getCharacter = value.startsWith("0") ? value.substring(1) : value;
+        const numberify = JSON.parse(getCharacter) as number;
+        return numberify;
+      }
+      return -1;
+    }
+
     if (typeOfAccount !== null) {
       try {
         event.preventDefault();
@@ -139,11 +164,7 @@ const PostForm = () => {
             )}`
         );
 
-        if (
-          textarea !== null &&
-          textarea.value !== null &&
-          state.tags.length > 0
-        ) {
+        if (textarea !== null && state.tags.length > 0) {
           const photoUrl: string[] = [];
           state.files?.map(async (props) => {
             photoUrl.push(props.name);
@@ -158,18 +179,10 @@ const PostForm = () => {
           const month = lastMarkedDate?.substring((first ?? 0) + 1, last);
           const date = lastMarkedDate?.substring((last ?? 0) + 1);
 
-          newDate.setFullYear(JSON.parse(year ?? "0") ?? 0);
-          newDate.setMonth(
-            (JSON.parse(
-              month?.charAt(0) === "0" ? month.substring(1) : month ?? "0"
-            ) ?? 0) - 1
-          );
-          newDate.setDate(
-            JSON.parse(
-              date?.charAt(0) === "0" ? date.substring(1) : date ?? "0"
-            ) ?? 0
-          );
-          console.log({ date: newDate.getTime() });
+          newDate.setFullYear(stringedNumDateFormatter(year));
+          newDate.setMonth(stringedNumDateFormatter(month));
+          newDate.setDate(stringedNumDateFormatter(date));
+
           const announcement: Omit<AnnouncementProps, "id"> = {
             postedBy: state.postedBy,
             type: state.type,
@@ -196,7 +209,8 @@ const PostForm = () => {
         return alert("Please enter atleast one tag");
       } catch (err) {
         console.log(err);
-        return handleState("files", null);
+        const files = null;
+        return setState((prevState) => ({ ...prevState, files }));
       }
     }
     alert("You do not have the permission to do this action");
@@ -231,7 +245,6 @@ const PostForm = () => {
                 onClick={() =>
                   handleRemoveFromArray({
                     array: state.files ?? [],
-                    name: "files",
                     index: i,
                   })
                 }
@@ -239,9 +252,10 @@ const PostForm = () => {
               >
                 x
               </button>
+              {/*eslint-disable-next-line @next/next/no-img-element */}
               <img
-                id={`image_${i}`}
                 alt=""
+                id={i.toString()}
                 className="h-auto w-auto"
                 {...imageDimension(icon)}
               />
@@ -266,7 +280,6 @@ const PostForm = () => {
                 onClick={() =>
                   handleRemoveFromArray({
                     array: state.tags,
-                    name: "tags",
                     index: i,
                   })
                 }

@@ -1,5 +1,5 @@
+import type { User } from "firebase/auth";
 import type { ReactNode } from "react";
-import type { UserCredential, User } from "firebase/auth";
 
 export interface InitialProps {
   currentUser: User | null;

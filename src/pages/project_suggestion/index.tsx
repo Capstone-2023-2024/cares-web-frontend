@@ -1,8 +1,8 @@
-import React, { FormEvent, useState } from "react";
-import Main from "~/components/Main";
-import type { EventProps, StateProps, StateValues } from "./types";
 import { addDoc, collection } from "firebase/firestore";
+import React, { useState, type FormEvent } from "react";
+import Main from "~/components/Main";
 import { db } from "~/utils/firebase";
+import type { EventProps, StateProps } from "./types";
 
 const ProjectSuggestion = () => {
   const initState: StateProps = {
@@ -14,8 +14,8 @@ const ProjectSuggestion = () => {
     days: null,
   };
   const [state, setState] = useState(initState);
-  const publishCondition =
-    state.options.length > 1 && state.question.trim() !== "";
+  // const publishCondition =
+  //   state.options.length > 1 && state.question.trim() !== "";
   const daysInMilliseconds = 86400000;
   const event: Omit<EventProps, "dateOfExpiration"> = {
     type: state.type,
@@ -25,43 +25,50 @@ const ProjectSuggestion = () => {
     dateCreated: new Date().getTime(),
   };
 
-  function handleState(key: keyof StateProps, value: StateValues) {
-    setState((prevState) => ({ ...prevState, [key]: value }));
-  }
-  function handlePollOption(e: React.ChangeEvent<HTMLInputElement>) {
-    handleState("text", e.target.value);
-  }
-  function handleEnter(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (state.text.trim() !== "" && e.key === "Enter") {
-      const holder = state.options;
-      holder.push({ value: state.text });
-      handleState("text", "");
-      handleState("options", holder);
+  function handleDays(event: React.ChangeEvent<HTMLSelectElement>) {
+    const days = event.target.value;
+    const numberify = JSON.parse(days) as number;
+    if (Number.isNaN(numberify)) {
+      setState((prevState) => ({ ...prevState, days: numberify }));
     }
   }
-  function handleQuestion(e: React.ChangeEvent<HTMLTextAreaElement>) {
-    handleState("question", e.target.value);
+  // function handlePollOption(event: React.ChangeEvent<HTMLInputElement>) {
+  //   const text = event.target.value;
+  //   setState((prevState) => ({ ...prevState, text }));
+  // }
+  // function handleEnter(e: React.KeyboardEvent<HTMLInputElement>) {
+  //   if (state.text.trim() !== "" && e.key === "Enter") {
+  //     const options = state.options;
+  //     options.push({ value: state.text });
+  //     const text = "";
+  //     setState((prevState) => ({ ...prevState, text, options }));
+  //   }
+  // }
+  function handleQuestion(event: React.ChangeEvent<HTMLTextAreaElement>) {
+    const question = event.target.value;
+    setState((prevState) => ({ ...prevState, question }));
   }
-  function handleRemovePollItem(index: number) {
-    const holder = state.options.filter((val) => val !== state.options[index]);
-    handleState("options", holder);
-  }
-  async function handlePublish() {
-    if (state.days !== null) {
-      try {
-        await addDoc(collection(db, "project_suggestion"), event);
-        setState(initState);
-      } catch (err) {
-        console.log(err);
-      }
-    }
-  }
+  // function handleRemovePollItem(index: number) {
+  //   const options = state.options.filter((val) => val !== state.options[index]);
+  //   setState((prevState) => ({ ...prevState, options }));
+  // }
+  // async function handlePublish() {
+  //   if (state.days !== null) {
+  //     try {
+  //       await addDoc(collection(db, "project_suggestion"), event);
+  //       setState(initState);
+  //     } catch (err) {
+  //       console.log(err);
+  //     }
+  //   }
+  // }
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const date = new Date();
     const totalMilliseconds = (state.days ?? 1) * daysInMilliseconds;
     const totalCalculation = totalMilliseconds + date.getTime();
     const { options, ...rest } = event;
+    console.log(options);
     const newEvent: Omit<EventProps, "options"> = {
       ...rest,
       dateOfExpiration: totalCalculation,
@@ -83,7 +90,7 @@ const ProjectSuggestion = () => {
         </h1>
         <div className=" h-max bg-secondary">
           <form
-            onSubmit={handleSubmit}
+            onSubmit={void handleSubmit}
             className="flex h-full flex-col items-center justify-center gap-2"
           >
             <div className="flex-row items-center justify-center">
@@ -95,7 +102,7 @@ const ProjectSuggestion = () => {
                 className="p-2"
                 id="expiration"
                 value={state.days ?? 1}
-                onChange={(e) => handleState("days", e.target.value)}
+                onChange={handleDays}
               >
                 {new Array(30).fill(0).map((v, index) => {
                   return (

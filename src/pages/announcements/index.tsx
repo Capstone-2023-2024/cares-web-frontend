@@ -40,10 +40,17 @@ const Announcements = () => {
   }
 
   useEffect(() => {
-    if (currentUser === null) {
-      router.push("/login");
+    async function setup() {
+      try {
+        if (currentUser === null) {
+          await router.push("/login");
+        }
+      } catch (err) {
+        console.log(err);
+      }
     }
-  }, [currentUser]);
+    return void setup();
+  }, [currentUser, router]);
 
   return currentUser !== null ? (
     <Main withPathName moreThanOne>

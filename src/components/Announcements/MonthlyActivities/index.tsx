@@ -1,13 +1,11 @@
 import { collection, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import Image from "next/image";
-import { ChangeEvent, MouseEvent, useState } from "react";
+import { useState, type ChangeEvent, type MouseEvent } from "react";
 import { useAnnouncement } from "~/contexts/AnnouncementContext";
 import { db, retrieveImageFBStorage } from "~/utils/firebase";
 import { icon, imageDimension } from "~/utils/image";
 import AnnouncementTypesSelection from "../PostForm/AnnouncementTypesSelection";
-import { AnnouncementProps } from "~/types/announcement";
-import { InitStateProps } from "./types";
-import { vendored } from "next/dist/server/future/route-modules/pages/module.compiled";
+import type { InitStateProps } from "./types";
 
 const MonthlyActivities = () => {
   const { type, handleTypeChange, orderBy, handleOrderBy, tag, handleTag } =
@@ -77,20 +75,21 @@ const Card = () => {
   ) {
     setState((prevState) => ({ ...prevState, [key]: value }));
   }
-  function handlePressButton(e: MouseEvent<HTMLButtonElement>) {
+  function handlePressButton() {
     handleState("toggle", false);
   }
   function handleMouseEnter(index: number) {
     handleState("toggle", true);
-    const target = data[index] as AnnouncementProps;
-    setState((prevState) => ({ ...prevState, ...target }));
+    const target = data[index];
+    if (target !== undefined) {
+      setState((prevState) => ({ ...prevState, ...target }));
+    }
   }
   const renderPhotos = (photoUrl: string[]) =>
     photoUrl?.map((v, i) => {
       return (
-        <div className="h-auto w-auto p-2">
+        <div key={i} className="h-auto w-auto p-2">
           <Image
-            key={i}
             alt=""
             priority
             quality={5}
@@ -201,7 +200,7 @@ const Card = () => {
                     className={`${
                       state.isEditing ? "" : "bg-transparent"
                     } max-h-[22rem] w-full resize-none p-2 duration-300 ease-in-out`}
-                    onMouseLeave={handleMouseLeave}
+                    onMouseLeave={void handleMouseLeave}
                     rows={Math.floor(message.length / rowsOffset)}
                     disabled={!state.isEditing}
                     value={state.message}

@@ -1,19 +1,4 @@
 import {
-  GoogleAuthProvider,
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  signInWithPopup,
-  signOut,
-} from "firebase/auth";
-import {
-  ChangeEvent,
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
-import { db } from "~/utils/firebase";
-import {
   and,
   collection,
   limit,
@@ -22,12 +7,19 @@ import {
   query,
   where,
 } from "firebase/firestore";
+import {
+  type ChangeEvent,
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import type { AnnouncementProps } from "~/types/announcement";
+import { db } from "~/utils/firebase";
 import type {
   AnnouncementContextProps,
   AnnouncementProviderProps,
   AnnouncementStateProps,
-  AnnouncementStateValue,
 } from "./types";
 
 const initState: AnnouncementStateProps = {
@@ -46,23 +38,23 @@ const AnnouncementContext = createContext<AnnouncementContextProps>({
 const AnnouncementProvider = ({ children }: AnnouncementProviderProps) => {
   const [state, setState] = useState(initState);
 
-  function handleState(
-    key: keyof AnnouncementStateProps,
-    value: AnnouncementStateValue
-  ) {
-    setState((prevState) => ({ ...prevState, [key]: value }));
-  }
   function handleTypeChange(event: ChangeEvent<HTMLSelectElement>) {
-    handleState("type", event.target.value as AnnouncementStateProps["type"]);
+    const type = event.target.value;
+    if (typeof type !== "string") {
+      setState((prevState) => ({ ...prevState, type }));
+    }
   }
   function handleOrderBy(event: ChangeEvent<HTMLSelectElement>) {
-    handleState(
-      "orderBy",
-      event.target.value as AnnouncementStateProps["orderBy"]
-    );
+    const orderBy = event.target.value;
+    if (typeof orderBy !== "string") {
+      setState((prevState) => ({ ...prevState, orderBy }));
+    }
   }
   function handleTag(event: ChangeEvent<HTMLInputElement>) {
-    handleState("tag", event.target.value as AnnouncementStateProps["tag"]);
+    const tag = event.target.value;
+    if (typeof tag !== "string") {
+      setState((prevState) => ({ ...prevState, tag }));
+    }
   }
 
   useEffect(() => {
@@ -119,7 +111,8 @@ const AnnouncementProvider = ({ children }: AnnouncementProviderProps) => {
             id,
           } as AnnouncementProps);
         });
-        handleState("data", placeholder);
+        const data = placeholder;
+        setState((prevState) => ({ ...prevState, data }));
       }
     );
     return unsub;

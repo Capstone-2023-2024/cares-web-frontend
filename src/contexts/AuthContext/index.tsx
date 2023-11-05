@@ -44,7 +44,14 @@ const AuthContext = createContext<AuthContextProps>({
       return "ERROR";
     }
   },
-  signInWithGoogle: async () => {},
+  signInWithGoogle: async () => {
+    try {
+      const googleProvider = new GoogleAuthProvider();
+      await signInWithPopup(auth, googleProvider);
+    } catch (err) {
+      console.log(err);
+    }
+  },
 });
 
 const AuthProvider = ({ children }: AuthProviderProps) => {
@@ -84,7 +91,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       handleState("loading", true);
       handleState("currentUser", user);
       async function extractAccounts() {
-        if (user !== null && user.email !== null) {
+        if (user !== null) {
           try {
             switch (user.email) {
               case superAdmin:
@@ -94,7 +101,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
               default:
                 break;
             }
-            const data = await accounts(user.email);
+            const data = await accounts(user.email ?? "");
             if (data !== null) {
               const { name, partial } = data.role.access_level;
               switch (name) {
@@ -128,7 +135,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       handleState("loading", false);
     });
     return unsub;
-  }, [accounts]);
+  }, []);
 
   return (
     <AuthContext.Provider

@@ -1,5 +1,5 @@
 import type { ChangeEvent } from "react";
-import { BaseRoleProps } from "~/utils/roles/types";
+import type { BaseRoleProps } from "~/utils/roles/types";
 
 export interface AccessLevelProps extends BaseRoleProps {
   handleAccessLevelSelection: (

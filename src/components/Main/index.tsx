@@ -13,18 +13,22 @@ const Main = ({ children, withPathName, ...rest }: MainType) => {
   const router = useRouter();
 
   useEffect(() => {
-    function setUp() {
-      if (typeOfAccount === null) {
-        void signout();
-        alert("You do not have any admin privileges");
-        router.replace("/login");
-      }
-      if (currentUser === null) {
-        router.replace("/login");
+    async function setUp() {
+      try {
+        if (typeOfAccount === null) {
+          alert("You do not have any admin privileges");
+          await signout();
+          await router.replace("/login");
+        }
+        if (currentUser === null) {
+          await router.replace("/login");
+        }
+      } catch (err) {
+        console.log(err);
       }
     }
-    return setUp()
-  }, [currentUser]);
+    return void setUp();
+  }, [currentUser, router, signout, typeOfAccount]);
 
   return (
     <div>

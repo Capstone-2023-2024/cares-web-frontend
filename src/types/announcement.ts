@@ -14,13 +14,3 @@ export interface AnnouncementProps
   markedDates: string[];
   endDate: number;
 }
-
-export type AnnouncementsValue =
-  | AnnouncementProps["dateCreated"]
-  | AnnouncementProps["dateEdited"]
-  | AnnouncementProps["department"]
-  | AnnouncementProps["markedDates"]
-  | AnnouncementProps["message"]
-  | AnnouncementProps["photoUrl"]
-  | AnnouncementProps["state"]
-  | AnnouncementProps["type"];

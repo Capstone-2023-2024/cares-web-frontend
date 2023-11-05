@@ -1,5 +1,5 @@
 import type { MutableRefObject } from "react";
-import { AnnouncementProps, AnnouncementsValue } from "~/types/announcement";
+import type { AnnouncementProps } from "~/types/announcement";
 
 export interface PostFormStateProps extends Omit<AnnouncementProps, "id"> {
   tag: string;
@@ -9,9 +9,6 @@ export interface TypesOfAnnouncementProps
   extends Pick<AnnouncementProps, "type"> {
   name: string;
 }
-export type PostFormStateValue =
-  | PostFormStateProps["files"]
-  | AnnouncementsValue;
 
 export interface CustomUploadButtonType {
   inputRef: InputRef;

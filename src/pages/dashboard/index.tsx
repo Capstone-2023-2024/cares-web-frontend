@@ -14,10 +14,17 @@ const Dashboard = () => {
   }
 
   useEffect(() => {
-    if (currentUser === null) {
-      router.replace("login");
+    async function setup() {
+      try {
+        if (currentUser === null) {
+          await router.replace("login");
+        }
+      } catch (err) {
+        console.log(err);
+      }
     }
-  }, [currentUser]);
+    return void setup();
+  }, [currentUser, router]);
 
   return currentUser === null ? (
     <div className="flex h-screen items-center justify-center">

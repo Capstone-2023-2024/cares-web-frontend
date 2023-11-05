@@ -1,10 +1,10 @@
-import { addDoc, collection, getDocs, query, where } from "firebase/firestore";
+import { addDoc, getDocs, query, where } from "firebase/firestore";
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import type {
   RoleModalProps,
   RoleModalPropsValue,
 } from "~/pages/permissions/types";
-import { db, permissionColRef, validateEmail } from "~/utils/firebase";
+import { permissionColRef, validateEmail } from "~/utils/firebase";
 import { roleOptions } from "~/utils/roles";
 import type { RoleProps } from "~/utils/roles/types";
 import AccessLevelSelection from "../AccessLevelSelection";
@@ -12,7 +12,10 @@ import RoleSelection from "../RoleSelection";
 import type { PermissionWithDateProps } from "./types";
 
 const RoleModal = () => {
-  const initialRole = roleOptions[0] as RoleProps;
+  const initialRole: RoleProps = {
+    title: "admin_1",
+    access_level: { name: "super_admin", partial: false },
+  };
   const initialProps = {
     email: "",
     role: initialRole,
@@ -41,7 +44,8 @@ const RoleModal = () => {
     const partial_access = JSON.parse(e.target.value) as boolean;
     const newRole = { ...state.role };
     const access_level = { ...newRole.access_level, partial: partial_access };
-    handleState("role", { ...newRole, access_level });
+    const role = { ...newRole, access_level };
+    setState((prevState) => ({ ...prevState, role }));
   }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {

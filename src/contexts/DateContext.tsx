@@ -1,11 +1,6 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  type ReactNode,
-} from "react";
+import { createContext, useContext, useState, type ReactNode } from "react";
 import type { WeekNameType } from "~/types/date";
-import { currentMonth, weekNames } from "~/utils/date";
+import { weekNames } from "~/utils/date";
 
 interface initialDateType {
   date: number;
@@ -26,11 +21,12 @@ interface DateProviderType {
 }
 
 const initDate = new Date();
+const day = initDate.getDay();
 const initialDate: initialDateType = {
   date: initDate.getDate(),
   month: initDate.getMonth(),
   year: initDate.getFullYear(),
-  weekName: weekNames[initDate.getDay()],
+  weekName: weekNames[day],
   selectedDateArray: [],
 };
 

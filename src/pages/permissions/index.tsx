@@ -1,6 +1,6 @@
 import {
-  DocumentData,
-  DocumentReference,
+  type DocumentData,
+  type DocumentReference,
   addDoc,
   and,
   collection,
@@ -15,13 +15,7 @@ import {
   where,
 } from "firebase/firestore";
 import { useRouter } from "next/router";
-import {
-  useEffect,
-  useState,
-  type ChangeEvent,
-  FormEvent,
-  MouseEvent,
-} from "react";
+import { type MouseEvent, useEffect, useState, type ChangeEvent } from "react";
 import ActionButton from "~/components/Actionbutton";
 import Main from "~/components/Main";
 import {
@@ -32,22 +26,20 @@ import {
 import type { PermissionWithDateProps } from "~/components/Permissions/RoleModal/types";
 import RoleSelection from "~/components/Permissions/RoleSelection";
 import SectionContainer from "~/components/Permissions/SectionContainer";
+import Selection from "~/components/Permissions/Selection";
 import { useAuth } from "~/contexts/AuthContext";
 import type { StudentWithSectionProps } from "~/types/student";
-import { db, permissionColRef, validateEmail } from "~/utils/firebase";
+import { db, permissionColRef } from "~/utils/firebase";
 import { roleOptions } from "~/utils/roles";
 import type {
+  AdviserProps,
   AssignAdminProps,
   AssignAdminPropsValue,
   AssignAdviserStateProps,
-  AssignAdviserStateValues,
   AssignMayorStateProps,
-  AssignMayorStateValues,
-  AdviserProps,
-  MayorProps,
   FacultyProps,
+  MayorProps,
 } from "./types";
-import Selection from "~/components/Permissions/Selection";
 
 const Permission = () => {
   const { typeOfAccount } = useAuth();
@@ -84,7 +76,11 @@ const AssignAdmin = () => {
       : handleState("toggleEdit", value);
   }
   async function toggleDelete(value: string) {
-    await deleteDoc(doc(permissionColRef, value));
+    try {
+      await deleteDoc(doc(permissionColRef, value));
+    } catch (err) {
+      console.log(err);
+    }
   }
   function handleRoleSelection(e: ChangeEvent<HTMLSelectElement>, id: string) {
     e.preventDefault();
@@ -202,7 +198,7 @@ const AssignAdmin = () => {
             <td className="flex flex-row items-center justify-center">
               <button
                 className={`${deleteConditionalStyle} rounded-xl p-2 capitalize duration-300 ease-in-out`}
-                onClick={() => toggleDelete(id)}
+                onClick={() => void toggleDelete(id)}
                 disabled={!indexCondition}
               >
                 delete
@@ -221,22 +217,30 @@ const AssignAdmin = () => {
     );
 
   useEffect(() => {
-    const unsub = onSnapshot(
-      query(permissionColRef, orderBy("dateAdded", "desc")),
-      (snapshot) => {
-        const placeholder: PermissionWithDateProps[] = [];
-        snapshot.forEach((doc) => {
-          const data = doc.data() as Omit<PermissionWithDateProps, "id">;
-          const id = doc.id;
-          placeholder.push({ ...data, id });
-        });
-        handleState("permissionArray", placeholder);
+    async function setup() {
+      const unsub = onSnapshot(
+        query(permissionColRef, orderBy("dateAdded", "desc")),
+        (snapshot) => {
+          const placeholder: PermissionWithDateProps[] = [];
+          snapshot.forEach((doc) => {
+            const data = doc.data() as Omit<PermissionWithDateProps, "id">;
+            const id = doc.id;
+            placeholder.push({ ...data, id });
+          });
+          handleState("permissionArray", placeholder);
+        }
+      );
+      try {
+        if (currentUser === null) {
+          return await router.push("/login");
+        }
+        return unsub;
+      } catch (err) {
+        console.log(err);
       }
-    );
-    return () => {
-      currentUser === null ? router.push("/login") : unsub();
-    };
-  }, []);
+    }
+    return void setup();
+  }, [currentUser, router]);
 
   return (
     <SectionContainer extensionName="admins & faculty">
@@ -268,11 +272,9 @@ const AssignAdviser = () => {
   };
   const [state, setState] = useState(initState);
 
-  function handleState(
-    key: keyof AssignAdviserStateProps,
-    value: AssignAdviserStateValues
-  ) {
-    setState((prevState) => ({ ...prevState, [key]: value }));
+  function handleSelectedFaculty(event: ChangeEvent<HTMLSelectElement>) {
+    const selectedFaculty = event.target.value;
+    setState((prevState) => ({ ...prevState, selectedFaculty }));
   }
   async function handleRevoke(id: string) {
     try {
@@ -289,10 +291,11 @@ const AssignAdviser = () => {
     )}${state.section.toUpperCase()}`;
 
     if (typeof state.selectedFaculty === "string") {
+      const section = state.section;
       const adviserInfo: Omit<AdviserProps, "name" | "id"> = {
+        section,
         email: state.selectedFaculty,
         yearLevel: state?.yearLevel ?? "",
-        section: state.section as AdviserProps["section"],
         dateCreated: new Date().getTime(),
       };
 
@@ -317,20 +320,22 @@ const AssignAdviser = () => {
           return alert(`There is already a adviser in ${formattedSection}`);
         }
         await addDoc(adviserColRef, adviserInfo);
-        handleState("yearLevel", initState.yearLevel);
-        handleState("section", initState.section);
-        handleState("selectedFaculty", initState.selectedFaculty);
+        const yearLevel = initState.yearLevel;
+        const section = initState.section;
+        const selectedFaculty = initState.selectedFaculty;
+        setState((prevState) => ({
+          ...prevState,
+          yearLevel,
+          section,
+          selectedFaculty,
+        }));
       } catch (err) {
         console.log(err);
       }
     }
   }
   const renderFaculty = () => (
-    <select
-      required
-      defaultValue=""
-      onChange={(e) => handleState("selectedFaculty", e.target.value)}
-    >
+    <select required defaultValue="" onChange={handleSelectedFaculty}>
       <option disabled value="">
         --
       </option>
@@ -343,11 +348,15 @@ const AssignAdviser = () => {
       })}
     </select>
   );
-  function handleYearLevel(e: ChangeEvent<HTMLSelectElement>) {
-    handleState("yearLevel", e.target.value);
+  function handleYearLevel(event: ChangeEvent<HTMLSelectElement>) {
+    const yearLevel = event.target.value;
+    setState((prevState) => ({ ...prevState, yearLevel }));
   }
-  function handleSection(e: ChangeEvent<HTMLSelectElement>) {
-    handleState("section", e.target.value);
+  function handleSection(event: ChangeEvent<HTMLSelectElement>) {
+    const section = event.target.value;
+    if (typeof section !== "string") {
+      setState((prevState) => ({ ...prevState, section }));
+    }
   }
   const renderYearLevel = () => (
     <div className="flex items-center justify-center gap-2">
@@ -400,7 +409,7 @@ const AssignAdviser = () => {
           </td>
           <td className="flex justify-center">
             <ActionButton
-              onClick={() => handleRevoke(id)}
+              onClick={() => void handleRevoke(id)}
               text="revoke"
               color="red"
             />
@@ -421,7 +430,7 @@ const AssignAdviser = () => {
           const id = doc.id;
           adviser.push({ ...data, id });
         });
-        handleState("adviser", adviser);
+        setState((prevState) => ({ ...prevState, adviser }));
       });
     }
     function getFaculty() {
@@ -434,7 +443,7 @@ const AssignAdviser = () => {
             const id = doc.id;
             faculty.push({ ...data, id });
           });
-          handleState("faculty", faculty);
+          setState((prevState) => ({ ...prevState, faculty }));
         }
       );
     }
@@ -454,7 +463,7 @@ const AssignAdviser = () => {
             <section>{renderSection()}</section>
             <section>{renderFaculty()}</section>
             <button
-              onClick={handleSubmitAdviser}
+              onClick={void handleSubmitAdviser}
               className="rounded-lg bg-primary p-2 text-white shadow-sm"
             >
               Assign
@@ -489,11 +498,9 @@ const AssignMayor = () => {
     ? "bg-primary text-white"
     : "bg-slate-200 text-slate-300";
 
-  function handleState(
-    key: keyof AssignMayorStateProps,
-    value: AssignMayorStateValues
-  ) {
-    setState((prevState) => ({ ...prevState, [key]: value }));
+  function handleSelectedMayor(event: ChangeEvent<HTMLSelectElement>) {
+    const selectedMayor = event.target.value;
+    setState((prevState) => ({ ...prevState, selectedMayor }));
   }
   async function handleRevoke(id: string, studentNo: string) {
     try {
@@ -547,18 +554,23 @@ const AssignMayor = () => {
       await updateDoc(doc(collection(db, "student"), mayorInfo.studentNo), {
         recipient: "bm",
       });
-      handleState("yearLevel", initState.yearLevel);
-      handleState("section", initState.section);
-      handleState("selectedMayor", initState.selectedMayor);
+      setState((prevState) => ({
+        ...prevState,
+        yearLevel: initState.yearLevel,
+        section: initState.section,
+        selectedMayor: initState.selectedMayor,
+      }));
     } catch (err) {
       console.log(err);
     }
   }
-  function handleYearLevel(e: ChangeEvent<HTMLSelectElement>) {
-    handleState("yearLevel", e.target.value);
+  function handleYearLevel(event: ChangeEvent<HTMLSelectElement>) {
+    const yearLevel = event.target.value;
+    setState((prevState) => ({ ...prevState, yearLevel }));
   }
-  function handleSection(e: ChangeEvent<HTMLSelectElement>) {
-    handleState("section", e.target.value);
+  function handleSection(event: ChangeEvent<HTMLSelectElement>) {
+    const section = event.target.value;
+    setState((prevState) => ({ ...prevState, section }));
   }
   const renderHeadings = () => (
     <tr className="border p-2">
@@ -597,11 +609,7 @@ const AssignMayor = () => {
     </div>
   );
   const renderStudentsWithSection = () => (
-    <select
-      required
-      defaultValue=""
-      onChange={(e) => handleState("selectedMayor", e.target.value)}
-    >
+    <select required defaultValue="" onChange={handleSelectedMayor}>
       <option disabled value="">
         --
       </option>
@@ -629,7 +637,7 @@ const AssignMayor = () => {
           </td>
           <td className="flex justify-center">
             <ActionButton
-              onClick={() => handleRevoke(id, studentNo)}
+              onClick={() => void handleRevoke(id, studentNo)}
               text="revoke"
               color="red"
             />
@@ -650,13 +658,13 @@ const AssignMayor = () => {
 
     function getStudentWithSection() {
       return onSnapshot(studentQuery, (snapshot) => {
-        const studentArray: StudentWithSectionProps[] = [];
+        const studentsWithSection: StudentWithSectionProps[] = [];
         snapshot.forEach((doc) => {
           const data = doc.data() as Omit<StudentWithSectionProps, "studentNo">;
           const studentNo = doc.id;
-          studentArray.push({ ...data, studentNo });
+          studentsWithSection.push({ ...data, studentNo });
         });
-        handleState("studentsWithSection", studentArray);
+        setState((prevState) => ({ ...prevState, studentsWithSection }));
       });
     }
     return getStudentWithSection();
@@ -672,7 +680,7 @@ const AssignMayor = () => {
           const id = doc.id;
           mayors.push({ ...data, id });
         });
-        handleState("mayors", mayors);
+        setState((prevState) => ({ ...prevState, mayors }));
       });
     }
 
@@ -690,7 +698,7 @@ const AssignMayor = () => {
               <section>{renderStudentsWithSection()}</section>
             )}
             <button
-              onClick={handleClassMayor}
+              onClick={void handleClassMayor}
               disabled={!addingMayorCondition}
               className={`${buttonConditionalStyle} rounded-lg p-2 capitalize shadow-sm`}
             >

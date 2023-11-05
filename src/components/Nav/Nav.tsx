@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { PathType } from "./types";
+import type { PathType } from "./types";
 
 const Nav = () => {
   return (

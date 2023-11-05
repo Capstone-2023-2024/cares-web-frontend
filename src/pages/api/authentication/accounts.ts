@@ -3,7 +3,6 @@ import {
   collection,
   getCountFromServer,
   getDocs,
-  onSnapshot,
   query,
   where,
 } from "firebase/firestore";

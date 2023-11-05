@@ -1,5 +1,5 @@
 import type { HTMLAttributes } from "react";
-import { PostFormStateProps } from "../types";
+import type { PostFormStateProps } from "../types";
 
 export interface AnnouncementTypesSelectionProps
   extends HTMLAttributes<HTMLSelectElement> {

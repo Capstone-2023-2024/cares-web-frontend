@@ -12,15 +12,9 @@ export interface StateProps {
   question: string;
 }
 
-export type StateValues =
-  | StateProps["days"]
-  | StateProps["options"]
-  | StateProps["text"]
-  | StateProps["question"];
-
 export interface EventProps
   extends Pick<StateProps, "type" | "state" | "options" | "question"> {
-    votes?: {[x: string]: string};
+  votes?: Record<string, string>;
   dateOfExpiration: number;
   dateCreated: number;
 }

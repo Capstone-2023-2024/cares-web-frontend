@@ -13,7 +13,7 @@ import React, { useEffect, useState } from "react";
 import ActionButton from "~/components/Actionbutton";
 import Main from "~/components/Main";
 import { useAuth } from "~/contexts/AuthContext";
-import { ConcernProps } from "~/types/complaints";
+import type { ConcernProps } from "~/types/complaints";
 import type { StudentWithSectionProps } from "~/types/student";
 import { db } from "~/utils/firebase";
 import type {
@@ -43,15 +43,19 @@ const Complaints = () => {
     handleState("message", e.target.value);
   }
   async function handleEnter(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === "Enter" && state.message.trim() !== "") {
-      const concern: Omit<ConcernProps, "id"> = {
-        sender: currentUser?.email ?? "admin",
-        withDocument: false,
-        message: state.message,
-        dateCreated: new Date().getTime(),
-      };
-      await addDoc(collection(db, state.collectionReference ?? ""), concern);
-      handleState("message", "");
+    try {
+      if (e.key === "Enter" && state.message.trim() !== "") {
+        const concern: Omit<ConcernProps, "id"> = {
+          sender: currentUser?.email ?? "admin",
+          withDocument: false,
+          message: state.message,
+          dateCreated: new Date().getTime(),
+        };
+        await addDoc(collection(db, state.collectionReference ?? ""), concern);
+        handleState("message", "");
+      }
+    } catch (err) {
+      console.log(err);
     }
   }
   async function handleResolution() {
@@ -61,12 +65,16 @@ const Complaints = () => {
       dateCreated: new Date().getTime(),
       message: "resolved",
     };
-    await addDoc(collection(db, state.collectionReference ?? ""), concerns);
-    await updateDoc(doc(collection(db, "student"), studentNoSelected), {
-      recipient: "class_section",
-    });
-    handleState("concerns", []);
-    handleState("collectionReference", null);
+    try {
+      await addDoc(collection(db, state.collectionReference ?? ""), concerns);
+      await updateDoc(doc(collection(db, "student"), studentNoSelected), {
+        recipient: "class_section",
+      });
+      handleState("concerns", []);
+      handleState("collectionReference", null);
+    } catch (err) {
+      console.log(err);
+    }
   }
   async function handleTurnOver() {
     const recipient =
@@ -79,12 +87,16 @@ const Complaints = () => {
       dateCreated: new Date().getTime(),
       message: `turnover to ${recipient.replace(/_/, " ")}`,
     };
-    await addDoc(collection(db, state.collectionReference ?? ""), concerns);
-    await updateDoc(doc(collection(db, "student"), studentNoSelected), {
-      recipient,
-    });
-    handleState("concerns", []);
-    handleState("collectionReference", null);
+    try {
+      await addDoc(collection(db, state.collectionReference ?? ""), concerns);
+      await updateDoc(doc(collection(db, "student"), studentNoSelected), {
+        recipient,
+      });
+      handleState("concerns", []);
+      handleState("collectionReference", null);
+    } catch (err) {
+      console.log(err);
+    }
   }
   async function handleRejection() {
     const concerns: Omit<ConcernProps, "id"> = {
@@ -93,14 +105,18 @@ const Complaints = () => {
       dateCreated: new Date().getTime(),
       message: "rejected",
     };
-    await addDoc(collection(db, state.collectionReference ?? ""), concerns);
-    await updateDoc(doc(collection(db, "student"), studentNoSelected), {
-      recipient: "class_section",
-    });
-    handleState("concerns", []);
-    handleState("collectionReference", null);
+    try {
+      await addDoc(collection(db, state.collectionReference ?? ""), concerns);
+      await updateDoc(doc(collection(db, "student"), studentNoSelected), {
+        recipient: "class_section",
+      });
+      handleState("concerns", []);
+      handleState("collectionReference", null);
+    } catch (err) {
+      console.log(err);
+    }
   }
-  async function handleIdClicked({ id }: { id: string }) {
+  function handleIdClicked({ id }: { id: string }) {
     const colPath = `student/${id}/concerns`;
     return onSnapshot(
       query(collection(db, colPath), orderBy("dateCreated"), limit(12)),
@@ -120,7 +136,7 @@ const Complaints = () => {
     return state.students.map(({ studentNo }) => {
       return (
         <button
-          onClick={() => handleIdClicked({ id: studentNo })}
+          onClick={handleIdClicked({ id: studentNo })}
           key={studentNo}
           className={`${
             studentNoSelected === studentNo
@@ -142,16 +158,20 @@ const Complaints = () => {
         <p>{student?.name}</p>
         <div className="flex h-1/6 w-full items-center justify-center gap-2 bg-primary/25">
           <ActionButton
-            onClick={handleResolution}
+            onClick={void handleResolution}
             text="resolved"
             color="green"
           />
           <ActionButton
-            onClick={handleTurnOver}
+            onClick={void handleTurnOver}
             text="turn-over"
             color="yellow"
           />
-          <ActionButton onClick={handleRejection} text="reject" color="red" />
+          <ActionButton
+            onClick={void handleRejection}
+            text="reject"
+            color="red"
+          />
         </div>
       </>
     );
@@ -223,7 +243,7 @@ const Complaints = () => {
             className="h-1/6 w-full resize-none border border-black p-2"
             value={state.message}
             onChange={handleChange}
-            onKeyDown={handleEnter}
+            onKeyDown={void handleEnter}
           />
         </div>
       )}
@@ -253,7 +273,7 @@ const ChatText = ({ text, condition, textSize }: ChatTextProps) => {
           ? "text-green-400"
           : text === "rejected"
           ? "text-red-400"
-          : text.substring(0, 4) === "turn"
+          : text.startsWith("turn")
           ? "text-yellow-400"
           : "text-black"
       } ${getTextSize()}`}

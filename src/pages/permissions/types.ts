@@ -50,13 +50,6 @@ export interface AssignAdviserStateProps extends DataSelectionProps {
   selectedFaculty: string | null;
 }
 
-export type AssignAdviserStateValues =
-  | AssignAdviserStateProps["yearLevel"]
-  | AssignAdviserStateProps["section"]
-  | AssignAdviserStateProps["adviser"]
-  | AssignAdviserStateProps["selectedFaculty"]
-  | AssignAdviserStateProps["faculty"];
-
 export interface AssignMayorStateProps {
   yearLevel: string;
   section: string;
@@ -64,10 +57,3 @@ export interface AssignMayorStateProps {
   selectedMayor: string | null;
   studentsWithSection: StudentWithSectionProps[];
 }
-
-export type AssignMayorStateValues =
-  | AssignMayorStateProps["yearLevel"]
-  | AssignMayorStateProps["section"]
-  | AssignMayorStateProps["mayors"]
-  | AssignMayorStateProps["selectedMayor"]
-  | AssignMayorStateProps["studentsWithSection"];

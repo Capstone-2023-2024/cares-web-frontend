@@ -1,6 +1,5 @@
 import { collection, doc, getDocs, runTransaction } from "firebase/firestore";
 import Image from "next/image";
-import { useRouter } from "next/router";
 import { useEffect, useState, type ChangeEvent, type MouseEvent } from "react";
 import Loading from "~/components/Loading";
 import Main from "~/components/Main";
@@ -16,7 +15,6 @@ import type {
 const About = () => {
   const NOVALUE = "";
   const { currentUser } = useAuth();
-  const router = useRouter();
   const [state, setState] = useState<AboutType>({
     summary: NOVALUE,
     vision: NOVALUE,

@@ -1,6 +1,6 @@
 import React from "react";
 import { typesOfAnnouncement } from "~/utils/announcement";
-import { AnnouncementTypesSelectionProps } from "./types";
+import type { AnnouncementTypesSelectionProps } from "./types";
 
 const AnnouncementTypesSelection = (props: AnnouncementTypesSelectionProps) => {
   return (
