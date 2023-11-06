@@ -56,11 +56,11 @@ const AnnouncementProvider = ({ children }: AnnouncementProviderProps) => {
     const limitNumber = 15;
     const eventRecognitionQuery = query(
       collection(db, "announcement"),
-      and(
-        where("type", "==", state.type),
-        where("endDate", ">", new Date().getTime())
-      ),
-      orderBy("endDate", state.orderBy),
+      // and(
+      where("type", "==", state.type),
+      // where("endDate", ">", new Date().getTime())
+      // ),
+      orderBy("dateCreated", state.orderBy),
       limit(limitNumber)
     );
     const eventRecognitionWithTagsQuery = query(
