@@ -463,7 +463,7 @@ const AssignAdviser = () => {
             <section>{renderSection()}</section>
             <section>{renderFaculty()}</section>
             <button
-              onClick={void handleSubmitAdviser}
+              onClick={(e) => void handleSubmitAdviser(e)}
               className="rounded-lg bg-primary p-2 text-white shadow-sm"
             >
               Assign
