@@ -10,7 +10,7 @@ const Header = () => {
         <Image
           alt="cares_icon"
           src="/cares_icon.png"
-          className="h-8 w-8 brightness-100 contrast-200 grayscale hue-rotate-180 invert saturate-100"
+          className="h-8 w-8 brightness-0 invert"
           {...imageDimension(icon)}
         />
         <h1 className="text-lg font-bold uppercase">{projectName}</h1>

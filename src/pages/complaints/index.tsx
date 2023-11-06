@@ -119,7 +119,7 @@ const Complaints = () => {
   function handleIdClicked({ id }: { id: string }) {
     const colPath = `student/${id}/concerns`;
     return onSnapshot(
-      query(collection(db, colPath), orderBy("dateCreated"), limit(12)),
+      query(collection(db, colPath), orderBy("dateCreated"), limit(15)),
       (snapshot) => {
         const placeholder: ConcernProps[] = [];
         snapshot.forEach((doc) => {

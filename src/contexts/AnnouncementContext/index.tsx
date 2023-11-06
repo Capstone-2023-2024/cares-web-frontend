@@ -53,7 +53,7 @@ const AnnouncementProvider = ({ children }: AnnouncementProviderProps) => {
 
   console.log({ state });
   useEffect(() => {
-    const limitNumber = 10;
+    const limitNumber = 15;
     const eventRecognitionQuery = query(
       collection(db, "announcement"),
       and(

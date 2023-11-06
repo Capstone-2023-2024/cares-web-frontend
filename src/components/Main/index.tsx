@@ -38,11 +38,11 @@ const Main = ({ children, withPathName, ...rest }: MainType) => {
       </Head>
       <Header />
       {typeOfAccount !== null && (
-        <div className="flex h-full min-h-screen ">
+        <div className="flex h-full min-h-screen">
           <Nav />
           <div className="inline-block w-2/3">
             {withPathName && <HeaderPath {...rest} />}
-            <div className=" text-charcoal">{children}</div>
+            <div className="text-charcoal">{children}</div>
           </div>
         </div>
       )}
