@@ -39,24 +39,19 @@ const AnnouncementProvider = ({ children }: AnnouncementProviderProps) => {
   const [state, setState] = useState(initState);
 
   function handleTypeChange(event: ChangeEvent<HTMLSelectElement>) {
-    const type = event.target.value;
-    if (typeof type !== "string") {
-      setState((prevState) => ({ ...prevState, type }));
-    }
+    const type = event.target.value as AnnouncementStateProps["type"];
+    setState((prevState) => ({ ...prevState, type }));
   }
   function handleOrderBy(event: ChangeEvent<HTMLSelectElement>) {
-    const orderBy = event.target.value;
-    if (typeof orderBy !== "string") {
-      setState((prevState) => ({ ...prevState, orderBy }));
-    }
+    const orderBy = event.target.value as AnnouncementStateProps["orderBy"];
+    setState((prevState) => ({ ...prevState, orderBy }));
   }
   function handleTag(event: ChangeEvent<HTMLInputElement>) {
     const tag = event.target.value;
-    if (typeof tag !== "string") {
-      setState((prevState) => ({ ...prevState, tag }));
-    }
+    setState((prevState) => ({ ...prevState, tag }));
   }
 
+  console.log({ state });
   useEffect(() => {
     const limitNumber = 10;
     const eventRecognitionQuery = query(

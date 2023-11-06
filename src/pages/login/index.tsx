@@ -1,22 +1,25 @@
+import Image from "next/image";
 import { useRouter } from "next/router";
 import { type ChangeEvent, type FormEvent, useEffect, useState } from "react";
+import Header from "~/components/Header/Header";
 import Loading from "~/components/Loading";
 import { useAuth } from "~/contexts/AuthContext";
 import type { InitialAuthProps } from "~/types/login";
+import { icon, imageDimension } from "~/utils/image";
 
 const initialProps: InitialAuthProps = {
   email: "",
   password: "",
+  error: false,
 };
 
 const Login = () => {
   const [state, setState] = useState(initialProps);
-  const [error, setError] = useState(false);
   const { emailAndPassSignin, currentUser, loading, signInWithGoogle } =
     useAuth();
   const router = useRouter();
   const inputBaseStyle =
-    "rounded-lg border p-4 shadow-sm outline-none duration-300 ease-in-out";
+    "rounded-lg border py-2 px-4 shadow-sm outline-none duration-300 ease-in-out";
 
   function handleEmail(event: ChangeEvent<HTMLInputElement>) {
     event.preventDefault();
@@ -31,19 +34,23 @@ const Login = () => {
   async function handleSubmitEmailAndPassword(e: FormEvent<HTMLFormElement>) {
     try {
       e.preventDefault();
+      const form = e.currentTarget;
+      const submit = form.querySelector("#submit");
+      submit?.setAttribute("disabled", "true");
       const response = await emailAndPassSignin({ ...state });
 
       if (response === "SUCCESS") {
+        submit?.removeAttribute("disabled");
         setState(initialProps);
         return router.replace("/dashboard");
       }
-      setError(true);
+      submit?.removeAttribute("disabled");
+      setState((prevState) => ({ ...prevState, error: true }));
       setTimeout(() => {
-        setError(false);
-      }, 2000);
+        setState((prevState) => ({ ...prevState, error: false }));
+      }, 800);
     } catch (err) {
-      const error = err as Error;
-      console.log({ error });
+      console.log(err);
     }
   }
   async function handleGoogleSignIn() {
@@ -69,43 +76,60 @@ const Login = () => {
 
   return !loading ? (
     <div className="h-screen">
-      <div className="fixed inset-x-0 bg-primary p-2 text-white">
-        <p className="uppercase">cares</p>
-      </div>
+      <Header />
       <form
         onSubmit={(e) => void handleSubmitEmailAndPassword(e)}
         className="flex h-full flex-col items-center justify-center gap-4"
       >
-        <h2 className="text-center text-3xl font-semibold">Login</h2>
+        <h2 className="text-center text-3xl font-bold">Login</h2>
         <input
-          className={`border-slate-300 ${inputBaseStyle}`}
+          className={`${
+            state.error
+              ? "animate-shake border-red-500 animate-infinite animate-ease-in"
+              : "border-primary"
+          } ${inputBaseStyle}`}
           // className={`${(state.email) ? 'border-green-500' : state.email === '' ? 'border-slate-300' : 'border-red-500'} ${inputBaseStyle}`}
           required
           type="email"
           onChange={handleEmail}
-          placeholder="email"
+          placeholder="Email"
         />
         <input
-          className={`border-slate-300 ${inputBaseStyle}`}
+          className={`${
+            state.error
+              ? "animate-shake border-red-500 animate-infinite animate-ease-in"
+              : "border-primary"
+          } ${inputBaseStyle}`}
           required
           type="password"
           onChange={handlePassword}
-          placeholder="password"
+          placeholder="Password"
         />
         <button
+          id="submit"
           type="submit"
-          className="rounded-lg bg-primary p-4 px-6 text-white shadow-sm"
+          className={`rounded-lg bg-primary px-12 py-3 text-white shadow-md duration-300 ease-in-out hover:scale-105 active:bg-paper active:text-primary`}
         >
           Login
         </button>
         <p>or</p>
-        <button type="button" onClick={() => void handleGoogleSignIn()}>
-          Sign in with Google
+        <button
+          type="button"
+          className="flex items-center justify-between gap-2 rounded-lg bg-paper px-6 py-2 shadow-md duration-300 ease-in-out hover:scale-105 active:bg-secondary active:text-paper"
+          onClick={() => void handleGoogleSignIn()}
+        >
+          <Image
+            alt="google"
+            src="/google.svg"
+            className="h-8 w-8"
+            {...imageDimension(icon)}
+          />
+          Sign in
         </button>
       </form>
       <p
         className={`${
-          error ? "opacity-100" : "opacity-0"
+          state.error ? "opacity-100" : "opacity-0"
         } select-none text-red-500 duration-300 ease-in-out`}
       >
         Authentication Error

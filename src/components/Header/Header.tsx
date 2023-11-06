@@ -1,10 +1,20 @@
+import Image from "next/image";
 import React from "react";
+import { icon, imageDimension } from "~/utils/image";
 import { projectName } from "~/utils/names";
 
 const Header = () => {
   return (
-    <header className="left-0 top-0 z-10 w-full bg-primary p-2 text-paper">
-      <h1 className="font-semibold uppercase">{projectName}</h1>
+    <header className="w-full bg-primary p-4 text-paper shadow-md">
+      <section className="flex flex-row items-center gap-4">
+        <Image
+          alt="cares_icon"
+          src="/cares_icon.png"
+          className="h-8 w-8 brightness-100 contrast-200 grayscale hue-rotate-180 invert saturate-100"
+          {...imageDimension(icon)}
+        />
+        <h1 className="text-lg font-bold uppercase">{projectName}</h1>
+      </section>
     </header>
   );
 };

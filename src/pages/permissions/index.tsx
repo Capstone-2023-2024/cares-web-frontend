@@ -698,7 +698,7 @@ const AssignMayor = () => {
               <section>{renderStudentsWithSection()}</section>
             )}
             <button
-              onClick={void handleClassMayor}
+              onClick={() => void handleClassMayor()}
               disabled={!addingMayorCondition}
               className={`${buttonConditionalStyle} rounded-lg p-2 capitalize shadow-sm`}
             >

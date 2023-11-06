@@ -17,6 +17,7 @@ import Button from "../../Button";
 import type { InputRef, PostFormStateProps } from "./types";
 import { typesOfAnnouncement } from "~/utils/announcement";
 import AnnouncementTypesSelection from "./AnnouncementTypesSelection";
+import type { AnnouncementStateProps } from "~/contexts/AnnouncementContext/types";
 
 const PostForm = () => {
   const { currentUser } = useAuth();
@@ -120,10 +121,8 @@ const PostForm = () => {
     }
   }
   function handleTypeChange(event: ChangeEvent<HTMLSelectElement>) {
-    const type = event.target.value;
-    if (typeof type !== "string") {
-      setState((prevState) => ({ ...prevState, type }));
-    }
+    const type = event.target.value as AnnouncementStateProps["type"];
+    setState((prevState) => ({ ...prevState, type }));
   }
   async function uploadImage(image: File) {
     try {
