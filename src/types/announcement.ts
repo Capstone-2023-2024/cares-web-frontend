@@ -5,7 +5,7 @@ export interface AnnouncementProps
   extends DateFileProps,
     FirestoreDatabaseProps,
     Partial<PhotoMediaProps> {
-  type: "event" | "university_memorandum" | "recognition";
+  type: "event" | "university_memorandum" | "recognition" | 'others';
   postedBy: string;
   tags: string[];
   message: string;
