@@ -13,4 +13,8 @@ export const typesOfAnnouncement: TypesOfAnnouncementProps[] = [
     name: "recognition",
     type: "recognition",
   },
+  {
+    name: "others",
+    type: "others",
+  },
 ];
