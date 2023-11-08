@@ -6,9 +6,11 @@ import React, {
 } from "react";
 
 interface InitialStateProps {
+  showNav: boolean;
   showCalendar: boolean;
 }
 interface ToggleContextType extends InitialStateProps {
+  toggleNav: (value: boolean) => void;
   toggleCalendar: () => void;
 }
 interface ToggleProviderType {
@@ -16,28 +18,30 @@ interface ToggleProviderType {
 }
 
 const initialState: InitialStateProps = {
+  showNav: false,
   showCalendar: false,
 };
 
 const ToggleContext = createContext<ToggleContextType>({
   ...initialState,
+  toggleNav: () => null,
   toggleCalendar: () => null,
 });
 const ToggleProvider = ({ children }: ToggleProviderType) => {
-  const [{ showCalendar }, setState] = useState(initialState);
-  function handleState(
-    key: keyof InitialStateProps,
-    value: InitialStateProps["showCalendar"]
-  ) {
-    setState((prevState) => ({ ...prevState, [key]: value }));
-  }
+  const [state, setState] = useState(initialState);
 
+  function toggleNav(value: boolean) {
+    setState((prevState) => ({ ...prevState, showNav: value }));
+  }
   function toggleCalendar() {
-    handleState("showCalendar", !showCalendar);
+    setState((prevState) => ({
+      ...prevState,
+      showCalendar: !prevState.showCalendar,
+    }));
   }
 
   return (
-    <ToggleContext.Provider value={{ showCalendar, toggleCalendar }}>
+    <ToggleContext.Provider value={{ ...state, toggleNav, toggleCalendar }}>
       {children}
     </ToggleContext.Provider>
   );

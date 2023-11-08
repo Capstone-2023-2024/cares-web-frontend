@@ -21,6 +21,7 @@ import type { AnnouncementStateProps } from "~/contexts/AnnouncementContext/type
 
 const PostForm = () => {
   const { currentUser } = useAuth();
+  const { showCalendar } = useToggle();
   const initState: PostFormStateProps = {
     postedBy: currentUser?.email ?? "",
     files: null,
@@ -40,6 +41,7 @@ const PostForm = () => {
   const { selectedDateArray, year, month, changeSelectedDateArray } = useDate();
   const inputRef: InputRef = useRef(null);
   const { typeOfAccount } = useAuth();
+  const imagePrefix = "image_";
   const placeholderText =
     state.type === "event"
       ? "What's happening in our campus?"
@@ -54,7 +56,7 @@ const PostForm = () => {
       const result = oFREvent.target?.result;
       if (result !== null && result !== undefined) {
         const imageContainer = document.getElementById(
-          `image_${index}`
+          `${imagePrefix}${index}`
         ) as HTMLImageElement;
         return (imageContainer.src = result as string);
       }
@@ -216,30 +218,34 @@ const PostForm = () => {
   }
   const renderUploadButton = () => {
     return (
-      <div className="relative -right-[22rem] bottom-36 z-10 flex w-max overflow-hidden rounded-xl bg-blue-400/40 px-4 py-2 text-white/40 duration-300 ease-in-out hover:bg-blue-400 hover:text-white">
-        <label className="absolute inset-0 m-auto w-max translate-y-1/4 self-center text-center text-xs">
+      <div className="absolute right-0 top-36 z-10 flex w-24 overflow-hidden rounded-xl bg-blue-400/40 px-4 py-2 text-white/40 duration-300 ease-in-out hover:bg-blue-400 hover:text-white">
+        <label className="absolute inset-x-0 mx-auto w-2/3 self-center text-center text-xs">
           {state.files !== null && state.files.length > 0
             ? "Add images"
             : "Choose Images"}
         </label>
         <input
-          ref={inputRef}
-          type="file"
           multiple
-          className="h-6 w-16 scale-150 cursor-pointer self-center opacity-0"
-          accept=".jpg, .jpeg, .png"
+          type="file"
+          ref={inputRef}
+          disabled={!showCalendar}
           onChange={handleFilePick}
+          accept=".jpg, .jpeg, .png"
+          className={`${
+            !showCalendar ? "" : "cursor-pointer"
+          } h-full w-full scale-150 opacity-0`}
         />
       </div>
     );
   };
   const renderSelectedImages = () => {
     return (
-      <div className="h-fit max-h-32 overflow-x-auto">
+      <div className="h-24 w-full overflow-x-auto">
         {state.files?.map((value, i) => {
           return (
-            <div key={i} className="relative">
+            <div key={i} className="relative inline-table h-24 w-12">
               <button
+                disabled={!showCalendar}
                 type="button"
                 onClick={() =>
                   handleRemoveFromArray({
@@ -247,14 +253,14 @@ const PostForm = () => {
                     index: i,
                   })
                 }
-                className="absolute right-0 top-0 rounded-full bg-primary/70 px-4 py-2 text-paper"
+                className="absolute right-0 top-0 rounded-full bg-primary/70 px-2 py-1 text-xs text-paper"
               >
                 x
               </button>
               {/*eslint-disable-next-line @next/next/no-img-element */}
               <img
                 alt=""
-                id={i.toString()}
+                id={`${imagePrefix}${i.toString()}`}
                 className="h-auto w-auto"
                 {...imageDimension(icon)}
               />
@@ -275,6 +281,7 @@ const PostForm = () => {
               className="relative w-fit gap-2 rounded-lg bg-paper/90 px-6 py-2"
             >
               <button
+                disabled={!showCalendar}
                 type="button"
                 onClick={() =>
                   handleRemoveFromArray({
@@ -301,7 +308,7 @@ const PostForm = () => {
       onSubmit={(e: React.MouseEvent<HTMLFormElement>) => {
         void handleSubmit(e);
       }}
-      className="mx-auto my-10 flex w-3/4 flex-col items-center justify-center gap-2 rounded-xl bg-primary/50 py-4"
+      className="mx-auto my-10 flex w-5/6 flex-col items-center justify-center gap-2 rounded-xl bg-primary/50 py-4"
     >
       <h2 className="text-xl">Create Post</h2>
       <p className="flex items-center gap-2 font-semibold uppercase">
@@ -312,17 +319,20 @@ const PostForm = () => {
       </p>
       <div className="relative w-3/4">
         <AnnouncementTypesSelection
+          disabled={!showCalendar}
           value={state.type}
           onChange={handleTypeChange}
         />
         <textarea
           required
+          disabled={!showCalendar}
           value={state.message}
           onChange={handleMessage}
           className="w-full resize-none rounded-xl p-4 pb-16"
           placeholder={placeholderText}
         />
         <input
+          disabled={!showCalendar}
           value={state.tag}
           onChange={handleTagChange}
           onKeyDown={handleTagEnter}
@@ -333,7 +343,13 @@ const PostForm = () => {
         {renderUploadButton()}
         {renderSelectedImages()}
       </div>
-      <Button type="submit" text="Post" primary rounded />
+      <Button
+        type="submit"
+        disabled={!showCalendar}
+        text="Post"
+        primary
+        rounded
+      />
     </form>
   );
 };

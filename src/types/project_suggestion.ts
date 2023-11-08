@@ -14,6 +14,7 @@ export interface StateProps {
 
 export interface EventProps
   extends Pick<StateProps, "type" | "state" | "options" | "question"> {
+  postedBy: string;
   votes?: Record<string, string>;
   dateOfExpiration: number;
   dateCreated: number;

@@ -1,4 +1,3 @@
-import React from "react";
 import { typesOfAnnouncement } from "~/utils/announcement";
 import type { AnnouncementTypesSelectionProps } from "./types";
 

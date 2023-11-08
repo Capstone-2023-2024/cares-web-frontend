@@ -91,7 +91,7 @@ const ChatProvider = ({ children }: ChatProviderProps) => {
         iterateSnapshot(snapshot);
       }
     };
-    return () => void unsub();
+    return void unsub();
   }, []);
 
   return (

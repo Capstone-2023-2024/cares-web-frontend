@@ -15,6 +15,7 @@ import type {
   InitialProps,
   InitialPropsType,
 } from "./types";
+import Loading from "~/components/Loading";
 
 const PROMISECONDITION = true;
 const initialProps: InitialProps = {
@@ -141,7 +142,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     <AuthContext.Provider
       value={{ ...state, signout, emailAndPassSignin, signInWithGoogle }}
     >
-      {state.loading ? <p>Loading</p> : children}
+      {state.loading ? <Loading /> : children}
     </AuthContext.Provider>
   );
 };

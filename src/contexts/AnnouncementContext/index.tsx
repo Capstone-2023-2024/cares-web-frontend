@@ -51,7 +51,6 @@ const AnnouncementProvider = ({ children }: AnnouncementProviderProps) => {
     setState((prevState) => ({ ...prevState, tag }));
   }
 
-  console.log({ state });
   useEffect(() => {
     const limitNumber = 15;
     const eventRecognitionQuery = query(

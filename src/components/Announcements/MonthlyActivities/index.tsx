@@ -33,11 +33,11 @@ const MonthlyActivities = () => {
   }
 
   return (
-    <div>
+    <div className="relative">
       <div className="flex items-center justify-around gap-2">
         <div className="flex items-center justify-center">
-          <p className="capitalize">type:</p>
-          <div className="min-w-24 w-max">
+          <p className="text-xs capitalize">type:</p>
+          <div className="min-w-24 w-fit">
             <AnnouncementTypesSelection
               value={type}
               onChange={handleTypeChange}
@@ -45,8 +45,8 @@ const MonthlyActivities = () => {
           </div>
         </div>
         <div className="flex items-center justify-center">
-          <p className="capitalize">order by:</p>
-          <div className="min-w-24 w-max">
+          <p className="text-xs capitalize">order:</p>
+          <div className="min-w-24 w-fit">
             <select
               className="w-full rounded-lg bg-primary p-2 capitalize text-paper"
               value={orderBy}
@@ -58,10 +58,11 @@ const MonthlyActivities = () => {
           </div>
         </div>
         <div className="flex items-center justify-center">
-          <p className="capitalize">search by tag:</p>
-          <div className="min-w-24 w-max">
+          <p className="text-xs capitalize">search by:</p>
+          <div className="min-w-24 w-fit">
             <input
-              className="w-full rounded-lg border border-primary p-1 capitalize text-primary"
+              placeholder="tag"
+              className="w-full rounded-lg border border-primary p-1 text-primary"
               value={tag}
               onChange={handleTag}
             />

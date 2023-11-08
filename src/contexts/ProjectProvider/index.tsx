@@ -15,6 +15,7 @@ interface OptionsProps {
 
 export interface PollProps {
   id: string;
+  postedBy: string;
   dateCreated: number;
   dateOfExpiration: number;
   options: Partial<OptionsProps>[];

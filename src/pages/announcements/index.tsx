@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import MonthlyActivities from "~/components/Announcements/MonthlyActivities";
 import PostForm from "~/components/Announcements/PostForm";
 import ToggleWrapper from "~/components/Announcements/ToggleWrapper";
+import Button from "~/components/Button";
 import Calendar from "~/components/Calendar";
 import Loading from "~/components/Loading";
 import Main from "~/components/Main";
@@ -54,35 +55,26 @@ const Announcements = () => {
 
   return currentUser !== null ? (
     <Main withPathName moreThanOne>
-      <div className="mx-auto mt-8 flex w-96 flex-row justify-between">
-        <button
+      <div className="flex flex-row justify-between">
+        <Button
+          primary
+          rounded
           disabled={showCalendar}
-          className={`${
-            showCalendar
-              ? "bg-slate-200 text-slate-300"
-              : "bg-primary text-white"
-          } rounded-lg p-2 capitalize`}
           onClick={handlePrev}
-        >
-          prev
-        </button>
-        <div className="flex items-center justify-center gap-2 text-xl font-semibold">
-          <h2 className="text-center capitalize">{monthName}</h2>
-          <h2 className="text-center capitalize">{year}</h2>
+          text="prev"
+        />
+        <div className="flex items-center justify-center gap-2 text-center text-xl font-semibold capitalize">
+          <h2>{`${monthName} ${year}`}</h2>
         </div>
-        <button
+        <Button
+          primary
+          rounded
           disabled={showCalendar}
-          className={`${
-            showCalendar
-              ? "bg-slate-200 text-slate-300"
-              : "bg-primary text-white"
-          } rounded-lg p-2 capitalize`}
           onClick={handleNext}
-        >
-          next
-        </button>
+          text="next"
+        />
       </div>
-      <div className="min-h-96 relative h-[70vh] overflow-hidden">
+      <div className="relative h-[70vh]">
         <ToggleWrapper condition={showCalendar}>
           <PostForm />
         </ToggleWrapper>

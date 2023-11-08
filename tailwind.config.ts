@@ -16,6 +16,30 @@ export default {
         warning: "#E5EAA9",
         unavailable: "#AEAEAE",
       },
+      keyframes: {
+        loading: {
+          "0%, 100%": {
+            transform: "translate(1rem, 1rem)",
+            backgroundColor: "#767373",
+          },
+          "25%": {
+            transform: "translate(-1rem, 1rem)",
+            backgroundColor: "#28303B",
+          },
+          "50%": {
+            transform: "translate(-1rem, -1rem)",
+            backgroundColor: "#ffd866",
+          },
+          "75%": {
+            transform: "translate(1rem, -1rem)",
+            backgroundColor: "#f5f5f5",
+          },
+        },
+      },
+      animation: {
+        "spin-slow": "spin 3s linear infinite",
+        loading: "loading 1s ease-in-out infinite",
+      },
     },
   },
   plugins: [require("tailwindcss-animated")],

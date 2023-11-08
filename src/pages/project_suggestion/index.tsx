@@ -1,8 +1,15 @@
-import { addDoc, collection } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  doc,
+  increment,
+  updateDoc,
+} from "firebase/firestore";
 import React, { useState, type FormEvent } from "react";
 import Masonry from "react-responsive-masonry";
 import Main from "~/components/Main";
 import TickingClock from "~/components/TickingClock";
+import { useAuth } from "~/contexts/AuthContext";
 import ProjectProvider, {
   useProject,
   type PollProps,
@@ -30,11 +37,11 @@ const Content = () => {
     text: "",
     days: null,
   };
+  const { currentUser } = useAuth();
   const [state, setState] = useState(initState);
-  // const publishCondition =
-  //   state.options.length > 1 && state.question.trim() !== "";
   const daysInMilliseconds = 86400000;
   const event: Omit<EventProps, "dateOfExpiration"> = {
+    postedBy: currentUser?.email ?? "null",
     type: state.type,
     state: state.state,
     question: state.question,
@@ -51,36 +58,10 @@ const Content = () => {
       setState((prevState) => ({ ...prevState, days: numberify }));
     }
   }
-  // function handlePollOption(event: React.ChangeEvent<HTMLInputElement>) {
-  //   const text = event.target.value;
-  //   setState((prevState) => ({ ...prevState, text }));
-  // }
-  // function handleEnter(e: React.KeyboardEvent<HTMLInputElement>) {
-  //   if (state.text.trim() !== "" && e.key === "Enter") {
-  //     const options = state.options;
-  //     options.push({ value: state.text });
-  //     const text = "";
-  //     setState((prevState) => ({ ...prevState, text, options }));
-  //   }
-  // }
   function handleQuestion(event: React.ChangeEvent<HTMLTextAreaElement>) {
     const question = event.target.value;
     setState((prevState) => ({ ...prevState, question }));
   }
-  // function handleRemovePollItem(index: number) {
-  //   const options = state.options.filter((val) => val !== state.options[index]);
-  //   setState((prevState) => ({ ...prevState, options }));
-  // }
-  // async function handlePublish() {
-  //   if (state.days !== null) {
-  //     try {
-  //       await addDoc(collection(db, "project_suggestion"), event);
-  //       setState(initState);
-  //     } catch (err) {
-  //       console.log(err);
-  //     }
-  //   }
-  // }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -162,15 +143,10 @@ const Content = () => {
 
 const PollsContainer = () => {
   interface PollsContainerStateProps {
-    published: PollProps[];
-    unpublished: PollProps[];
     target?: PollProps;
   }
   const { polls } = useProject();
-  const PollsContainerState: PollsContainerStateProps = {
-    published: [...polls.filter(({ state }) => state === "published")],
-    unpublished: [...polls.filter(({ state }) => state === "unpublished")],
-  };
+  const PollsContainerState: PollsContainerStateProps = { target: undefined };
   const [state, setState] = useState(PollsContainerState);
   const items = state.target?.options
     ? [...shuffle([...state.target.options])].map((props, index) => {
@@ -203,6 +179,7 @@ const PollsContainer = () => {
         );
       })
     : [];
+  const dayValue = 1000 * 60 * 60 * 24;
 
   function shuffle(array: PollProps["options"]) {
     for (let i = array.length - 1; i > 0; i--) {
@@ -214,10 +191,40 @@ const PollsContainer = () => {
     return array;
   }
 
+  async function handleExtendTime(id: string) {
+    try {
+      await updateDoc(doc(collection(db, "project_suggestion"), id), {
+        dateOfExpiration: increment(dayValue),
+      });
+    } catch (err) {
+      console.log(err);
+    }
+  }
+  async function handlePublish() {
+    try {
+      if (state.target !== undefined) {
+        const { id, ...rest } = state.target;
+        const options = rest.options;
+        const length = options.length;
+        const sortByVotes = options.sort(
+          (a, b) => (a.value ?? -1) - (b.value ?? -1)
+        );
+        const mostVotedValues = sortByVotes.splice(length - 4);
+        await updateDoc(doc(collection(db, "project_suggestion"), id), {
+          dateOfExpiration: increment(dayValue),
+          state: "published",
+          options: mostVotedValues,
+        });
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
   return (
     <div className="grid grid-cols-2 items-start">
       {state.target !== undefined && (
-        <section className="absolute inset-0 z-30 h-full min-h-screen bg-paper/95">
+        <section className="fixed inset-0 z-30 h-full min-h-screen bg-paper/95">
           <button
             className="rounded-full bg-red-500 p-2 px-3 text-xs text-paper"
             onClick={() =>
@@ -230,26 +237,35 @@ const PollsContainer = () => {
           <h3 className="p-4 text-center text-2xl font-bold">
             {state.target?.question}
           </h3>
-          <TickingClock
-            expiration={state.target?.dateOfExpiration}
-            title="time remaining"
-          />
+          <div className="mx-auto flex w-max rounded-lg bg-secondary">
+            <TickingClock
+              expiration={state.target?.dateOfExpiration}
+              title="time remaining"
+            />
+            <div className="p-6 text-paper">
+              <button
+                onClick={() => void handleExtendTime(state.target?.id ?? "")}
+                className="rounded-lg bg-primary p-2 capitalize"
+              >
+                extend a day
+              </button>
+            </div>
+          </div>
           <div className="mx-auto w-1/2 rounded-lg bg-paper p-4 shadow-sm">
             <p className="text-center text-lg font-semibold">Consensus</p>
             <Masonry columnsCount={6} gutter="1.5rem">
               {items}
             </Masonry>
           </div>
-          <button className="w-full rounded-lg p-2">
+          <div className="mx-auto w-max rounded-lg p-2">
             <button
-              onClick={() =>
-                alert("function is not yet implemented, calm your poopoo")
-              }
-              className="mx-auto w-1/2 rounded-lg bg-secondary p-2 capitalize text-paper shadow-sm"
+              onClick={() => void handlePublish()}
+              className=" rounded-lg bg-secondary p-2 capitalize text-paper shadow-sm"
             >
               publish now
             </button>
-          </button>
+          </div>
+          <p className="p-2 text-sm text-primary">{state.target?.postedBy}</p>
         </section>
       )}
       <section>
@@ -257,63 +273,67 @@ const PollsContainer = () => {
           Awaiting consensus:{" "}
         </h1>
         <div className="flex h-[60vh] flex-col gap-2 overflow-y-auto p-2">
-          {[...polls].map(({ id, question, ...rest }) => {
-            return (
-              <button
-                key={id}
-                onClick={() =>
-                  setState((prevState) => ({
-                    ...prevState,
-                    target: { id, question, ...rest },
-                  }))
-                }
-                onMouseEnter={(e) => {
-                  const button = e.currentTarget;
-                  const holder = document.createElement("p");
-                  holder.textContent = "Click to get status from";
-                  holder.classList.add(
-                    "text-paper",
-                    "bg-secondary",
-                    "p-2",
-                    "rounded-lg",
-                    "absolute",
-                    "inset-x-0",
-                    "top-0",
-                    "z-10",
-                    "helper"
-                  );
-                  button.appendChild(holder);
-                }}
-                onMouseLeave={(e) => {
-                  const button = e.currentTarget;
-                  const helpers = button.querySelectorAll(".helper");
-                  helpers.forEach((child) => {
-                    button.removeChild(child);
-                  });
-                }}
-                className="relative rounded-xl bg-primary/80 p-4 text-paper shadow-sm duration-300 ease-in-out hover:bg-primary"
-              >
-                <p className="grid font-bold">
-                  Question:<span className="font-light">{question}</span>
-                </p>
-              </button>
-            );
-          })}
+          {[...polls.filter(({ state }) => state === "unpublished")].map(
+            ({ id, question, ...rest }) => {
+              return (
+                <button
+                  key={id}
+                  onClick={() =>
+                    setState((prevState) => ({
+                      ...prevState,
+                      target: { id, question, ...rest },
+                    }))
+                  }
+                  onMouseEnter={(e) => {
+                    const button = e.currentTarget;
+                    const holder = document.createElement("p");
+                    holder.textContent = "Click to get status from";
+                    holder.classList.add(
+                      "text-paper",
+                      "bg-secondary",
+                      "p-2",
+                      "rounded-lg",
+                      "absolute",
+                      "inset-x-0",
+                      "top-0",
+                      "z-10",
+                      "helper"
+                    );
+                    button.appendChild(holder);
+                  }}
+                  onMouseLeave={(e) => {
+                    const button = e.currentTarget;
+                    const helpers = button.querySelectorAll(".helper");
+                    helpers.forEach((child) => {
+                      button.removeChild(child);
+                    });
+                  }}
+                  className="relative rounded-xl bg-primary/80 p-4 text-paper shadow-sm duration-300 ease-in-out hover:bg-primary"
+                >
+                  <p className="grid font-bold">
+                    Question:<span className="font-light">{question}</span>
+                  </p>
+                </button>
+              );
+            }
+          )}
         </div>
       </section>
       <section className="h-[50vh] bg-white">
         <h1 className="text-center text-lg font-semibold">Ongoing Polls: </h1>
         <div className="flex flex-col gap-2 overflow-y-auto p-2">
-          {[...state.published].map(({ id, question }) => {
-            return (
-              <button
-                key={id}
-                className="rounded-xl bg-yellow-300 p-4 shadow-sm"
-              >
-                <p>{question}</p>
-              </button>
-            );
-          })}
+          {[...polls.filter(({ state }) => state === "published")].map(
+            ({ id, question }) => {
+              return (
+                <button
+                  key={id}
+                  className="rounded-xl bg-yellow-300 p-4 shadow-sm"
+                >
+                  <p>{question}</p>
+                </button>
+              );
+            }
+          )}
         </div>
       </section>
     </div>

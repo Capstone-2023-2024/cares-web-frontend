@@ -43,7 +43,7 @@ const Map = ({ month, year }: Omit<DateType, "date">) => {
   const maxDays = selectedMonth !== undefined ? selectedMonth.maxDays : -1;
   const { value } = currentWeekDay({ month, year }, weekNames);
   const dateMap = calendarInArray({ ...value, maxDays });
-  const { toggleCalendar } = useToggle();
+  const { toggleCalendar, showCalendar } = useToggle();
   const { changeSelectedDateArray } = useDate();
   const [selectedDates, setSelectedDates] = useState<number[]>([]);
   const [isSelectionEnable, setEnableSelection] = useState<boolean>(false);
@@ -101,13 +101,13 @@ const Map = ({ month, year }: Omit<DateType, "date">) => {
         )[0];
         return (
           <button
-            disabled={!isOverNoValue}
+            disabled={!isOverNoValue || showCalendar}
             onMouseDown={(e) => handleMouseDown(e, today)}
             onMouseUp={handleMouseUp}
             onMouseOver={(e) => handleMouseOver(e, today)}
             className={`${
-              arrayContainsSelectedDate ? "border-blue-400 shadow-md" : ""
-            } sm:h-26 border duration-300 ease-in-out`}
+              arrayContainsSelectedDate ? "shadow-md" : ""
+            } sm:h-26 duration-300 ease-in-out`}
             key={index}
           >
             <p
@@ -119,7 +119,7 @@ const Map = ({ month, year }: Omit<DateType, "date">) => {
                 arrayContainsSelectedDate
                   ? "bg-blue-400 text-white"
                   : "bg-transparent"
-              } ${today > noValue ? "text-black" : ""} p-2`}
+              } ${today > noValue ? "text-black" : ""} p-4`}
             >
               {today}
             </p>

@@ -154,26 +154,26 @@ const Complaints = () => {
       ({ studentNo }) => studentNoSelected === studentNo
     )[0];
     return (
-      <>
+      <div className="bg-primary/25 p-2">
         <p>{student?.name}</p>
-        <div className="flex h-1/6 w-full items-center justify-center gap-2 bg-primary/25">
+        <div className="flex items-center justify-center gap-2">
           <ActionButton
-            onClick={void handleResolution}
+            onClick={() => void handleResolution()}
             text="resolved"
             color="green"
           />
           <ActionButton
-            onClick={void handleTurnOver}
+            onClick={() => void handleTurnOver()}
             text="turn-over"
             color="yellow"
           />
           <ActionButton
-            onClick={void handleRejection}
+            onClick={() => void handleRejection()}
             text="reject"
             color="red"
           />
         </div>
-      </>
+      </div>
     );
   };
   function renderConcerns() {
@@ -243,7 +243,7 @@ const Complaints = () => {
             className="h-1/6 w-full resize-none border border-black p-2"
             value={state.message}
             onChange={handleChange}
-            onKeyDown={void handleEnter}
+            onKeyDown={(e) => void handleEnter(e)}
           />
         </div>
       )}

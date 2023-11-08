@@ -16,12 +16,13 @@ const ActionButton = ({ text, color, src, ...rest }: ActionButtonProps) => {
   return (
     <button
       {...rest}
-      className={`${getColor()} flex h-max items-center gap-2 rounded-xl p-2`}
+      className={`${getColor()} flex h-max w-max items-center gap-2 rounded-xl p-2`}
     >
       {src ? (
         <Image width={DIMENSION} height={DIMENSION} src={src} alt="icon" />
       ) : (
-        <p className="text-xs">icon</p>
+        <></>
+        // <p className="text-xs">icon</p>
       )}
       <p>{text}</p>
     </button>

@@ -2,11 +2,31 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import type { PathType } from "./types";
+import { useToggle } from "~/contexts/ToggleContext";
 
 const Nav = () => {
+  const { showNav, toggleNav } = useToggle();
+
   return (
-    <nav className="inline-block w-2/6 bg-secondary p-2 text-paper">
-      <h2 className="font-bold">MENU</h2>
+    <nav
+      className={`${
+        showNav ? "fixed inset-y-0 right-0 z-30" : "hidden sm:inline-block"
+      } h-full min-h-screen w-2/6 bg-secondary p-2 text-paper`}
+    >
+      {showNav ? (
+        <div className="relative p-2">
+          <h2 className="font-bold">MENU</h2>
+          <button
+            onClick={() => toggleNav(false)}
+            className="absolute inset-y-0 right-0 my-auto h-max rounded-full bg-primary p-1 px-2 text-xs"
+          >
+            x
+          </button>
+        </div>
+      ) : (
+        <h2 className="font-bold">MENU</h2>
+      )}
+
       <ul className="m-0 list-none p-0 duration-300 ease-in-out">
         {/* <Path pathname="about" /> */}
         <Path iconSrc="/megaphone.png" pathname="announcements" />
