@@ -1,13 +1,22 @@
+interface DocumentProps {
+  files: string[];
+}
+
+export interface ConcernBaseProps extends Partial<DocumentProps> {
+  message: string;
+  sender: string;
+  timestamp: number;
+}
+
 export interface ConcernProps {
-    id: string;
-    message: string;
-    withDocument: boolean;
-    sender: string;
-    dateCreated: number;
-  }
-  
-  export interface ChatTextProps {
-    text: string;
-    condition: boolean;
-    textSize?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-  }
+  dateCreated: number;
+  recipient: "mayor" | "adviser" | "program_chair" | "board_member";
+  messages: ConcernBaseProps[];
+  status: "processing" | "resolved" | "turn-over";
+}
+
+export interface ChatTextProps {
+  text: string;
+  condition: boolean;
+  textSize?: "xs" | "sm" | "md" | "lg" | "xl";
+}

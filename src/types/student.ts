@@ -13,10 +13,20 @@ export interface StudentCORProps {
   email: string;
 }
 
-export interface StudentWithSectionProps extends StudentCORProps {
-  section: "a" | "b" | "c" | "d" | "e" | "f" | "g";
+export interface StudentWithClassSection extends StudentCORProps {
+  section?: "a" | "b" | "c" | "d" | "e" | "f" | "g";
+  src?: string;
 }
 
 export interface ResultType extends Pick<StudentCORProps, "name"> {
   type?: "first" | "last" | "initial";
+}
+
+export interface MayorProps {
+  dateCreated: number;
+  email: string;
+  name: string;
+  section: StudentWithClassSection["section"];
+  studentNo: string;
+  yearLevel: string;
 }
