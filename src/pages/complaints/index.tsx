@@ -225,6 +225,7 @@ const Complaints = () => {
     };
     if (state.targetDocument !== undefined) {
       if (typeof state.selectedChat === "object") {
+        /** concernDetails enters here */
         const data: ConcernProps = {
           messages: [complaint],
           ...state.selectedChat,
@@ -237,7 +238,7 @@ const Complaints = () => {
           return setState((prevState) => ({
             ...prevState,
             message: initState.message,
-            selectedChat: document.id,
+            chatBox: document.id,
           }));
         } catch (err) {
           console.log(err, "sending message through complaints => individual");
@@ -382,30 +383,32 @@ const Complaints = () => {
           <>
             <h2>Complaint/Concern(s):</h2>
             <div className="flex h-64 flex-col gap-2 overflow-y-auto p-2">
-              {state.complaintRecord?.map(({ id, messages, dateCreated }) => {
-                const selectedMessage = messages[messages.length - 1];
-                const date = new Date();
-                const timestamp = new Date();
-                date.setTime(dateCreated);
-                timestamp.setTime(selectedMessage?.timestamp ?? -28800000);
-                return (
-                  <button
-                    key={id}
-                    className="mx-auto w-max border border-black bg-paper"
-                    onClick={() => handleSelectComplaintId(id)}
-                  >
-                    <p>{`Message: ${selectedMessage?.message.substring(
-                      0,
-                      selectedMessage.message.length > 20
-                        ? 15
-                        : selectedMessage.message.length
-                    )}...`}</p>
-                    <p>{`SenderId: ${selectedMessage?.sender}`}</p>
-                    <p>{timestamp.toTimeString()}</p>
-                    <p>{date.toUTCString()}</p>
-                  </button>
-                );
-              })}
+              {state.complaintRecord
+                ?.sort((a, b) => b.dateCreated - a.dateCreated)
+                .map(({ id, messages, dateCreated }) => {
+                  const selectedMessage = messages[messages.length - 1];
+                  const date = new Date();
+                  const timestamp = new Date();
+                  date.setTime(dateCreated);
+                  timestamp.setTime(selectedMessage?.timestamp ?? -28800000);
+                  return (
+                    <button
+                      key={id}
+                      className="mx-auto w-max border border-black bg-paper"
+                      onClick={() => handleSelectComplaintId(id)}
+                    >
+                      <p>{`Message: ${selectedMessage?.message.substring(
+                        0,
+                        selectedMessage.message.length > 20
+                          ? 15
+                          : selectedMessage.message.length
+                      )}...`}</p>
+                      <p>{`SenderId: ${selectedMessage?.sender}`}</p>
+                      <p>{timestamp.toTimeString()}</p>
+                      <p>{date.toUTCString()}</p>
+                    </button>
+                  );
+                })}
             </div>
           </>
           <button onClick={handleNewConcern}>
