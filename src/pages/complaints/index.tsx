@@ -381,6 +381,10 @@ const Complaints = () => {
         }
       } else if (state.selectedChat === "class_section") {
         await addDoc(collection(state.targetDocument, "group"), complaint);
+        setState((prevState) => ({
+          ...prevState,
+          message: initState.message,
+        }));
         return console.log("new log");
       } else {
         /** This is for student forwarding messages to the existing complaint */
