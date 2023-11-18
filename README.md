@@ -1,24 +1,9 @@
-# Bootstrapped with Create T3 App [T3 Stack](https://create.t3.gg/)
+# This is a React development to be port in react-native
 
-# **TODO:**
+# Changelog:
 
-- Optimize image by reducing size
+- `student` and `mayor` flow done.
 
-```
-const URL = "http://localhost:3000/api/file/upload";
-const OPTIONS = {
-method: "POST",
-headers: {
-"Content-Type": "application/json",
-"Access-Control-Allow-Origin": "\*",
-},
-body: JSON.stringify({ file }),
-};
-const req = await fetch(URL, OPTIONS);
-const output = await req.text();
-console.log(output);
-const FILE: Buffer = JSON.parse(output);
-```
+# Issues:
 
-for ~/components/Announcements/PostForm.tsx -> uploadImage()
-
+- `student`'s new complaint UI is not reflected in Complaint box, check line 429

@@ -13,6 +13,8 @@ export interface ConcernProps {
   recipient: "mayor" | "adviser" | "program_chair" | "board_member";
   messages: ConcernBaseProps[];
   status: "processing" | "resolved" | "turn-over";
+  studentNo: string;
+  turnOvers?: number;
 }
 
 export interface ChatTextProps {
