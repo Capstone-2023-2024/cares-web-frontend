@@ -1,6 +1,6 @@
 import type { DocumentData } from "firebase/firestore";
 import type { ConcernProps } from "~/types/complaints";
-import type { StudentWithSectionProps } from "~/types/student";
+import type { StudentWithClassSection } from "~/types/student";
 
 export interface ChatTextProps {
   text: string;
@@ -28,7 +28,7 @@ export interface TicketInfoExtended extends TicketInfoProps {
 }
 
 export interface ComplaintsStateProps {
-  students: StudentWithSectionProps[];
+  students: StudentWithClassSection[];
   concerns: ConcernProps[];
   message: string;
   collectionReference: string | null;
