@@ -3,9 +3,11 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import type { PathType } from "./types";
 import { useToggle } from "~/contexts/ToggleContext";
+import { useAuth } from "~/contexts/AuthContext";
 
 const Nav = () => {
   const { showNav, toggleNav } = useToggle();
+  const { signout } = useAuth();
 
   return (
     <nav
@@ -22,6 +24,12 @@ const Nav = () => {
           >
             x
           </button>
+          <button
+            className="rounded-lg bg-red-500 p-2 text-white"
+            onClick={() => void signout()}
+          >
+            logout
+          </button>
         </div>
       ) : (
         <h2 className="font-bold">MENU</h2>
@@ -31,7 +39,6 @@ const Nav = () => {
         {/* <Path pathname="about" /> */}
         <Path iconSrc="/megaphone.png" pathname="announcements" />
         <Path iconSrc="/question.png" pathname="complaints" />
-        <Path iconSrc="/dashboard.png" pathname="dashboard" />
         <Path iconSrc="/hierarchy.png" pathname="permissions" />
         <Path iconSrc="/suggestion.png" pathname="project_suggestion" />
       </ul>

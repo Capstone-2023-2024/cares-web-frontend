@@ -13,6 +13,7 @@ import {
   type DocumentData,
   type DocumentReference,
 } from "firebase/firestore";
+import { useRouter } from "next/router";
 import {
   useCallback,
   useEffect,
@@ -21,6 +22,7 @@ import {
   type MouseEvent,
   type ReactNode,
 } from "react";
+import Main from "~/components/Main";
 import { useAuth } from "~/contexts/AuthContext";
 import type { ConcernBaseProps, ConcernProps } from "~/types/complaints";
 import { collectionRef } from "~/types/firebase";
@@ -63,6 +65,13 @@ interface InitStateProps {
   showMayorModal: boolean;
   showClassmates: boolean;
 }
+interface RenderStudentUIProps
+  extends Pick<InitStateProps, "role" | "mayor">,
+    ComplainBoxRendererProps {
+  children?: ReactNode;
+  higherUpAction: () => void;
+  classSectionAction: () => void;
+}
 interface ComplainBoxRendererProps {
   data: ConcernPropsExtended[] | undefined;
   heading: string;
@@ -84,6 +93,8 @@ const Complaints = () => {
   const LIMIT = 15;
   const { currentUser } = useAuth();
   const [state, setState] = useState(initState);
+  /**Don't include in react-native */
+  const router = useRouter();
 
   function handleMessage(event: ChangeEvent<HTMLTextAreaElement>) {
     const message = event.target.value;
@@ -467,7 +478,6 @@ const Complaints = () => {
     });
   };
   /**TODO: Optimized this together with Mayor UI */
-
   const renderInputMessageContainer = () => {
     const placeholder =
       state.selectedChat === "class_section"
@@ -534,9 +544,22 @@ const Complaints = () => {
     state.currentStudent?.section,
     mayorSetup,
   ]);
+  /**Don't include in react native */
+  useEffect(() => {
+    async function setup() {
+      try {
+        if (currentUser === null) {
+          await router.replace("login");
+        }
+      } catch (err) {
+        console.log(err);
+      }
+    }
+    return void setup();
+  }, [currentUser, router]);
 
   return (
-    <main>
+    <Main>
       <p className="capitalize">{`${state.role} ${state.currentStudent?.name}`}</p>
       <section>
         {state.role === "mayor" ? (
@@ -658,17 +681,9 @@ const Complaints = () => {
       {state.selectedChat !== undefined &&
         state.selectedChat !== "" &&
         renderInputMessageContainer()}
-    </main>
+    </Main>
   );
 };
-
-interface RenderStudentUIProps
-  extends Pick<InitStateProps, "role" | "mayor">,
-    ComplainBoxRendererProps {
-  children?: ReactNode;
-  higherUpAction: () => void;
-  classSectionAction: () => void;
-}
 
 const RenderStudentUI = ({
   role,
