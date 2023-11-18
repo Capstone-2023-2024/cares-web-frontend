@@ -2,7 +2,7 @@
 
 # Changelog:
 
-- Action buttons are now added
+- Action buttons(`resolved` and `turn-over`) are now added
 - UI Updated, moved class mates into student follow-up set-up for reference in various student ids
 - removed unnecessary components in development
 - `student` and `mayor` flow done.
