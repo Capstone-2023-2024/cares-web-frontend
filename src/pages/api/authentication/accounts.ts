@@ -16,7 +16,7 @@ export default async function handler(email: string) {
   const emailQuery = query(permColRef, where("email", "==", email));
   const countFromServer = await getCountFromServer(emailQuery);
   const count = countFromServer.data().count;
-  console.log({ count });
+  // console.log({ count });
 
   if (count < 1) {
     return null;

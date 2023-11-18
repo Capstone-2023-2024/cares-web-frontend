@@ -33,15 +33,20 @@ interface ConcernBasePropsExtended extends ConcernBaseProps {
   id: string;
 }
 
+interface YearLevelSectionProps {
+  yearLevel: string;
+  section: StudentWithClassSection["section"];
+}
+
 interface InitStateProps {
   role?: "student" | "mayor";
   mayor?: StudentWithClassSection;
   chatBox?: string;
   classMates?: StudentWithClassSection[];
-  currentStudent?: StudentWithClassSection;
+  targetDocument?: DocumentReference<DocumentData, DocumentData>;
+  currentStudent: StudentWithClassSection;
   complaintRecord?: ConcernPropsExtended[];
   groupComplaints?: ConcernBasePropsExtended[];
-  targetDocument?: DocumentReference<DocumentData, DocumentData>;
   message: string;
   selectedChat: string | Omit<ConcernProps, "messages">;
   showMayorModal: boolean;
@@ -49,13 +54,28 @@ interface InitStateProps {
 
 const Complaints = () => {
   const initState: InitStateProps = {
+    currentStudent: {
+      studentNo: "null",
+      college: "null",
+      schoolYear: "null",
+      name: "null",
+      course: "null",
+      gender: "null",
+      major: "null",
+      curriculum: "null",
+      age: "null",
+      yearLevel: "null",
+      scholarship: "null",
+      email: "null",
+      section: undefined,
+      src: undefined,
+    },
     message: "",
     selectedChat: "",
     showMayorModal: false,
   };
   const [state, setState] = useState(initState);
   const { currentUser } = useAuth();
-  const complaintsCol = collectionRef("complaints");
   const LIMIT = 15;
 
   function handleMessage(event: ChangeEvent<HTMLTextAreaElement>) {
@@ -65,43 +85,43 @@ const Complaints = () => {
   function handleClassmateClick(studentNo: string) {
     setState((prevState) => ({ ...prevState, selectedChat: studentNo }));
   }
-  function toggleModal(value: InitStateProps["showMayorModal"]) {
+  function toggleModal(value: boolean) {
     setState((prevState) => ({ ...prevState, showMayorModal: value }));
   }
 
-  const returnComplaintsQuery = useCallback(async () => {
-    const thisYear = new Date().getFullYear();
-    const nextYear = thisYear + 1;
-    const formatYearStringify = `${thisYear}-${nextYear}`;
-    const generatedQuery = query(
-      complaintsCol,
-      and(
-        where("yearLevel", "==", state.currentStudent?.yearLevel),
-        where("section", "==", state.currentStudent?.section),
-        where("academicYear", "==", formatYearStringify)
-      )
-    );
-    try {
-      const snapshot = await getDocs(generatedQuery);
-      if (snapshot.docs.length > 0) {
-        const result = snapshot.docs[0];
-        return { queryId: result ? result.id : "" };
+  const returnComplaintsQuery = useCallback(
+    async ({ yearLevel, section }: YearLevelSectionProps) => {
+      const thisYear = new Date().getFullYear();
+      const nextYear = thisYear + 1;
+      const formatYearStringify = `${thisYear}-${nextYear}`;
+      const generatedQuery = query(
+        collectionRef("complaints"),
+        and(
+          where("yearLevel", "==", yearLevel),
+          where("section", "==", section),
+          where("academicYear", "==", formatYearStringify)
+        )
+      );
+      try {
+        const snapshot = await getDocs(generatedQuery);
+        if (snapshot.docs.length > 0) {
+          const result = snapshot.docs[0];
+          return { queryId: result ? result.id : "" };
+        }
+        const reference = await addDoc(collectionRef("complaints"), {
+          time: new Date().getTime(),
+          section,
+          yearLevel,
+          academicYear: formatYearStringify,
+        });
+        return { queryId: reference.id };
+      } catch (err) {
+        console.log(err, "Error in returning complaints Query");
       }
-      const reference = await addDoc(complaintsCol, {
-        time: new Date().getTime(),
-        section: state.currentStudent?.section,
-        yearLevel: state.currentStudent?.yearLevel,
-        academicYear: formatYearStringify,
-      });
-      return { queryId: reference.id };
-    } catch (err) {
-      console.log(err, "Error in returning complaints Query");
-    }
-  }, [
-    complaintsCol,
-    state.currentStudent?.section,
-    state.currentStudent?.yearLevel,
-  ]);
+    },
+    []
+  );
+  /** Setting up currentStudent, and role `mayor` or `student` in state */
   const fetchStudentInfo = useCallback(async () => {
     const studentSnapshot = await getDocs(
       query(collectionRef("student"), where("email", "==", currentUser?.email))
@@ -112,6 +132,7 @@ const Complaints = () => {
     if (!studentSnapshot.empty) {
       const doc = studentSnapshot.docs[0];
       const data = doc?.data() as StudentWithClassSection;
+      console.log({ data });
       setState((prevState) => ({
         ...prevState,
         currentStudent: data,
@@ -121,100 +142,134 @@ const Complaints = () => {
     if (!mayorSnapshot.empty) {
       setState((prevState) => ({ ...prevState, role: "mayor" }));
     }
-  }, [currentUser]);
+  }, [currentUser?.email]);
   /**TODO: Add onSnapshot for concerns turn-over to higher ups */
-  const getChattablesForStudent = useCallback(async () => {
-    try {
-      const mayorSnapshot = await getDocs(
-        query(
-          collectionRef("mayor"),
-          and(
-            where("yearLevel", "==", state.currentStudent?.yearLevel),
-            where("section", "==", state.currentStudent?.section)
+  const getChattablesForStudent = useCallback(
+    async ({ yearLevel, section }: YearLevelSectionProps) => {
+      try {
+        const mayorSnapshot = await getDocs(
+          query(
+            collectionRef("mayor"),
+            and(
+              where("yearLevel", "==", yearLevel),
+              where("section", "==", section)
+            )
           )
-        )
-      );
-      const reference = await returnComplaintsQuery();
-      if (!mayorSnapshot.empty) {
-        const doc = mayorSnapshot.docs[0];
-        const data = doc?.data() as StudentWithClassSection;
-        setState((prevState) => ({
-          ...prevState,
-          mayor: data,
-        }));
-      }
-      if (reference !== undefined) {
-        const groupComplaintsCol = collection(
-          doc(complaintsCol, reference.queryId),
-          "group"
         );
-        return onSnapshot(groupComplaintsCol, (groupSnapshot) => {
-          const groupComplaintsHolder: ConcernBasePropsExtended[] = [];
-          groupSnapshot.forEach((snap) => {
-            const data = snap.data() as ConcernBaseProps;
-            const id = snap.id;
-            groupComplaintsHolder.push({ ...data, id });
-          });
+        const reference = await returnComplaintsQuery({ yearLevel, section });
+        if (!mayorSnapshot.empty) {
+          const doc = mayorSnapshot.docs[0];
+          const data = doc?.data() as StudentWithClassSection;
           setState((prevState) => ({
             ...prevState,
-            groupComplaints: groupComplaintsHolder,
+            mayor: data,
           }));
-        });
-      }
-    } catch (err) {
-      console.log(err, "Error in getting other chattables for student");
-    }
-  }, [state.currentStudent, complaintsCol, returnComplaintsQuery]);
-  const fetchStudentConcerns = useCallback(async () => {
-    try {
-      const reference = await returnComplaintsQuery();
-
-      async function fetchComplaintCollections(
-        targetDocument: DocumentReference<DocumentData, DocumentData>
-      ) {
-        const groupComplaintCol = collection(targetDocument, "group");
-        const individualComplaintCol = collection(targetDocument, "individual");
-        const groupCOmplaints = await getDocs(
-          query(groupComplaintCol, limit(LIMIT))
-        );
-        const groupComplaintsHolder: InitStateProps["groupComplaints"] = [];
-        groupCOmplaints.forEach((doc) => {
-          const data = doc.data() as ConcernBaseProps;
-          const id = doc.id;
-          groupComplaintsHolder.push({ ...data, id });
-        });
-        return onSnapshot(
-          query(
-            individualComplaintCol,
-            where("recipient", "==", "mayor"),
-            limit(LIMIT)
-          ),
-          (individualSnap) => {
-            const individualComplaintHolder: InitStateProps["complaintRecord"] =
-              [];
-            individualSnap.forEach((doc) => {
-              const data = doc.data() as ConcernProps;
-              const id = doc.id;
-              individualComplaintHolder.push({ ...data, id });
+        }
+        if (reference !== undefined) {
+          const groupComplaintsCol = collection(
+            doc(collectionRef("complaints"), reference.queryId),
+            "group"
+          );
+          return onSnapshot(groupComplaintsCol, (groupSnapshot) => {
+            const groupComplaintsHolder: ConcernBasePropsExtended[] = [];
+            groupSnapshot.forEach((snap) => {
+              const data = snap.data() as ConcernBaseProps;
+              const id = snap.id;
+              groupComplaintsHolder.push({ ...data, id });
             });
             setState((prevState) => ({
               ...prevState,
-              targetDocument: targetDocument,
-              complaintRecord: individualComplaintHolder,
               groupComplaints: groupComplaintsHolder,
             }));
-          }
-        );
+          });
+        }
+      } catch (err) {
+        console.log(err, "Error in getting other chattables for student");
       }
+    },
+    [returnComplaintsQuery]
+  );
+  /** Setup `targetDocument`, `complaintRecord`, and `groupComplaints` in state*/
+  const fetchStudentConcerns = useCallback(
+    async ({ yearLevel, section }: YearLevelSectionProps) => {
+      try {
+        const reference = await returnComplaintsQuery({ yearLevel, section });
+        async function fetchComplaintCollections(
+          targetDocument: DocumentReference<DocumentData, DocumentData>
+        ) {
+          const groupComplaintCol = collection(targetDocument, "group");
+          const individualComplaintCol = collection(
+            targetDocument,
+            "individual"
+          );
+          const groupCOmplaints = await getDocs(
+            query(groupComplaintCol, limit(LIMIT))
+          );
+          const groupComplaintsHolder: ConcernBasePropsExtended[] = [];
+          groupCOmplaints.forEach((doc) => {
+            const data = doc.data() as ConcernBaseProps;
+            const id = doc.id;
+            groupComplaintsHolder.push({ ...data, id });
+          });
+          return onSnapshot(
+            query(
+              individualComplaintCol,
+              where("recipient", "==", "mayor"),
+              limit(LIMIT)
+            ),
+            (individualSnap) => {
+              const individualComplaintHolder: ConcernPropsExtended[] = [];
+              individualSnap.forEach((doc) => {
+                const data = doc.data() as ConcernProps;
+                const id = doc.id;
+                individualComplaintHolder.push({ ...data, id });
+              });
+              setState((prevState) => ({
+                ...prevState,
+                targetDocument: targetDocument,
+                complaintRecord: individualComplaintHolder,
+                groupComplaints: groupComplaintsHolder,
+              }));
+            }
+          );
+        }
 
-      if (reference !== undefined) {
-        const targetDocument = doc(complaintsCol, reference.queryId);
-        return fetchComplaintCollections(targetDocument);
+        if (reference !== undefined) {
+          console.log({ reference });
+          const targetDocument = doc(
+            collectionRef("complaints"),
+            reference.queryId
+          );
+          return void fetchComplaintCollections(targetDocument);
+        }
+      } catch (err) {
+        console.log(err, "fetch student concerns");
       }
-    } catch (err) {
-      console.log(err, "fetch student concerns");
-    }
-  }, [complaintsCol, returnComplaintsQuery]);
+    },
+    [returnComplaintsQuery]
+  );
+  const mayorSetup = useCallback(() => {
+    const studentQuery = query(
+      collectionRef("student"),
+      and(
+        where("yearLevel", "==", state.currentStudent?.yearLevel),
+        where("section", "==", state.currentStudent?.section),
+        where("email", "!=", state.currentStudent?.email)
+      )
+    );
+    return onSnapshot(studentQuery, (snapshot) => {
+      const studentHolder: StudentWithClassSection[] = [];
+      snapshot.forEach((doc) => {
+        const data = doc.data() as StudentWithClassSection;
+        studentHolder.push(data);
+      });
+      setState((prevState) => ({ ...prevState, classMates: studentHolder }));
+    });
+  }, [
+    state.currentStudent?.email,
+    state.currentStudent?.section,
+    state.currentStudent?.yearLevel,
+  ]);
 
   async function handleSend(event: MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
@@ -297,29 +352,6 @@ const Complaints = () => {
     }
     console.log("selected chat is not a string in state");
   }
-
-  const mayorSetup = useCallback(() => {
-    const studentQuery = query(
-      collectionRef("student"),
-      and(
-        where("yearLevel", "==", state.currentStudent?.yearLevel),
-        where("section", "==", state.currentStudent?.section),
-        where("email", "!=", state.currentStudent?.email)
-      )
-    );
-    return onSnapshot(studentQuery, (snapshot) => {
-      const studentHolder: InitStateProps["classMates"] = [];
-      snapshot.forEach((doc) => {
-        const data = doc.data() as StudentWithClassSection;
-        studentHolder.push(data);
-      });
-      setState((prevState) => ({ ...prevState, classMates: studentHolder }));
-    });
-  }, [
-    state.currentStudent?.email,
-    state.currentStudent?.section,
-    state.currentStudent?.yearLevel,
-  ]);
 
   const renderStudentComplainBox = () => {
     const array =
@@ -438,23 +470,29 @@ const Complaints = () => {
   };
 
   useEffect(() => {
-    void fetchStudentInfo();
-    if (state.currentStudent !== undefined) {
-      if (state.role === "mayor") {
-        mayorSetup();
-      } else {
-        void getChattablesForStudent();
-        void fetchStudentConcerns();
-      }
+    return void fetchStudentInfo();
+  }, [fetchStudentInfo]);
+  useEffect(() => {
+    if (
+      state.currentStudent.yearLevel !== "null" &&
+      state.currentStudent.section !== undefined
+    ) {
+      const yearLevel = state.currentStudent.yearLevel;
+      const section = state.currentStudent.section;
+      void getChattablesForStudent({ yearLevel, section });
+      void fetchStudentConcerns({ yearLevel, section });
     }
   }, [
-    fetchStudentInfo,
-    state.role,
-    fetchStudentConcerns,
+    state.currentStudent.section,
+    state.currentStudent.yearLevel,
     getChattablesForStudent,
-    mayorSetup,
-    state.currentStudent,
+    fetchStudentConcerns,
   ]);
+  useEffect(() => {
+    if (state.role === "mayor") {
+      mayorSetup;
+    }
+  }, [state.role, mayorSetup]);
 
   return (
     <main>
