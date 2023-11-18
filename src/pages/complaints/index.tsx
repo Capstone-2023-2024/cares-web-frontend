@@ -44,7 +44,7 @@ interface InitStateProps {
   chatBox?: string;
   classMates?: StudentWithClassSection[];
   targetDocument?: DocumentReference<DocumentData, DocumentData>;
-  currentStudent: StudentWithClassSection;
+  currentStudent?: StudentWithClassSection;
   complaintRecord?: ConcernPropsExtended[];
   groupComplaints?: ConcernBasePropsExtended[];
   message: string;
@@ -54,22 +54,6 @@ interface InitStateProps {
 
 const Complaints = () => {
   const initState: InitStateProps = {
-    currentStudent: {
-      studentNo: "null",
-      college: "null",
-      schoolYear: "null",
-      name: "null",
-      course: "null",
-      gender: "null",
-      major: "null",
-      curriculum: "null",
-      age: "null",
-      yearLevel: "null",
-      scholarship: "null",
-      email: "null",
-      section: undefined,
-      src: undefined,
-    },
     message: "",
     selectedChat: "",
     showMayorModal: false,
@@ -388,7 +372,7 @@ const Complaints = () => {
             className="rounded-xl bg-primary p-2 text-white"
             onClick={() => {
               toggleModal(true);
-              setState((prevState) => ({ ...prevState, selectedChat: "" }));
+              setState((prevState) => ({ ...prevState }));
             }}
           >{`Mayor: ${state.mayor?.name}`}</button>
           <button
@@ -474,8 +458,8 @@ const Complaints = () => {
   }, [fetchStudentInfo]);
   useEffect(() => {
     if (
-      state.currentStudent.yearLevel !== "null" &&
-      state.currentStudent.section !== undefined
+      state.currentStudent?.yearLevel !== undefined &&
+      state.currentStudent?.section !== undefined
     ) {
       const yearLevel = state.currentStudent.yearLevel;
       const section = state.currentStudent.section;
@@ -483,14 +467,14 @@ const Complaints = () => {
       void fetchStudentConcerns({ yearLevel, section });
     }
   }, [
-    state.currentStudent.section,
-    state.currentStudent.yearLevel,
+    state.currentStudent?.section,
+    state.currentStudent?.yearLevel,
     getChattablesForStudent,
     fetchStudentConcerns,
   ]);
   useEffect(() => {
     if (state.role === "mayor") {
-      mayorSetup;
+      mayorSetup();
     }
   }, [state.role, mayorSetup]);
 
