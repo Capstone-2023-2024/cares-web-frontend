@@ -675,7 +675,9 @@ const Complaints = () => {
     return (
       <div
         className={`${
-          renderCondition || typeof state.selectedChat === "object"
+          renderCondition ||
+          typeof state.selectedChat === "object" ||
+          state.selectedChat === "class_section"
             ? "block"
             : "hidden"
         }`}
