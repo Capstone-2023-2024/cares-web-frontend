@@ -1,5 +1,5 @@
 import type { PermissionWithDateProps } from "~/components/Permissions/RoleModal/types";
-import type { StudentWithSectionProps } from "~/types/student";
+import type { StudentWithClassSection } from "~/types/student";
 import type { RoleProps } from "~/utils/roles/types";
 
 export interface AssignAdminProps {
@@ -55,5 +55,5 @@ export interface AssignMayorStateProps {
   section: string;
   mayors: MayorProps[];
   selectedMayor: string | null;
-  studentsWithSection: StudentWithSectionProps[];
+  studentsWithSection: StudentWithClassSection[];
 }
