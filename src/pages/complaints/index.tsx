@@ -13,6 +13,7 @@ import {
   type DocumentData,
   type DocumentReference,
 } from "firebase/firestore";
+import Image from "next/image";
 import { useRouter } from "next/router";
 import {
   useCallback,
@@ -22,6 +23,7 @@ import {
   type MouseEvent,
   type ReactNode,
 } from "react";
+import Loading from "~/components/Loading";
 import Main from "~/components/Main";
 import { useAuth } from "~/contexts/AuthContext";
 import type { ConcernBaseProps, ConcernProps } from "~/types/complaints";
@@ -40,7 +42,6 @@ interface YearLevelSectionProps {
 }
 interface MayorSetUpProps extends YearLevelSectionProps {
   studentNo: string;
-  email: string;
 }
 interface FetchComplaintCollectionsProps {
   targetDocument: DocumentReference<DocumentData, DocumentData>;
@@ -64,22 +65,6 @@ interface InitStateProps {
   selectedStudent: string | null;
   showMayorModal: boolean;
   showClassmates: boolean;
-}
-interface RenderStudentUIProps
-  extends Pick<InitStateProps, "role" | "mayor">,
-    ComplainBoxRendererProps {
-  children?: ReactNode;
-  higherUpAction: () => void;
-  classSectionAction: () => void;
-}
-interface ComplainBoxRendererProps {
-  data: ConcernPropsExtended[] | undefined;
-  heading: string;
-  condition: boolean;
-  setId: (id: string | Omit<ConcernProps, "messages">) => void;
-  setIdExtended?: () => void;
-  closingCondition: () => void;
-  handleNewConcern?: () => void;
 }
 
 const Complaints = () => {
@@ -163,6 +148,30 @@ const Complaints = () => {
       setState((prevState) => ({ ...prevState, role: "mayor" }));
     }
   }, [currentUser?.email]);
+  /**TODO: Store classmate info into Local Storage */
+  const fetchClassMatesInfo = useCallback(
+    ({ yearLevel, section }: YearLevelSectionProps) => {
+      const studentQuery = query(
+        collectionRef("student"),
+        and(
+          where("yearLevel", "==", yearLevel),
+          where("section", "==", section)
+        )
+      );
+      return onSnapshot(studentQuery, (snapshot) => {
+        const studentHolder: StudentWithClassSection[] = [];
+        snapshot.forEach((doc) => {
+          const data = doc.data() as StudentWithClassSection;
+          studentHolder.push(data);
+        });
+        setState((prevState) => ({
+          ...prevState,
+          classMates: studentHolder,
+        }));
+      });
+    },
+    []
+  );
   /**TODO: Add onSnapshot for concerns turn-over to higher ups */
   const getChattablesForStudent = useCallback(
     async ({ yearLevel, section }: YearLevelSectionProps) => {
@@ -303,31 +312,11 @@ const Complaints = () => {
   );
   /** Setup Classmates concerns, and concern for Adviser */
   const mayorSetup = useCallback(
-    async ({ yearLevel, section, email, studentNo }: MayorSetUpProps) => {
+    async ({ yearLevel, section, studentNo }: MayorSetUpProps) => {
       try {
         const reference = await returnComplaintsQuery({
           yearLevel,
           section,
-        });
-        const studentQuery = query(
-          collectionRef("student"),
-          and(
-            where("yearLevel", "==", yearLevel),
-            where("section", "==", section),
-            where("email", "!=", email)
-          )
-        );
-
-        const snapOne = onSnapshot(studentQuery, (snapshot) => {
-          const studentHolder: StudentWithClassSection[] = [];
-          snapshot.forEach((doc) => {
-            const data = doc.data() as StudentWithClassSection;
-            studentHolder.push(data);
-          });
-          setState((prevState) => ({
-            ...prevState,
-            classMates: studentHolder,
-          }));
         });
 
         if (reference !== undefined) {
@@ -336,13 +325,12 @@ const Complaints = () => {
             reference.queryId
           );
 
-          void fetchComplaintCollections({
+          return void fetchComplaintCollections({
             targetDocument,
             recipient: "adviser",
             targetStateContainer: "higherUpComplaintRecord",
             studentNo: studentNo,
           });
-          return snapOne;
         }
       } catch (err) {
         console.log(err, "fetch student concerns");
@@ -434,48 +422,106 @@ const Complaints = () => {
   }
 
   const renderStudentComplainBox = () => {
-    const array =
+    /**state.higherUpComplaintRecord === 0 */
+    const idSelectedChat = state.higherUpComplaintRecord?.filter(
+      (props) => props.id === state.selectedChat
+    );
+    const conditionalArray = [
+      ...((idSelectedChat?.length === 0
+        ? state.complaintRecord
+        : state.higherUpComplaintRecord) ?? []),
+    ]?.filter((props) => props.id === state.chatBox)[0];
+    const renderThisArray =
       state.selectedChat === "class_section"
         ? state.groupComplaints?.sort((a, b) => a.timestamp - b.timestamp)
-        : [
-            ...((state.complaintRecord?.filter(
-              (props) => props.id === state.selectedChat
-            ).length === 0
-              ? state.higherUpComplaintRecord
-              : state.complaintRecord) ?? []),
-          ]
-            ?.filter((props) => props.id === state.chatBox)[0]
-            ?.messages.sort((a, b) => a.timestamp - b.timestamp);
+        : conditionalArray?.messages.sort((a, b) => a.timestamp - b.timestamp);
 
-    return array?.map(({ message, timestamp, sender }, index) => {
-      const newTimestamp = new Date();
-      newTimestamp.setTime(timestamp);
+    return (
+      <>
+        {state.selectedChat !== "" && (
+          <div className="bg-primary/20 p-2 text-center">
+            <p className="text-xl font-bold">
+              {state.selectedChat === "class_section"
+                ? "Class Section"
+                : idSelectedChat === undefined
+                ? "undefined"
+                : idSelectedChat.length === 0
+                ? state.classMates?.filter(
+                    (stud) =>
+                      state.complaintRecord?.filter(
+                        (props) => props.id === state.selectedChat
+                      )[0]?.studentNo === stud.studentNo
+                  )[0]?.name
+                : "Adviser"}
+            </p>
+            {typeof state.selectedChat === "string" &&
+              state.selectedChat !== "class_section" && (
+                <>
+                  <p className="font-semibold text-primary">
+                    {`Concern Id: ${state.selectedChat}`}
+                  </p>
+                  <p className="flex items-center justify-center gap-2">
+                    Status:
+                    <span
+                      className={`${
+                        conditionalArray?.status === "processing"
+                          ? "text-yellow-500"
+                          : conditionalArray?.status === "resolved"
+                          ? "text-green-500"
+                          : "text-red-500"
+                      } font-bold capitalize`}
+                    >
+                      {conditionalArray?.status === "processing"
+                        ? "ongoing"
+                        : conditionalArray?.status}
+                    </span>
+                  </p>
+                </>
+              )}
+          </div>
+        )}
+        <div className="flex h-[60vh] flex-col gap-2 overflow-y-auto bg-primary/10 p-2">
+          {renderThisArray?.map(({ message, timestamp, sender }, index) => {
+            const newTimestamp = new Date();
+            newTimestamp.setTime(timestamp);
+            const targetStudent = state.classMates?.filter(
+              (props) => sender === props.studentNo
+            )[0];
 
-      return (
-        <div
-          key={index}
-          className={`${
-            sender === state.currentStudent?.studentNo
-              ? "self-end"
-              : "self-start"
-          }`}
-        >
-          <p>{sender}</p>
-          <p>{message}</p>
-          <p>{newTimestamp.toTimeString()}</p>
-          {state.role === "mayor" &&
-            state.adviser === undefined &&
-            state.selectedChat === null && (
-              <p className="relative z-10">
-                <span className="absolute rounded-lg bg-yellow-100 p-2 text-yellow-800">
-                  Note: You do not have a active adviser right now, however this
-                  message will be recorded.
-                </span>
-              </p>
-            )}
+            return (
+              <ProfilePictureContainer
+                key={index}
+                src={targetStudent?.src ?? ""}
+                renderCondition={sender === state.currentStudent?.studentNo}
+              >
+                <>
+                  <div>
+                    <p className="font-bold">
+                      {targetStudent?.name ?? "not_student"}
+                    </p>
+                    <p className="font-bold text-primary">{sender}</p>
+                    <p>{message}</p>
+                    <p className="text-xs font-thin">
+                      {newTimestamp.toLocaleTimeString()}
+                    </p>
+                  </div>
+                  {state.role === "mayor" &&
+                    state.adviser === undefined &&
+                    state.selectedChat === null && (
+                      <p className="relative z-10">
+                        <span className="absolute rounded-lg bg-yellow-100 p-2 text-yellow-800">
+                          Note: You do not have a active adviser right now,
+                          however this message will be recorded.
+                        </span>
+                      </p>
+                    )}
+                </>
+              </ProfilePictureContainer>
+            );
+          })}
         </div>
-      );
-    });
+      </>
+    );
   };
   /**TODO: Optimized this together with Mayor UI */
   const renderInputMessageContainer = () => {
@@ -511,6 +557,7 @@ const Complaints = () => {
       section !== undefined &&
       studentNo !== undefined
     ) {
+      void fetchClassMatesInfo({ yearLevel, section });
       void getChattablesForStudent({ yearLevel, section });
       void fetchStudentConcerns({ yearLevel, section, studentNo });
     }
@@ -518,28 +565,26 @@ const Complaints = () => {
     state.currentStudent?.section,
     state.currentStudent?.studentNo,
     state.currentStudent?.yearLevel,
+    fetchClassMatesInfo,
     getChattablesForStudent,
     fetchStudentConcerns,
   ]);
   /** Mayor Set-up */
   useEffect(() => {
-    const email = state.currentStudent?.email;
     const yearLevel = state.currentStudent?.yearLevel;
     const section = state.currentStudent?.section;
     const studentNo = state.currentStudent?.studentNo;
     if (
       state.role === "mayor" &&
-      email !== undefined &&
       yearLevel !== undefined &&
       section !== undefined &&
       studentNo !== undefined
     ) {
-      void mayorSetup({ email, yearLevel, section, studentNo });
+      void mayorSetup({ yearLevel, section, studentNo });
     }
   }, [
     state.role,
     state.currentStudent?.studentNo,
-    state.currentStudent?.email,
     state.currentStudent?.yearLevel,
     state.currentStudent?.section,
     mayorSetup,
@@ -558,13 +603,19 @@ const Complaints = () => {
     return void setup();
   }, [currentUser, router]);
 
+  if (state.role === undefined) {
+    return <Loading />;
+  }
+
   return (
     <Main>
-      <p className="capitalize">{`${state.role} ${state.currentStudent?.name}`}</p>
-      <section>
+      <section className="h-full">
         {state.role === "mayor" ? (
           <>
             <RenderStudentUI
+              selectedChat={
+                typeof state.selectedChat === "string" ? state.selectedChat : ""
+              }
               handleNewConcern={handleNewConcern}
               role={state.role}
               mayor={state.mayor}
@@ -573,7 +624,6 @@ const Complaints = () => {
                   ? state.higherUpComplaintRecord
                   : state.complaintRecord) ?? []),
               ].sort((a, b) => b.dateCreated - a.dateCreated)}
-              heading="Complaint/Concern(s):"
               condition={state.showMayorModal}
               setId={handleSelectComplaintId}
               closingCondition={() => toggleModal(false)}
@@ -596,38 +646,59 @@ const Complaints = () => {
             >
               <button
                 onClick={() => {
-                  toggleClassmates(true);
+                  toggleClassmates(!state.showClassmates);
                   toggleModal(false);
                 }}
-                className="rounded-xl bg-primary p-2 text-white"
+                className={`${
+                  state.complaintRecord?.filter(
+                    (props) => state.selectedChat === props.id
+                  ) !== undefined &&
+                  state.complaintRecord?.filter(
+                    (props) => state.selectedChat === props.id
+                  ).length > 0
+                    ? "bg-secondary"
+                    : "bg-primary"
+                } rounded-xl p-2 text-white duration-300 ease-in-out`}
               >
-                My Classmates:
+                My Classmates
               </button>
             </RenderStudentUI>
             <div
               className={`${
                 state.showClassmates ? "flex" : "hidden"
-              } mx-auto w-5/6 overflow-x-auto`}
+              } mx-auto w-full gap-2 overflow-x-auto bg-secondary p-2`}
             >
-              {state.classMates?.map(({ studentNo, name }) => {
-                return (
-                  <div key={studentNo}>
+              {state.classMates
+                ?.filter((props) => props.email !== state.currentStudent?.email)
+                ?.map(({ studentNo, name, src }) => {
+                  return (
                     <button
+                      key={studentNo}
                       onClick={() => {
                         handleClassmateClick(studentNo);
                       }}
                     >
-                      {name}
+                      <ProfilePictureContainer src={src ?? ""}>
+                        <div className="text-start">
+                          <p className="font-bold">{name}</p>
+                          <p className="font-bold text-primary">{studentNo}</p>
+                        </div>
+                      </ProfilePictureContainer>
                     </button>
-                  </div>
-                );
-              })}
+                  );
+                })}
             </div>
             <ComplainBoxRenderer
               data={state.complaintRecord
                 ?.filter((props) => props.studentNo === state.selectedStudent)
                 ?.sort((a, b) => b.dateCreated - a.dateCreated)}
-              heading={`${state.selectedStudent}'s Complaint/Concern(s):`}
+              heading={`${
+                state.classMates
+                  ?.filter(
+                    (props) => state.selectedStudent === props.studentNo
+                  )[0]
+                  ?.name.split(",")[0]
+              }'s Complaint/Concern(s):`}
               condition={state.selectedStudent !== null}
               setId={handleSelectComplaintId}
               setIdExtended={() => {
@@ -647,13 +718,15 @@ const Complaints = () => {
           </>
         ) : (
           <RenderStudentUI
+            selectedChat={
+              typeof state.selectedChat === "string" ? state.selectedChat : ""
+            }
             handleNewConcern={handleNewConcern}
             role={state.role}
             mayor={state.mayor}
             data={state.complaintRecord?.sort(
               (a, b) => b.dateCreated - a.dateCreated
             )}
-            heading="Complaint/Concern(s):"
             condition={state.showMayorModal}
             setId={handleSelectComplaintId}
             closingCondition={() => toggleModal(false)}
@@ -674,37 +747,52 @@ const Complaints = () => {
             }}
           />
         )}
-      </section>
-      <div className="flex h-[60vh] flex-col overflow-y-auto">
         {renderStudentComplainBox()}
-      </div>
-      {state.selectedChat !== undefined &&
-        state.selectedChat !== "" &&
-        renderInputMessageContainer()}
+        {state.selectedChat !== undefined &&
+          state.selectedChat !== "" &&
+          renderInputMessageContainer()}
+      </section>
     </Main>
   );
 };
 
+interface RenderStudentUIProps
+  extends Pick<InitStateProps, "role" | "mayor">,
+    ComplainBoxRendererProps {
+  selectedChat: string;
+  children?: ReactNode;
+  higherUpAction: () => void;
+  classSectionAction: () => void;
+}
 const RenderStudentUI = ({
   role,
   mayor,
   children,
+  selectedChat,
   higherUpAction,
   classSectionAction,
   ...rest
 }: RenderStudentUIProps) => {
-  const higherUpName = role === "mayor" ? `Adviser: ` : `Mayor: ${mayor?.name}`;
+  const higherUpName = role === "mayor" ? `Adviser` : `Mayor: ${mayor?.name}`;
   return (
-    <div>
-      <div className="flex w-screen gap-2 overflow-x-auto">
+    <div className="bg-primary/30 p-2">
+      <div className="flex w-full flex-row gap-2 overflow-x-auto">
         <button
-          className="rounded-xl bg-primary p-2 text-white"
+          className={`${
+            rest.data?.filter((props) => props.id === selectedChat) !==
+              undefined &&
+            rest.data?.filter((props) => props.id === selectedChat).length > 0
+              ? "bg-secondary"
+              : "bg-primary"
+          } rounded-xl p-2 text-white duration-300 ease-in-out`}
           onClick={higherUpAction}
         >
           {higherUpName}
         </button>
         <button
-          className="rounded-xl bg-primary p-2 text-white"
+          className={`${
+            selectedChat === "class_section" ? "bg-secondary" : "bg-primary"
+          } rounded-xl p-2 text-white duration-300 ease-in-out`}
           onClick={classSectionAction}
         >{`Class Section`}</button>
         {children}
@@ -714,6 +802,15 @@ const RenderStudentUI = ({
   );
 };
 
+interface ComplainBoxRendererProps {
+  data: ConcernPropsExtended[] | undefined;
+  heading?: string;
+  condition: boolean;
+  setId: (id: string | Omit<ConcernProps, "messages">) => void;
+  setIdExtended?: () => void;
+  closingCondition: () => void;
+  handleNewConcern?: () => void;
+}
 const ComplainBoxRenderer = ({
   data,
   heading,
@@ -724,17 +821,23 @@ const ComplainBoxRenderer = ({
   handleNewConcern,
 }: ComplainBoxRendererProps) => {
   return (
-    <div className={`${condition ? "block" : "hidden"} bg-paper`}>
+    <div
+      className={`${
+        condition ? "block" : "hidden"
+      } relative bg-paper p-2 text-center`}
+    >
       <button
         onClick={closingCondition}
-        className="rounded-full bg-red-400 px-2 text-white"
+        className="absolute right-2 top-2 rounded-full bg-red-400 px-2 text-white"
       >
         x
       </button>
       <>
-        <h2>{heading}</h2>
-        <div className="flex h-64 flex-col gap-2 overflow-y-auto p-2">
-          {data?.map(({ id, messages, dateCreated }) => {
+        <h2 className="p-2 text-lg font-bold">
+          {heading ? heading : "Your Complaint/Concern(s)"}
+        </h2>
+        <div className="flex w-full gap-2 overflow-x-auto p-2">
+          {data?.map(({ id, messages, dateCreated, status }) => {
             const date = new Date();
             const timestamp = new Date();
             const selectedMessage = messages[messages.length - 1];
@@ -744,31 +847,89 @@ const ComplainBoxRenderer = ({
             return (
               <button
                 key={id}
-                className="mx-auto w-max border border-black bg-paper"
+                className="rounded-lg bg-secondary p-2 text-start text-paper shadow-sm"
                 onClick={() => {
-                  setId(id);
                   setIdExtended && setIdExtended();
+                  setId(id);
                 }}
               >
-                <p>{`Message: ${selectedMessage?.message.substring(
+                <p className="text-sm text-primary">{`Concern Id: ${id}`}</p>
+                <p className="text-sm">
+                  Status:
+                  <span
+                    className={`${
+                      status === "processing"
+                        ? "text-yellow-500"
+                        : status === "resolved"
+                        ? "text-green-500"
+                        : "text-red-400"
+                    } pl-2 font-bold capitalize`}
+                  >
+                    {status === "processing" ? "ongoing" : status}
+                  </span>
+                </p>
+                <p className="text-sm">{`Recent Message: ${selectedMessage?.message.substring(
                   0,
-                  selectedMessage.message.length > 20
-                    ? 15
+                  selectedMessage.message.length > 6
+                    ? 4
                     : selectedMessage.message.length
                 )}...`}</p>
-                <p>{`SenderId: ${selectedMessage?.sender}`}</p>
-                <p>{timestamp.toTimeString()}</p>
-                <p>{date.toUTCString()}</p>
+                <p className="text-xs font-thin">{`Date: ${date.toLocaleDateString()}`}</p>
               </button>
             );
           })}
         </div>
       </>
       {handleNewConcern !== undefined && (
-        <button onClick={handleNewConcern}>
+        <button
+          className="mx-auto w-fit rounded-lg bg-green-400 p-2 text-white"
+          onClick={handleNewConcern}
+        >
           Create new Complaint/Concern(s)
         </button>
       )}
+    </div>
+  );
+};
+
+interface ProfilePictureContainerProps extends ProfilePictureProps {
+  renderCondition?: boolean;
+  children: ReactNode;
+}
+const ProfilePictureContainer = ({
+  renderCondition,
+  children,
+  ...rest
+}: ProfilePictureContainerProps) => {
+  const additionalStyle = renderCondition
+    ? "self-end bg-paper"
+    : "self-start bg-blue-100";
+  return (
+    <div
+      className={`${
+        renderCondition === undefined ? "bg-paper" : additionalStyle
+      } flex flex-row items-center justify-center gap-2 rounded-lg border border-primary p-2`}
+    >
+      <ProfilePicture {...rest} />
+      {children}
+    </div>
+  );
+};
+
+interface ProfilePictureProps {
+  src: string;
+}
+const ProfilePicture = ({ src }: ProfilePictureProps) => {
+  const DIMENSION = 46;
+  return (
+    <div className="h-12 w-12">
+      <Image
+        src={src}
+        alt="profile_picture"
+        className="h-full w-full rounded-full"
+        width={DIMENSION}
+        height={DIMENSION}
+      />
     </div>
   );
 };
