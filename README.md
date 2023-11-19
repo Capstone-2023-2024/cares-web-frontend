@@ -2,6 +2,7 @@
 
 # Changelog:
 
+- [FIXED]: Duplicate groupComplaints onSnapshot
 - [FIXED]: `adviser`'s class section Complaint box UI is not update when sending message
 - [FIXED]: (`student`/`mayor`)'s new complaint UI is not reflected in Complaint box.
 - [FIXED]: `adviser` is not yet recognized in `mayor`'s UI
@@ -14,6 +15,9 @@
 # Issues:
 
 - `student`'s turn-overed complaints are not reflecting in Complaints and the adviser is not available
+- Hero UI in rendering ComplaintBox's complaints
+- Sometimes the snapshot is not sent to the complaintContext
+- `adviser` is buggy
 
 # For improvements
 
