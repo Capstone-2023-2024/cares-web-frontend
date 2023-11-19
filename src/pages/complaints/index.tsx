@@ -421,6 +421,7 @@ const Complaints = () => {
             ...prevState,
             message: initState.message,
             chatBox: document.id,
+            selectedChat: document.id,
           }));
         } catch (err) {
           console.log(err, "sending message through complaints => individual");
@@ -510,6 +511,7 @@ const Complaints = () => {
       state.selectedChat === "class_section"
         ? state.groupComplaints?.sort((a, b) => a.timestamp - b.timestamp)
         : conditionalArray?.messages.sort((a, b) => a.timestamp - b.timestamp);
+
     async function actionButton(type: "resolved" | "turn-over") {
       try {
         if (typeof state.selectedChat === "string") {

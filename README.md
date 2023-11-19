@@ -2,6 +2,8 @@
 
 # Changelog:
 
+- [FIXED]: (`student`/`mayor`)'s new complaint UI is not reflected in Complaint box.
+- [FIXED]: `adviser` is not yet recognized in `mayor`'s UI
 - `adviser`'s UI is now implemented
 - Action buttons(`resolved` and `turn-over`) are now added
 - UI Updated, moved class mates into student follow-up set-up for reference in various student ids
@@ -11,9 +13,7 @@
 # Issues:
 
 - `adviser`'s class section Complaint box UI is not update when sending message
-- (`student`/`mayor`)'s new complaint UI is not reflected in Complaint box, check line 509, 649
 - `student`'s turn-overed complaints are not reflecting in Complaints and the adviser is not available
-- `adviser` is not yet recognized in `mayor`'s UI
 
 # For improvements
 
