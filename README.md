@@ -2,6 +2,7 @@
 
 # Changelog:
 
+- [FIXED]: `adviser`'s class section Complaint box UI is not update when sending message
 - [FIXED]: (`student`/`mayor`)'s new complaint UI is not reflected in Complaint box.
 - [FIXED]: `adviser` is not yet recognized in `mayor`'s UI
 - `adviser`'s UI is now implemented
@@ -12,7 +13,6 @@
 
 # Issues:
 
-- `adviser`'s class section Complaint box UI is not update when sending message
 - `student`'s turn-overed complaints are not reflecting in Complaints and the adviser is not available
 
 # For improvements

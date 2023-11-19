@@ -5,6 +5,7 @@ import {
   collection,
   doc,
   getDocs,
+  orderBy,
   increment,
   limit,
   onSnapshot,
@@ -283,7 +284,7 @@ const Complaints = () => {
   );
   /** if role is === `mayor`, recipient is set to `adviser` and if called in student follow-up set-up, studentNo should be undefined */
   const fetchComplaintCollections = useCallback(
-    async ({
+    ({
       targetDocument,
       studentNo,
       recipient,
@@ -291,22 +292,28 @@ const Complaints = () => {
     }: FetchComplaintCollectionsProps) => {
       const groupComplaintCol = collection(targetDocument, "group");
       const individualComplaintCol = collection(targetDocument, "individual");
-      const groupCOmplaints = await getDocs(
-        query(groupComplaintCol, limit(LIMIT))
+      const classComplaintsUnsub = onSnapshot(
+        query(groupComplaintCol, orderBy("timestamp", "desc"), limit(LIMIT)),
+        (snapshot) => {
+          const groupComplaintsHolder: ConcernBasePropsExtended[] = [];
+          snapshot.forEach((doc) => {
+            const data = doc.data() as ConcernBaseProps;
+            const id = doc.id;
+            groupComplaintsHolder.push({ ...data, id });
+          });
+          setState((prevState) => ({
+            ...prevState,
+            groupComplaints: groupComplaintsHolder,
+          }));
+        }
       );
-      const groupComplaintsHolder: ConcernBasePropsExtended[] = [];
-      groupCOmplaints.forEach((doc) => {
-        const data = doc.data() as ConcernBaseProps;
-        const id = doc.id;
-        groupComplaintsHolder.push({ ...data, id });
-      });
-
-      return onSnapshot(
+      const individualUnsub = onSnapshot(
         studentNo === undefined
           ? query(
               individualComplaintCol,
               where("recipient", "==", recipient),
-              limit(LIMIT * 3)
+              orderBy("dateCreated", "desc"),
+              limit(LIMIT)
             )
           : query(
               individualComplaintCol,
@@ -327,10 +334,13 @@ const Complaints = () => {
             ...prevState,
             targetDocument: targetDocument,
             [targetStateContainer]: concernsHolder,
-            groupComplaints: groupComplaintsHolder,
           }));
         }
       );
+      return () => {
+        classComplaintsUnsub;
+        individualUnsub;
+      };
     },
     []
   );
@@ -357,7 +367,7 @@ const Complaints = () => {
             recipient: "mayor",
             targetStateContainer: "complaintRecord",
           };
-          return void fetchComplaintCollections(
+          return fetchComplaintCollections(
             state.role === "mayor"
               ? fetchComplaintProps
               : { studentNo, ...fetchComplaintProps }
@@ -1161,7 +1171,7 @@ const RenderAdviserUI = ({ students, adviser }: RenderAdviserUIProps) => {
     []
   );
   const fetchComplaintCollections = useCallback(
-    async ({
+    ({
       targetDocument,
       studentNo,
       recipient,
@@ -1169,22 +1179,28 @@ const RenderAdviserUI = ({ students, adviser }: RenderAdviserUIProps) => {
     }: FetchComplaintCollectionsProps) => {
       const groupComplaintCol = collection(targetDocument, "group");
       const individualComplaintCol = collection(targetDocument, "individual");
-      const groupCOmplaints = await getDocs(
-        query(groupComplaintCol, limit(LIMIT))
+      const classSectionUnsub = onSnapshot(
+        query(groupComplaintCol, orderBy("timestamp", "desc"), limit(LIMIT)),
+        (snapshot) => {
+          const groupComplaintsHolder: ConcernBasePropsExtended[] = [];
+          snapshot.forEach((doc) => {
+            const data = doc.data() as ConcernBaseProps;
+            const id = doc.id;
+            groupComplaintsHolder.push({ ...data, id });
+          });
+          setState((prevState) => ({
+            ...prevState,
+            groupComplaints: groupComplaintsHolder,
+          }));
+        }
       );
-      const groupComplaintsHolder: ConcernBasePropsExtended[] = [];
-      groupCOmplaints.forEach((doc) => {
-        const data = doc.data() as ConcernBaseProps;
-        const id = doc.id;
-        groupComplaintsHolder.push({ ...data, id });
-      });
-
-      return onSnapshot(
+      const individualUnsub = onSnapshot(
         studentNo === undefined
           ? query(
               individualComplaintCol,
               where("recipient", "==", recipient),
-              limit(LIMIT * 3)
+              orderBy("dateCreated", "desc"),
+              limit(LIMIT)
             )
           : query(
               individualComplaintCol,
@@ -1205,10 +1221,13 @@ const RenderAdviserUI = ({ students, adviser }: RenderAdviserUIProps) => {
             ...prevState,
             targetDocument: targetDocument,
             [targetStateContainer]: concernsHolder,
-            groupComplaints: groupComplaintsHolder,
           }));
         }
       );
+      return () => {
+        classSectionUnsub;
+        individualUnsub;
+      };
     },
     []
   );
@@ -1230,7 +1249,7 @@ const RenderAdviserUI = ({ students, adviser }: RenderAdviserUIProps) => {
             recipient: "adviser",
             targetStateContainer: "complaintRecord",
           };
-          return void fetchComplaintCollections(fetchComplaintProps);
+          return fetchComplaintCollections(fetchComplaintProps);
         }
       } catch (err) {
         console.log(err, "fetch student concerns");
@@ -1526,6 +1545,7 @@ const RenderAdviserUI = ({ students, adviser }: RenderAdviserUIProps) => {
     if (section !== undefined && yearLevel !== undefined)
       return void fetchStudentConcerns({ section, yearLevel });
   }, [adviser?.section, adviser?.yearLevel, fetchStudentConcerns]);
+
   return (
     <div>
       <div className="bg-primary/20 p-2">
