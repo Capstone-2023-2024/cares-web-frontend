@@ -10,6 +10,6 @@ export interface DateFileProps {
   dateEdited: number | null;
 }
 
-export type CollectionPath = "complaints" | "student" | "mayor";
+export type CollectionPath = "complaints" | "student" | "mayor" | "advisers";
 
 export const collectionRef = (path: CollectionPath) => collection(db, path);

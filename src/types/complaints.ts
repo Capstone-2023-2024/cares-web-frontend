@@ -15,6 +15,7 @@ export interface ConcernProps {
   status: "processing" | "resolved" | "turn-over";
   studentNo: string;
   turnOvers?: number;
+  referenceId?: string;
 }
 
 export interface ChatTextProps {

@@ -5,14 +5,15 @@ import {
   collection,
   doc,
   getDocs,
+  increment,
   limit,
   onSnapshot,
   query,
   updateDoc,
   where,
+  writeBatch,
   type DocumentData,
   type DocumentReference,
-  increment,
 } from "firebase/firestore";
 import Image from "next/image";
 import { useRouter } from "next/router";
@@ -51,14 +52,23 @@ interface FetchComplaintCollectionsProps {
   targetStateContainer: "complaintRecord" | "higherUpComplaintRecord";
   recipient: InitStateProps["role"];
 }
+interface AdviserProps extends YearLevelSectionProps {
+  dateCreated: number;
+  email: string;
+  src?: string;
+  name?: string;
+}
+interface AdviserPropsExtended extends AdviserProps {
+  id: string;
+}
 interface InitStateProps {
   role?: "student" | "mayor" | "adviser";
   mayor?: StudentWithClassSection;
-  adviser?: string;
   chatBox?: string;
   classMates?: StudentWithClassSection[];
   targetDocument?: DocumentReference<DocumentData, DocumentData>;
   currentStudent?: StudentWithClassSection;
+  currentAdviser?: AdviserPropsExtended;
   complaintRecord?: ConcernPropsExtended[];
   higherUpComplaintRecord?: ConcernPropsExtended[];
   groupComplaints?: ConcernBasePropsExtended[];
@@ -71,6 +81,7 @@ interface InitStateProps {
   showTurnOverPopUp: boolean;
 }
 
+const LIMIT = 15;
 const Complaints = () => {
   const initState: InitStateProps = {
     message: "",
@@ -81,7 +92,6 @@ const Complaints = () => {
     showClassmates: false,
     showTurnOverPopUp: false,
   };
-  const LIMIT = 15;
   const { currentUser } = useAuth();
   const [state, setState] = useState(initState);
   /**Don't include in react-native */
@@ -140,14 +150,16 @@ const Complaints = () => {
     },
     []
   );
-  /** Setting up currentStudent, and role `mayor` or `student` in state */
-  const fetchStudentInfo = useCallback(async () => {
+
+  /** Setting up user info in `currentStudent` or `currentAdviser`, and role `mayor`, `student` or `adviser` in state */
+  const fetchUserInfo = useCallback(async () => {
     const studentSnapshot = await getDocs(
       query(collectionRef("student"), where("email", "==", currentUser?.email))
     );
     const mayorSnapshot = await getDocs(
       query(collectionRef("mayor"), where("email", "==", currentUser?.email))
     );
+
     if (!studentSnapshot.empty) {
       const doc = studentSnapshot.docs[0];
       const data = doc?.data() as StudentWithClassSection;
@@ -156,6 +168,41 @@ const Complaints = () => {
         currentStudent: data,
         role: "student",
       }));
+      const adviserSnapshot = await getDocs(
+        query(
+          collectionRef("advisers"),
+          and(
+            where("yearLevel", "==", data.yearLevel),
+            where("section", "==", data.section)
+          )
+        )
+      );
+      if (!adviserSnapshot.empty) {
+        const doc = adviserSnapshot.docs[0];
+        const adviserData = doc?.data() as AdviserProps;
+        const id = doc?.id ?? "";
+        setState((prevState) => ({
+          ...prevState,
+          currentAdviser: { id, ...adviserData },
+        }));
+      }
+    } else {
+      const adviserSnapshot = await getDocs(
+        query(
+          collectionRef("advisers"),
+          where("email", "==", currentUser?.email)
+        )
+      );
+      if (!adviserSnapshot.empty) {
+        const doc = adviserSnapshot.docs[0];
+        const adviserData = doc?.data() as AdviserProps;
+        const id = doc?.id ?? "";
+        setState((prevState) => ({
+          ...prevState,
+          currentAdviser: { id, ...adviserData },
+          role: "adviser",
+        }));
+      }
     }
     if (!mayorSnapshot.empty) {
       setState((prevState) => ({ ...prevState, role: "mayor" }));
@@ -287,8 +334,7 @@ const Complaints = () => {
     },
     []
   );
-  /**TODO: reference this in `adviser` role setup. __________________________________/
-   * Setup `targetDocument`, `complaintRecord`, and `groupComplaints` in state.*/
+  /** Setup `targetDocument`, `complaintRecord`, and `groupComplaints` in state.*/
   const fetchStudentConcerns = useCallback(
     async ({
       yearLevel,
@@ -460,7 +506,6 @@ const Complaints = () => {
         ? complaintRecordCondition
         : higherUpComplaintRecordCondition),
     ].filter((props) => props.id === state.chatBox)[0];
-    console.log({ conditionalArray });
     const renderThisArray =
       state.selectedChat === "class_section"
         ? state.groupComplaints?.sort((a, b) => a.timestamp - b.timestamp)
@@ -549,7 +594,13 @@ const Complaints = () => {
                     >
                       {conditionalArray?.status === "processing"
                         ? "ongoing"
-                        : conditionalArray?.status}
+                        : conditionalArray?.status && (
+                            <RenderTurnOverStatus
+                              role={state.role}
+                              status={conditionalArray?.status}
+                              turnOvers={conditionalArray?.turnOvers}
+                            />
+                          )}
                     </span>
                   </p>
                 </>
@@ -560,7 +611,8 @@ const Complaints = () => {
               state.complaintRecord?.filter(
                 (props) => props.id === state.selectedChat
               ).length > 0 &&
-              conditionalArray?.status === "processing" && (
+              conditionalArray?.status === "processing" &&
+              state.role !== "student" && (
                 <div className="flex items-center justify-center gap-2">
                   <button
                     className="rounded-lg bg-green-500 p-2 capitalize text-paper"
@@ -575,31 +627,19 @@ const Complaints = () => {
                     turn-over
                   </button>
                   {state.showTurnOverPopUp && (
-                    <div className="fixed inset-0 bg-blue-400">
-                      <button
-                        className="absolute right-2 top-2 rounded-full bg-red-500 px-2"
-                        onClick={() => toggleTurnOver(false)}
-                      >
-                        <p className="text-white">x</p>
-                      </button>
-                      <textarea
-                        className="p-2"
-                        placeholder="Compose a turn-over message to send to your adviser"
-                        value={state.turnOverMessage}
-                        onChange={handleTurnOverMessage}
-                      />
-                      <button
-                        disabled={state.turnOverMessage.trim() === ""}
-                        className={`${
-                          state.turnOverMessage.trim() === ""
-                            ? "bg-slate-200 text-slate-300"
-                            : "bg-green text-paper"
-                        } rounded-lg p-2 capitalize duration-300 ease-in-out`}
-                        onClick={() => void actionButton("turn-over")}
-                      >
-                        send
-                      </button>
-                    </div>
+                    <TurnOverModal
+                      closingModal={() => toggleTurnOver(false)}
+                      turnOverMessage={state.turnOverMessage}
+                      handleTurnOverMessage={handleTurnOverMessage}
+                      handleTurnOver={() => {
+                        setState((prevState) => ({
+                          ...prevState,
+                          turnOverMessage: "",
+                        }));
+                        toggleTurnOver(false);
+                        void actionButton("turn-over");
+                      }}
+                    />
                   )}
                 </div>
               )}
@@ -616,22 +656,37 @@ const Complaints = () => {
             return (
               <ProfilePictureContainer
                 key={index}
-                src={targetStudent?.src ?? ""}
+                src={
+                  sender === "adviser"
+                    ? state.currentAdviser?.src ?? ""
+                    : targetStudent?.src ?? ""
+                }
                 renderCondition={sender === state.currentStudent?.studentNo}
               >
                 <div className="relative">
                   <div>
                     <p className="font-bold">
-                      {targetStudent?.name ?? "not_student"}
+                      {sender === "adviser"
+                        ? state.currentAdviser?.name ??
+                          state.currentAdviser?.email ??
+                          "not_faculty"
+                        : targetStudent?.name ?? "not_student"}
                     </p>
-                    <p className="font-bold text-primary">{sender}</p>
+                    <p className="font-bold text-primary">
+                      {sender === "adviser"
+                        ? `${state.currentAdviser?.yearLevel.substring(
+                            0,
+                            1
+                          )}${state.currentAdviser?.section?.toUpperCase()} Adviser`
+                        : sender}
+                    </p>
                     <p>{message}</p>
                     <p className="text-xs font-thin">
                       {newTimestamp.toLocaleTimeString()}
                     </p>
                   </div>
                   {state.role === "mayor" &&
-                    state.adviser === undefined &&
+                    state.currentAdviser?.email === undefined &&
                     typeof state.selectedChat === "string" &&
                     state.higherUpComplaintRecord?.filter(
                       (props) => state.selectedChat === props.id
@@ -696,10 +751,27 @@ const Complaints = () => {
     );
   };
 
-  /** Student initial Set-up */
+  /** User initial Set-up */
   useEffect(() => {
-    return void fetchStudentInfo();
-  }, [fetchStudentInfo]);
+    return void fetchUserInfo();
+  }, [fetchUserInfo]);
+  /** Adviser follow-up Set-up */
+  useEffect(() => {
+    const yearLevel = state.currentAdviser?.yearLevel;
+    const section = state.currentAdviser?.section;
+    if (
+      state.role !== "student" &&
+      yearLevel !== undefined &&
+      section !== undefined
+    ) {
+      void fetchClassMatesInfo({ yearLevel, section });
+    }
+  }, [
+    state.role,
+    state.currentAdviser?.section,
+    state.currentAdviser?.yearLevel,
+    fetchClassMatesInfo,
+  ]);
   /** Student follow-up Set-up */
   useEffect(() => {
     const yearLevel = state.currentStudent?.yearLevel;
@@ -762,25 +834,135 @@ const Complaints = () => {
 
   return (
     <Main>
-      <section className="h-full">
-        {state.role === "mayor" ? (
-          <>
+      {state.role === "adviser" ? (
+        <RenderAdviserUI
+          students={state.classMates}
+          adviser={state.currentAdviser}
+        />
+      ) : (
+        <section className="h-full">
+          {state.role === "mayor" ? (
+            <>
+              <RenderStudentUI
+                selectedChat={state.selectedChat}
+                handleNewConcern={handleNewConcern}
+                role={state.role}
+                mayor={state.mayor}
+                data={[
+                  ...((state.role === "mayor"
+                    ? state.higherUpComplaintRecord
+                    : state.complaintRecord) ?? []),
+                ].sort((a, b) => b.dateCreated - a.dateCreated)}
+                condition={state.showMayorModal}
+                setId={handleSelectComplaintId}
+                closingCondition={() => toggleModal(false)}
+                higherUpAction={() => {
+                  toggleModal(true);
+                  toggleClassmates(false);
+                  setState((prevState) => ({
+                    ...prevState,
+                    selectedStudent: null,
+                  }));
+                }}
+                classSectionAction={() => {
+                  setState((prevState) => ({
+                    ...prevState,
+                    selectedChat: "class_section",
+                    message: initState.message,
+                    showMayorModal: false,
+                  }));
+                }}
+              >
+                <button
+                  onClick={() => {
+                    toggleClassmates(!state.showClassmates);
+                    toggleModal(false);
+                  }}
+                  className={`${
+                    state.complaintRecord?.filter(
+                      (props) => state.selectedChat === props.id
+                    ) !== undefined &&
+                    state.complaintRecord?.filter(
+                      (props) => state.selectedChat === props.id
+                    ).length > 0
+                      ? "bg-secondary"
+                      : "bg-primary"
+                  } rounded-xl p-2 text-white duration-300 ease-in-out`}
+                >
+                  My Classmates
+                </button>
+              </RenderStudentUI>
+              <div
+                className={`${
+                  state.showClassmates ? "flex" : "hidden"
+                } mx-auto w-full gap-2 overflow-x-auto bg-secondary p-2`}
+              >
+                {state.classMates
+                  ?.filter(
+                    (props) => props.email !== state.currentStudent?.email
+                  )
+                  ?.map(({ studentNo, name, src }) => {
+                    return (
+                      <button
+                        key={studentNo}
+                        onClick={() => {
+                          handleClassmateClick(studentNo);
+                        }}
+                      >
+                        <ProfilePictureContainer src={src ?? ""}>
+                          <div className="text-start">
+                            <p className="font-bold">{name}</p>
+                            <p className="font-bold text-primary">
+                              {studentNo}
+                            </p>
+                          </div>
+                        </ProfilePictureContainer>
+                      </button>
+                    );
+                  })}
+              </div>
+              <ComplainBoxRenderer
+                data={state.complaintRecord
+                  ?.filter((props) => props.studentNo === state.selectedStudent)
+                  ?.sort((a, b) => b.dateCreated - a.dateCreated)}
+                heading={`${
+                  state.classMates
+                    ?.filter(
+                      (props) => state.selectedStudent === props.studentNo
+                    )[0]
+                    ?.name.split(",")[0]
+                }'s Complaint/Concern(s):`}
+                condition={state.selectedStudent !== null}
+                setId={handleSelectComplaintId}
+                setIdExtended={() => {
+                  toggleClassmates(false);
+                  setState((prevState) => ({
+                    ...prevState,
+                    selectedStudent: null,
+                  }));
+                }}
+                closingCondition={() =>
+                  setState((prevState) => ({
+                    ...prevState,
+                    selectedStudent: null,
+                  }))
+                }
+              />
+            </>
+          ) : (
             <RenderStudentUI
               selectedChat={state.selectedChat}
               handleNewConcern={handleNewConcern}
               role={state.role}
               mayor={state.mayor}
-              data={[
-                ...((state.role === "mayor"
-                  ? state.higherUpComplaintRecord
-                  : state.complaintRecord) ?? []),
-              ].sort((a, b) => b.dateCreated - a.dateCreated)}
+              data={state.complaintRecord?.sort(
+                (a, b) => b.dateCreated - a.dateCreated
+              )}
               condition={state.showMayorModal}
               setId={handleSelectComplaintId}
               closingCondition={() => toggleModal(false)}
               higherUpAction={() => {
                 toggleModal(true);
-                toggleClassmates(false);
                 setState((prevState) => ({
                   ...prevState,
                   selectedStudent: null,
@@ -794,113 +976,14 @@ const Complaints = () => {
                   showMayorModal: false,
                 }));
               }}
-            >
-              <button
-                onClick={() => {
-                  toggleClassmates(!state.showClassmates);
-                  toggleModal(false);
-                }}
-                className={`${
-                  state.complaintRecord?.filter(
-                    (props) => state.selectedChat === props.id
-                  ) !== undefined &&
-                  state.complaintRecord?.filter(
-                    (props) => state.selectedChat === props.id
-                  ).length > 0
-                    ? "bg-secondary"
-                    : "bg-primary"
-                } rounded-xl p-2 text-white duration-300 ease-in-out`}
-              >
-                My Classmates
-              </button>
-            </RenderStudentUI>
-            <div
-              className={`${
-                state.showClassmates ? "flex" : "hidden"
-              } mx-auto w-full gap-2 overflow-x-auto bg-secondary p-2`}
-            >
-              {state.classMates
-                ?.filter((props) => props.email !== state.currentStudent?.email)
-                ?.map(({ studentNo, name, src }) => {
-                  return (
-                    <button
-                      key={studentNo}
-                      onClick={() => {
-                        handleClassmateClick(studentNo);
-                      }}
-                    >
-                      <ProfilePictureContainer src={src ?? ""}>
-                        <div className="text-start">
-                          <p className="font-bold">{name}</p>
-                          <p className="font-bold text-primary">{studentNo}</p>
-                        </div>
-                      </ProfilePictureContainer>
-                    </button>
-                  );
-                })}
-            </div>
-            <ComplainBoxRenderer
-              data={state.complaintRecord
-                ?.filter((props) => props.studentNo === state.selectedStudent)
-                ?.sort((a, b) => b.dateCreated - a.dateCreated)}
-              heading={`${
-                state.classMates
-                  ?.filter(
-                    (props) => state.selectedStudent === props.studentNo
-                  )[0]
-                  ?.name.split(",")[0]
-              }'s Complaint/Concern(s):`}
-              condition={state.selectedStudent !== null}
-              setId={handleSelectComplaintId}
-              setIdExtended={() => {
-                toggleClassmates(false);
-                setState((prevState) => ({
-                  ...prevState,
-                  selectedStudent: null,
-                }));
-              }}
-              closingCondition={() =>
-                setState((prevState) => ({
-                  ...prevState,
-                  selectedStudent: null,
-                }))
-              }
             />
-          </>
-        ) : (
-          <RenderStudentUI
-            selectedChat={state.selectedChat}
-            handleNewConcern={handleNewConcern}
-            role={state.role}
-            mayor={state.mayor}
-            data={state.complaintRecord?.sort(
-              (a, b) => b.dateCreated - a.dateCreated
-            )}
-            condition={state.showMayorModal}
-            setId={handleSelectComplaintId}
-            closingCondition={() => toggleModal(false)}
-            higherUpAction={() => {
-              toggleModal(true);
-              setState((prevState) => ({
-                ...prevState,
-                selectedStudent: null,
-              }));
-            }}
-            classSectionAction={() => {
-              setState((prevState) => ({
-                ...prevState,
-                selectedChat: "class_section",
-                message: initState.message,
-                showMayorModal: false,
-              }));
-            }}
-          />
-        )}
-        {renderStudentComplainBox()}
-        {state.selectedChat !== undefined &&
-          state.selectedChat !== "" &&
-          renderInputMessageContainer()}
-      </section>
+          )}
+          {renderStudentComplainBox()}
+          {state.selectedChat !== undefined &&
+            state.selectedChat !== "" &&
+            renderInputMessageContainer()}
+        </section>
+      )}
     </Main>
   );
 };
@@ -953,6 +1036,582 @@ const RenderStudentUI = ({
   );
 };
 
+interface RenderAdviserUIProps {
+  adviser: InitStateProps["currentAdviser"];
+  students: InitStateProps["classMates"];
+}
+interface AdviserStateProps
+  extends Pick<
+    InitStateProps,
+    | "targetDocument"
+    | "groupComplaints"
+    | "complaintRecord"
+    | "selectedStudent"
+    | "message"
+    | "turnOverMessage"
+    | "showTurnOverPopUp"
+    | "selectedChat"
+  > {
+  showStudents: boolean;
+}
+const RenderAdviserUI = ({ students, adviser }: RenderAdviserUIProps) => {
+  const initState: AdviserStateProps = {
+    message: "",
+    selectedChat: "",
+    turnOverMessage: "",
+    selectedStudent: null,
+    showStudents: false,
+    showTurnOverPopUp: false,
+  };
+  const [state, setState] = useState(initState);
+
+  function handleMessage(event: ChangeEvent<HTMLTextAreaElement>) {
+    const message = event.target.value;
+    setState((prevState) => ({ ...prevState, message }));
+  }
+  function handleTurnOverMessage(event: ChangeEvent<HTMLTextAreaElement>) {
+    const turnOverMessage = event.target.value;
+    setState((prevState) => ({ ...prevState, turnOverMessage }));
+  }
+  function handleClassmateClick(studentNo: string) {
+    setState((prevState) => ({ ...prevState, selectedStudent: studentNo }));
+  }
+  function handleSelectComplaintId(id: typeof state.selectedChat) {
+    if (typeof id === "string") {
+      const chatBox = id;
+      return setState((prevState) => ({
+        ...prevState,
+        selectedChat: id,
+        showMayorModal: false,
+        chatBox,
+      }));
+    }
+    console.log("selected chat is not a string in state");
+  }
+
+  async function handleSend(event: MouseEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    const complaint: ConcernBaseProps = {
+      timestamp: new Date().getTime(),
+      sender: "adviser",
+      message: state.message,
+    };
+    if (state.targetDocument !== undefined) {
+      if (state.selectedChat === "class_section") {
+        await addDoc(collection(state.targetDocument, "group"), complaint);
+        setState((prevState) => ({
+          ...prevState,
+          message: initState.message,
+        }));
+        return console.log("new log");
+      } else {
+        /** This is for student forwarding messages to the existing complaint */
+        const docRef = doc(
+          collection(state.targetDocument, "individual"),
+          typeof state.selectedChat === "string" ? state.selectedChat : "null"
+        );
+        try {
+          await updateDoc(docRef, {
+            messages: arrayUnion(complaint),
+          });
+          return setState((prevState) => ({
+            ...prevState,
+            message: initState.message,
+          }));
+        } catch (err) {
+          return console.log(err, "Failed in updating document");
+        }
+      }
+    }
+    console.log("Individual Complaints Collection in state is undefined");
+  }
+
+  const returnComplaintsQuery = useCallback(
+    async ({ yearLevel, section }: YearLevelSectionProps) => {
+      const thisYear = new Date().getFullYear();
+      const nextYear = thisYear + 1;
+      const formatYearStringify = `${thisYear}-${nextYear}`;
+      const generatedQuery = query(
+        collectionRef("complaints"),
+        and(
+          where("yearLevel", "==", yearLevel),
+          where("section", "==", section),
+          where("academicYear", "==", formatYearStringify)
+        )
+      );
+      try {
+        const snapshot = await getDocs(generatedQuery);
+        if (snapshot.docs.length > 0) {
+          const result = snapshot.docs[0];
+          return { queryId: result ? result.id : "" };
+        }
+        const reference = await addDoc(collectionRef("complaints"), {
+          time: new Date().getTime(),
+          section,
+          yearLevel,
+          academicYear: formatYearStringify,
+        });
+        return { queryId: reference.id };
+      } catch (err) {
+        console.log(err, "Error in returning complaints Query");
+      }
+    },
+    []
+  );
+  const fetchComplaintCollections = useCallback(
+    async ({
+      targetDocument,
+      studentNo,
+      recipient,
+      targetStateContainer,
+    }: FetchComplaintCollectionsProps) => {
+      const groupComplaintCol = collection(targetDocument, "group");
+      const individualComplaintCol = collection(targetDocument, "individual");
+      const groupCOmplaints = await getDocs(
+        query(groupComplaintCol, limit(LIMIT))
+      );
+      const groupComplaintsHolder: ConcernBasePropsExtended[] = [];
+      groupCOmplaints.forEach((doc) => {
+        const data = doc.data() as ConcernBaseProps;
+        const id = doc.id;
+        groupComplaintsHolder.push({ ...data, id });
+      });
+
+      return onSnapshot(
+        studentNo === undefined
+          ? query(
+              individualComplaintCol,
+              where("recipient", "==", recipient),
+              limit(LIMIT * 3)
+            )
+          : query(
+              individualComplaintCol,
+              and(
+                where("recipient", "==", recipient),
+                where("studentNo", "==", studentNo)
+              ),
+              limit(LIMIT)
+            ),
+        (individualSnap) => {
+          const concernsHolder: ConcernPropsExtended[] = [];
+          individualSnap.forEach((doc) => {
+            const data = doc.data() as ConcernProps;
+            const id = doc.id;
+            concernsHolder.push({ ...data, id });
+          });
+          setState((prevState) => ({
+            ...prevState,
+            targetDocument: targetDocument,
+            [targetStateContainer]: concernsHolder,
+            groupComplaints: groupComplaintsHolder,
+          }));
+        }
+      );
+    },
+    []
+  );
+  const fetchStudentConcerns = useCallback(
+    async ({ yearLevel, section }: YearLevelSectionProps) => {
+      try {
+        const reference = await returnComplaintsQuery({
+          yearLevel,
+          section,
+        });
+
+        if (reference !== undefined) {
+          const targetDocument = doc(
+            collectionRef("complaints"),
+            reference.queryId
+          );
+          const fetchComplaintProps: FetchComplaintCollectionsProps = {
+            targetDocument,
+            recipient: "adviser",
+            targetStateContainer: "complaintRecord",
+          };
+          return void fetchComplaintCollections(fetchComplaintProps);
+        }
+      } catch (err) {
+        console.log(err, "fetch student concerns");
+      }
+    },
+    [returnComplaintsQuery, fetchComplaintCollections]
+  );
+
+  const renderStudentComplainBox = () => {
+    const complaintRecord = state.complaintRecord?.filter(
+      (props) => state.selectedChat === props.id
+    );
+    const complaintRecordCondition =
+      complaintRecord !== undefined && complaintRecord.length > 0
+        ? complaintRecord
+        : [];
+
+    const renderThisArray =
+      state.selectedChat === "class_section"
+        ? state.groupComplaints?.sort((a, b) => a.timestamp - b.timestamp)
+        : complaintRecordCondition
+            .filter((props) => props.id === state.selectedChat)[0]
+            ?.messages.sort((a, b) => a.timestamp - b.timestamp);
+
+    async function actionButton(type: "resolved" | "turn-over") {
+      try {
+        if (typeof state.selectedChat === "string") {
+          const reference = await returnComplaintsQuery({
+            yearLevel: adviser?.yearLevel ?? "null",
+            section: adviser?.section,
+          });
+          if (reference !== undefined) {
+            const individualColRef = collection(
+              doc(db, "complaints", reference.queryId),
+              "individual"
+            );
+            const targetDoc = doc(individualColRef, state.selectedChat);
+            const filteredRecord = state.complaintRecord?.filter(
+              (props) => state.selectedChat === props.id
+            )[0];
+            if (type === "resolved") {
+              if (filteredRecord?.referenceId !== undefined) {
+                try {
+                  const batch = writeBatch(db);
+                  const snapshot = await getDocs(
+                    query(
+                      individualColRef,
+                      where("referenceId", "==", filteredRecord.referenceId)
+                    )
+                  );
+                  snapshot.forEach((snap) => {
+                    batch.update(doc(individualColRef, snap.id), {
+                      status: type,
+                    });
+                  });
+                  batch.update(
+                    doc(individualColRef, filteredRecord.referenceId),
+                    { status: type }
+                  );
+                  return await batch.commit();
+                } catch (err) {
+                  console.log(err, "Batch error");
+                }
+              }
+              return await updateDoc(targetDoc, { status: type });
+            } else if (type === "turn-over") {
+              if (filteredRecord?.referenceId !== undefined) {
+                await updateDoc(targetDoc, {
+                  status: type,
+                  turnOvers: increment(1),
+                });
+                return await addDoc(individualColRef, {
+                  dateCreated: new Date().getTime(),
+                  referenceId: filteredRecord.referenceId,
+                  messages: [
+                    {
+                      sender: "adviser",
+                      message: state.turnOverMessage,
+                      timestamp: new Date().getTime(),
+                    },
+                  ],
+                  recipient: "program_chair",
+                  status: "processing",
+                  studentNo: filteredRecord?.studentNo,
+                });
+              }
+              await updateDoc(targetDoc, {
+                status: type,
+                turnOvers: increment(1),
+              });
+              return await addDoc(individualColRef, {
+                dateCreated: new Date().getTime(),
+                referenceId: state.selectedChat,
+                messages: [
+                  {
+                    sender: "adviser",
+                    message: state.turnOverMessage,
+                    timestamp: new Date().getTime(),
+                  },
+                ],
+                recipient: "program_chair",
+                status: "processing",
+                studentNo:
+                  state.complaintRecord?.filter(
+                    (props) => state.selectedChat === props.id
+                  )[0]?.studentNo ?? "null",
+              });
+            }
+          }
+        }
+      } catch (err) {
+        console.log(err, "Action Button");
+      }
+    }
+
+    return (
+      <>
+        {state.selectedChat !== "" && (
+          <div className="bg-primary/20 p-2 text-center">
+            <p className="text-xl font-bold">
+              {state.selectedChat === "class_section"
+                ? "Class Section"
+                : students?.filter(
+                    (student) =>
+                      state.complaintRecord?.filter(
+                        (props) => state.selectedChat === props.id
+                      )[0]?.studentNo === student.studentNo
+                  )[0]?.name}
+            </p>
+            {typeof state.selectedChat === "string" &&
+              state.selectedChat !== "class_section" && (
+                <>
+                  <p className="font-semibold text-primary">
+                    {`Concern Id: ${state.selectedChat}`}
+                  </p>
+                  <p className="flex items-center justify-center gap-2">
+                    Status:
+                    <span
+                      className={`${
+                        complaintRecordCondition?.filter(
+                          (props) => props.id === state.selectedChat
+                        )[0]?.status === "processing"
+                          ? "text-yellow-500"
+                          : complaintRecordCondition?.filter(
+                              (props) => props.id === state.selectedChat
+                            )[0]?.status === "resolved"
+                          ? "text-green-500"
+                          : "text-red-500"
+                      } font-bold capitalize`}
+                    >
+                      {complaintRecordCondition?.filter(
+                        (props) => props.id === state.selectedChat
+                      )[0]?.status === "processing"
+                        ? "ongoing"
+                        : complaintRecordCondition?.filter(
+                            (props) => props.id === state.selectedChat
+                          )[0]?.status}
+                    </span>
+                  </p>
+                </>
+              )}
+            {state.complaintRecord?.filter(
+              (props) => props.id === state.selectedChat
+            ) !== undefined &&
+              state.complaintRecord?.filter(
+                (props) => props.id === state.selectedChat
+              ).length > 0 &&
+              complaintRecordCondition?.filter(
+                (props) => props.id === state.selectedChat
+              )[0]?.status === "processing" && (
+                <div className="flex items-center justify-center gap-2">
+                  <button
+                    className="rounded-lg bg-green-500 p-2 capitalize text-paper"
+                    onClick={() => void actionButton("resolved")}
+                  >
+                    resolve
+                  </button>
+                  <button
+                    className="rounded-lg bg-yellow-500 p-2 capitalize text-paper"
+                    onClick={() =>
+                      setState((prevState) => ({
+                        ...prevState,
+                        showTurnOverPopUp: true,
+                      }))
+                    }
+                  >
+                    turn-over
+                  </button>
+                  {state.showTurnOverPopUp && (
+                    <TurnOverModal
+                      turnOverMessage={state.turnOverMessage}
+                      handleTurnOverMessage={handleTurnOverMessage}
+                      handleTurnOver={() => {
+                        setState((prevState) => ({
+                          ...prevState,
+                          turnOverMessage: "",
+                          showTurnOverPopUp: false,
+                        }));
+                        void actionButton("turn-over");
+                      }}
+                      closingModal={() =>
+                        setState((prevState) => ({
+                          ...prevState,
+                          showTurnOverPopUp: false,
+                        }))
+                      }
+                    />
+                  )}
+                </div>
+              )}
+          </div>
+        )}
+        <div className="flex h-[60vh] flex-col gap-2 overflow-y-auto bg-primary/10 p-2">
+          {renderThisArray?.map(({ message, timestamp, sender }, index) => {
+            const newTimestamp = new Date();
+            newTimestamp.setTime(timestamp);
+            const targetStudent = students?.filter(
+              (props) => sender === props.studentNo
+            )[0];
+
+            return (
+              <ProfilePictureContainer
+                key={index}
+                src={
+                  sender === "adviser"
+                    ? adviser?.src ?? ""
+                    : targetStudent?.src ?? ""
+                }
+                renderCondition={sender === "adviser"}
+              >
+                <div>
+                  <p className="font-bold">
+                    {sender === "adviser"
+                      ? adviser?.name ?? adviser?.email ?? "not_faculty"
+                      : targetStudent?.name ?? "not_student"}
+                  </p>
+                  <p className="font-bold text-primary">
+                    {sender === "adviser"
+                      ? `${adviser?.yearLevel.substring(
+                          0,
+                          1
+                        )}${adviser?.section?.toUpperCase()} Adviser`
+                      : sender}
+                  </p>
+                  <p>{message}</p>
+                  <p className="text-xs font-thin">
+                    {newTimestamp.toLocaleTimeString()}
+                  </p>
+                </div>
+              </ProfilePictureContainer>
+            );
+          })}
+        </div>
+      </>
+    );
+  };
+  const renderInputMessageContainer = () => {
+    const placeholder =
+      state.selectedChat === "class_section"
+        ? "Compose a message to send in your class section"
+        : "Compose a message";
+
+    const complaintRecord =
+      state.complaintRecord?.filter(
+        (props) => props.id === state.selectedChat
+      ) ?? [];
+    const renderCondition =
+      complaintRecord.length > 0 && complaintRecord[0]?.status === "processing";
+
+    return (
+      <div
+        className={`${
+          renderCondition ||
+          typeof state.selectedChat === "object" ||
+          state.selectedChat === "class_section"
+            ? "block"
+            : "hidden"
+        }`}
+      >
+        <textarea
+          placeholder={placeholder}
+          value={state.message}
+          onChange={handleMessage}
+        />
+        <button onClick={(e) => void handleSend(e)}>send</button>
+      </div>
+    );
+  };
+
+  useEffect(() => {
+    const section = adviser?.section;
+    const yearLevel = adviser?.yearLevel;
+    if (section !== undefined && yearLevel !== undefined)
+      return void fetchStudentConcerns({ section, yearLevel });
+  }, [adviser?.section, adviser?.yearLevel, fetchStudentConcerns]);
+  return (
+    <div>
+      <div className="bg-primary/20 p-2">
+        <div className="flex w-full flex-row gap-2 overflow-x-auto">
+          <button
+            className={`${
+              state.selectedChat !== "class_section"
+                ? "bg-secondary"
+                : "bg-primary"
+            } rounded-lg p-2 capitalize text-paper duration-300 ease-in-out`}
+            onClick={() =>
+              setState((prevState) => ({ ...prevState, showStudents: true }))
+            }
+          >
+            students
+          </button>
+          <button
+            className={`${
+              state.selectedChat === "class_section"
+                ? "bg-secondary"
+                : "bg-primary"
+            } rounded-lg p-2 capitalize text-paper duration-300 ease-in-out`}
+            onClick={() =>
+              setState((prevState) => ({
+                ...prevState,
+                selectedChat: "class_section",
+              }))
+            }
+          >
+            class section
+          </button>
+        </div>
+      </div>
+      <div
+        className={`${
+          state.showStudents ? "flex" : "hidden"
+        } mx-auto w-full gap-2 overflow-x-auto bg-secondary p-2`}
+      >
+        {students?.map(({ studentNo, name, src }) => {
+          return (
+            <button
+              key={studentNo}
+              onClick={() => {
+                handleClassmateClick(studentNo);
+              }}
+            >
+              <ProfilePictureContainer src={src ?? ""}>
+                <div className="text-start">
+                  <p className="font-bold">{name}</p>
+                  <p className="font-bold text-primary">{studentNo}</p>
+                </div>
+              </ProfilePictureContainer>
+            </button>
+          );
+        })}
+      </div>
+      <ComplainBoxRenderer
+        data={state.complaintRecord
+          ?.filter((props) => props.studentNo === state.selectedStudent)
+          ?.sort((a, b) => b.dateCreated - a.dateCreated)}
+        heading={`${
+          students
+            ?.filter((props) => state.selectedStudent === props.studentNo)[0]
+            ?.name.split(",")[0]
+        }'s Complaint/Concern(s):`}
+        condition={state.selectedStudent !== null}
+        setId={handleSelectComplaintId}
+        setIdExtended={() => {
+          setState((prevState) => ({
+            ...prevState,
+            selectedStudent: null,
+            showStudents: false,
+          }));
+        }}
+        closingCondition={() =>
+          setState((prevState) => ({
+            ...prevState,
+            selectedStudent: null,
+          }))
+        }
+      />
+      {renderStudentComplainBox()}
+      {state.selectedChat !== undefined &&
+        state.selectedChat !== "" &&
+        renderInputMessageContainer()}
+    </div>
+  );
+};
 interface ComplainBoxRendererProps {
   data: ConcernPropsExtended[] | undefined;
   heading?: string;
@@ -1083,6 +1742,93 @@ const ProfilePicture = ({ src }: ProfilePictureProps) => {
       />
     </div>
   );
+};
+interface TurnOverModalProps {
+  closingModal: () => void;
+  handleTurnOverMessage: (event: ChangeEvent<HTMLTextAreaElement>) => void;
+  turnOverMessage: string;
+  handleTurnOver: () => void;
+}
+const TurnOverModal = ({
+  closingModal,
+  turnOverMessage,
+  handleTurnOverMessage,
+  handleTurnOver,
+}: TurnOverModalProps) => {
+  return (
+    <div className="fixed inset-0 z-20 bg-blue-400">
+      <button
+        className="absolute right-2 top-2 rounded-full bg-red-500 px-2"
+        onClick={closingModal}
+      >
+        <p className="text-white">x</p>
+      </button>
+      <textarea
+        className="p-2"
+        placeholder="Compose a turn-over message to send to your adviser"
+        value={turnOverMessage}
+        onChange={(e) => handleTurnOverMessage(e)}
+      />
+      <button
+        disabled={turnOverMessage.trim() === ""}
+        className={`${
+          turnOverMessage.trim() === ""
+            ? "bg-slate-200 text-slate-300"
+            : "bg-green text-paper"
+        } rounded-lg p-2 capitalize duration-300 ease-in-out`}
+        onClick={handleTurnOver}
+      >
+        send
+      </button>
+    </div>
+  );
+};
+
+interface RenderTurnOverStatusProps {
+  role?: "mayor" | "student" | "adviser";
+  status?: "turn-over" | "resolved";
+  turnOvers?: number;
+}
+const RenderTurnOverStatus = ({
+  role,
+  status,
+  turnOvers,
+}: RenderTurnOverStatusProps) => {
+  const turnOverModified = (role === "mayor" ? 1 : 0) + (turnOvers ?? -1);
+  switch (turnOverModified) {
+    case undefined:
+      return (
+        <>
+          {status === "resolved" ? "Resolved by Mayor" : "Turn-Over to Mayor"}
+        </>
+      );
+    case 1:
+      return (
+        <>
+          {status === "resolved"
+            ? "Resolved by Adviser"
+            : "Turn-Over to Adviser"}
+        </>
+      );
+    case 2:
+      return (
+        <>
+          {status === "resolved"
+            ? "Resolved by Program Chair"
+            : "Turn-Over to Program Chair"}
+        </>
+      );
+    case 3:
+      return (
+        <>
+          {status === "resolved"
+            ? "Resolved by Board Member"
+            : "Turn-Over to Board Member"}
+        </>
+      );
+    default:
+      return <>undefined</>;
+  }
 };
 
 export default Complaints;
