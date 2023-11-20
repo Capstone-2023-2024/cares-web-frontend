@@ -2,6 +2,8 @@
 
 # Changelog:
 
+- [FIXED]: `adviser` is not sharing components with `student`
+- [REMOVED]: Hero UI in rendering ComplaintBox's complaints [CHANGED]: selected Ticket is highlighted
 - [FIXED]: Duplicate groupComplaints onSnapshot
 - [FIXED]: `adviser`'s class section Complaint box UI is not update when sending message
 - [FIXED]: (`student`/`mayor`)'s new complaint UI is not reflected in Complaint box.
@@ -14,10 +16,7 @@
 
 # Issues:
 
-- `student`'s turn-overed complaints are not reflecting in Complaints and the adviser is not available
-- Hero UI in rendering ComplaintBox's complaints
-- Sometimes the snapshot is not sent to the complaintContext
-- `adviser` is buggy
+- Complaint Box UI conflicting with class_section ChatHeadButton
 
 # For improvements
 

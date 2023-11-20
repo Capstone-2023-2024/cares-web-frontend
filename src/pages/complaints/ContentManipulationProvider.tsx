@@ -50,7 +50,7 @@ const ContentManipulationProvider = ({
   children,
 }: ContentManipulationProviderProps) => {
   const [state, setState] = useState(contentManupulationInitState);
-
+  console.log({ rest: state });
   const setSelectedChatId = useCallback(
     (selectedChatId: string | null) =>
       setState((prevState) => ({ ...prevState, selectedChatId })),

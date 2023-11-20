@@ -68,50 +68,52 @@ const ComplaintsWrapper = () => {
 
   /** Setting up setRole, setCurrentStudentInfo, and setAdviserInfo */
   const fetchUserInfo = useCallback(async () => {
-    const studentSnapshot = await getDocs(
-      query(collectionRef("student"), where("email", "==", currentUser?.email))
-    );
-    const mayorSnapshot = await getDocs(
-      query(collectionRef("mayor"), where("email", "==", currentUser?.email))
-    );
+    if (typeof currentUser?.email === "string") {
+      const studentSnapshot = await getDocs(
+        query(collectionRef("student"), where("email", "==", currentUser.email))
+      );
+      const mayorSnapshot = await getDocs(
+        query(collectionRef("mayor"), where("email", "==", currentUser.email))
+      );
 
-    if (!studentSnapshot.empty) {
-      const doc = studentSnapshot.docs[0];
-      const data = doc?.data() as StudentWithClassSection;
-      setRole("student");
-      setCurrentStudentInfo(data);
-      const adviserSnapshot = await getDocs(
-        query(
-          collectionRef("advisers"),
-          and(
-            where("yearLevel", "==", data.yearLevel),
-            where("section", "==", data.section)
+      if (!studentSnapshot.empty) {
+        const doc = studentSnapshot.docs[0];
+        const data = doc?.data() as StudentWithClassSection;
+        setRole("student");
+        setCurrentStudentInfo(data);
+        const adviserSnapshot = await getDocs(
+          query(
+            collectionRef("advisers"),
+            and(
+              where("yearLevel", "==", data.yearLevel),
+              where("section", "==", data.section)
+            )
           )
-        )
-      );
-      if (!adviserSnapshot.empty) {
-        const doc = adviserSnapshot.docs[0];
-        const adviserData = doc?.data() as AdviserProps;
-        const id = doc?.id ?? "null";
-        setAdviserInfo(adviserData, id);
+        );
+        if (!adviserSnapshot.empty) {
+          const doc = adviserSnapshot.docs[0];
+          const adviserData = doc?.data() as AdviserProps;
+          const id = doc?.id ?? "null";
+          setAdviserInfo(adviserData, id);
+        }
+      } else {
+        const adviserSnapshot = await getDocs(
+          query(
+            collectionRef("advisers"),
+            where("email", "==", currentUser.email)
+          )
+        );
+        if (!adviserSnapshot.empty) {
+          const doc = adviserSnapshot.docs[0];
+          const adviserData = doc?.data() as AdviserProps;
+          const id = doc?.id ?? "";
+          setAdviserInfo(adviserData, id);
+          setRole("adviser");
+        }
       }
-    } else {
-      const adviserSnapshot = await getDocs(
-        query(
-          collectionRef("advisers"),
-          where("email", "==", currentUser?.email)
-        )
-      );
-      if (!adviserSnapshot.empty) {
-        const doc = adviserSnapshot.docs[0];
-        const adviserData = doc?.data() as AdviserProps;
-        const id = doc?.id ?? "";
-        setAdviserInfo(adviserData, id);
-        setRole("adviser");
+      if (!mayorSnapshot.empty) {
+        setRole("mayor");
       }
-    }
-    if (!mayorSnapshot.empty) {
-      setRole("mayor");
     }
   }, [currentUser?.email, setAdviserInfo, setCurrentStudentInfo, setRole]);
 
@@ -297,8 +299,9 @@ const MainPage = () => {
           setClassSectionComplaints(groupComplaintsHolder);
         }
       );
-    return unsub;
+    return unsub ? unsub : () => null;
   }, [setClassSectionComplaints, currentYearSectionComplaintDocId]);
+  /** If studentNo is undefined, concerns will be redirected to currentStudentComplaints */
   const fetchOtherComplaints = useCallback(
     ({ studentNo, recipient }: FetchComplaintCollectionsProps) => {
       const unsub =
@@ -367,7 +370,6 @@ const MainPage = () => {
           const fetchComplaintProps: FetchComplaintCollectionsProps = {
             recipient: "mayor",
           };
-          fetchClassSectionComplaints();
           fetchOtherComplaints(
             role === "mayor"
               ? fetchComplaintProps
@@ -382,11 +384,10 @@ const MainPage = () => {
       role,
       fetchOtherComplaints,
       returnComplaintsQuery,
-      fetchClassSectionComplaints,
       setCurrentYearSectionComplaintDocId,
     ]
   );
-  /** Setup Classmates concerns, and concern for Adviser */
+  /** Mayor's Setup for Student concerns, and Mayor's concern for Adviser */
   const mayorSetup = useCallback(
     async ({ yearLevel, section, studentNo }: MayorSetUpProps) => {
       try {
@@ -412,12 +413,40 @@ const MainPage = () => {
       setCurrentYearSectionComplaintDocId,
     ]
   );
+  /** Adviser's Setup for Student concerns, and Mayor's concerns */
+  const adviserSetup = useCallback(
+    async ({ yearLevel, section }: YearLevelSectionProps) => {
+      try {
+        const reference = await returnComplaintsQuery({
+          yearLevel,
+          section,
+        });
+
+        if (reference !== undefined) {
+          setCurrentYearSectionComplaintDocId(reference.queryId);
+          return fetchOtherComplaints({
+            recipient: "adviser",
+          });
+        }
+      } catch (err) {
+        console.log(err, "fetch student concerns");
+      }
+    },
+    [
+      returnComplaintsQuery,
+      fetchOtherComplaints,
+      setCurrentYearSectionComplaintDocId,
+    ]
+  );
   /** If sender is anonymous, currentStudentInfo is not loaded properly */
   async function handleSend(event: MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
     const complaint: WriteConcernBaseProps = {
       timestamp: new Date().getTime(),
-      sender: currentStudentInfo?.studentNo ?? "anonymous",
+      sender:
+        role === "adviser"
+          ? currentUser?.email ?? "adviser"
+          : currentStudentInfo?.studentNo ?? "anonymous",
       message: state.message,
     };
     if (currentYearSectionComplaintDocId !== null) {
@@ -565,18 +594,23 @@ const MainPage = () => {
     );
   };
 
-  /** Adviser follow-up Set-up */
+  /** Set-up for whole class section with same `yearLevel` and `section`*/
   useEffect(() => {
-    const yearLevel = adviserInfo?.yearLevel;
-    const section = adviserInfo?.section;
-    if (
-      role !== "student" &&
-      yearLevel !== undefined &&
-      section !== undefined
-    ) {
+    const yearLevel = adviserInfo?.yearLevel ?? currentStudentInfo?.yearLevel;
+    const section = adviserInfo?.section ?? currentStudentInfo?.section;
+    if (yearLevel !== undefined && section !== undefined) {
       fetchClassStudents({ yearLevel, section });
     }
-  }, [role, adviserInfo?.section, adviserInfo?.yearLevel, fetchClassStudents]);
+    return fetchClassSectionComplaints();
+  }, [
+    fetchClassSectionComplaints,
+    fetchClassStudents,
+    currentYearSectionComplaintDocId,
+    adviserInfo?.section,
+    adviserInfo?.yearLevel,
+    currentStudentInfo?.section,
+    currentStudentInfo?.yearLevel,
+  ]);
   /** Student follow-up Set-up */
   useEffect(() => {
     const yearLevel = currentStudentInfo?.yearLevel;
@@ -587,7 +621,7 @@ const MainPage = () => {
       section !== undefined &&
       studentNo !== undefined
     ) {
-      fetchClassStudents({ yearLevel, section });
+      console.log("student");
       void getChattablesForStudent({ yearLevel, section });
       void fetchStudentConcerns({ yearLevel, section, studentNo });
     }
@@ -595,11 +629,10 @@ const MainPage = () => {
     currentStudentInfo?.section,
     currentStudentInfo?.studentNo,
     currentStudentInfo?.yearLevel,
-    fetchClassStudents,
     getChattablesForStudent,
     fetchStudentConcerns,
   ]);
-  /** Mayor Set-up */
+  /** Mayor Set-up for fetching complaints */
   useEffect(() => {
     const yearLevel = currentStudentInfo?.yearLevel;
     const section = currentStudentInfo?.section;
@@ -610,6 +643,7 @@ const MainPage = () => {
       section !== undefined &&
       studentNo !== undefined
     ) {
+      console.log("mayor");
       void mayorSetup({ yearLevel, section, studentNo });
     }
   }, [
@@ -619,6 +653,19 @@ const MainPage = () => {
     currentStudentInfo?.section,
     mayorSetup,
   ]);
+  /** Adviser set-up for fetching complaints */
+  useEffect(() => {
+    const yearLevel = adviserInfo?.yearLevel;
+    const section = adviserInfo?.section;
+    if (
+      role === "adviser" &&
+      yearLevel !== undefined &&
+      section !== undefined
+    ) {
+      console.log("adviser");
+      void adviserSetup({ yearLevel, section });
+    }
+  }, [role, adviserInfo?.yearLevel, adviserInfo?.section, adviserSetup]);
 
   if (role === undefined) {
     return <Loading />;
@@ -627,7 +674,7 @@ const MainPage = () => {
   return (
     <>
       <section className="h-full">
-        {role === "mayor" ? (
+        {role !== "student" ? (
           <>
             <RenderChatHeads
               recipientArray={[
@@ -844,7 +891,7 @@ const ComplainBoxRenderer = ({
                   <p
                     className={`${
                       selectedChatId === id
-                        ? "text-green-300"
+                        ? "font-bold text-paper"
                         : "text-slate-400"
                     } text-sm duration-300 ease-in-out`}
                   >{`Concern Id: ${id}`}</p>
@@ -1144,8 +1191,9 @@ const ComplaintBox = ({}) => {
     try {
       if (typeof selectedChatId === "string") {
         const reference = await returnComplaintsQuery({
-          yearLevel: adviserInfo?.yearLevel ?? "null",
-          section: adviserInfo?.section,
+          yearLevel:
+            currentStudentInfo?.yearLevel ?? adviserInfo?.yearLevel ?? "null",
+          section: currentStudentInfo?.section ?? adviserInfo?.section,
         });
         if (reference !== undefined) {
           const individualColRef = collection(
@@ -1188,8 +1236,7 @@ const ComplaintBox = ({}) => {
   const renderActionButtons = () => {
     const condition =
       targetArray?.status === "processing" &&
-      targetArray?.recipient === "mayor" &&
-      role !== "student" &&
+      role === targetArray?.recipient &&
       selectedChatHead !== "class_section" &&
       selectedChatId !== "class_section";
     return (
@@ -1236,6 +1283,7 @@ const ComplaintBox = ({}) => {
         {renderThisArray?.map(({ message, timestamp, sender }, index) => {
           const newTimestamp = new Date();
           newTimestamp.setTime(timestamp);
+          console.log({ studentsInfo });
           const targetStudent = studentsInfo?.filter(
             (props) => sender === props.studentNo
           )[0];
@@ -1244,21 +1292,27 @@ const ComplaintBox = ({}) => {
             <ProfilePictureContainer
               key={index}
               src={
-                sender === "adviser"
+                sender === adviserInfo?.email
                   ? adviserInfo?.src ?? ""
                   : targetStudent?.src ?? ""
               }
-              renderCondition={sender === currentStudentInfo?.studentNo}
+              renderCondition={
+                role === "adviser"
+                  ? sender === adviserInfo?.email
+                  : sender === currentStudentInfo?.studentNo
+              }
             >
               <div className="relative">
                 <div>
                   <p className="font-bold">
-                    {sender === "adviser"
-                      ? adviserInfo?.name ?? adviserInfo?.email ?? "not_faculty"
-                      : targetStudent?.name ?? "not_student"}
+                    {sender === adviserInfo?.email
+                      ? adviserInfo?.name ??
+                        adviserInfo?.email ??
+                        "Deleted Faculty"
+                      : targetStudent?.name ?? "Deleted User"}
                   </p>
                   <p className="font-bold text-primary">
-                    {sender === "adviser"
+                    {sender === adviserInfo?.email
                       ? `${adviserInfo?.yearLevel.substring(
                           0,
                           1
