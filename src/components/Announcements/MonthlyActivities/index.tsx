@@ -36,7 +36,7 @@ const MonthlyActivities = () => {
     <div className="relative">
       <div className="flex items-center justify-around gap-2">
         <div className="flex items-center justify-center">
-          <p className="text-xs capitalize">type:</p>
+          <p className="text-lg capitalize">type: &nbsp;&nbsp;&nbsp;&nbsp;</p>
           <div className="min-w-24 w-fit">
             <AnnouncementTypesSelection
               value={type}
@@ -45,10 +45,10 @@ const MonthlyActivities = () => {
           </div>
         </div>
         <div className="flex items-center justify-center">
-          <p className="text-xs capitalize">order:</p>
+          <p className="text-lg capitalize">order: &nbsp;&nbsp;&nbsp;&nbsp;</p>
           <div className="min-w-24 w-fit">
             <select
-              className="w-full rounded-lg bg-primary p-2 capitalize text-paper"
+              className="w-full rounded-lg bg-primary p-2 pl-16 pr-16 capitalize text-paper"
               value={orderBy}
               onChange={handleOrderBy}
             >
@@ -58,10 +58,12 @@ const MonthlyActivities = () => {
           </div>
         </div>
         <div className="flex items-center justify-center">
-          <p className="text-xs capitalize">search by:</p>
+          <p className="text-lg capitalize">
+            search by: &nbsp;&nbsp;&nbsp;&nbsp;
+          </p>
           <div className="min-w-24 w-fit">
             <input
-              placeholder="tag"
+              placeholder="Tag"
               className="w-full rounded-lg border border-primary p-1 text-primary"
               value={tag}
               onChange={handleTag}
@@ -70,8 +72,7 @@ const MonthlyActivities = () => {
         </div>
       </div>
       <Button type="button" onClick={toggleEdit}>
-        {/* <Image src="/pencil.png" alt="" {...imageDimension(icon)} /> */}
-        <p>Edit</p>
+        {<Image src="/pencil.png" alt="" {...imageDimension(icon)} />}
       </Button>
       <div className="mx-2 flex gap-2 overflow-x-auto rounded-xl bg-black/10 p-4">
         {data.map((props, index) => {
@@ -93,7 +94,7 @@ const Card = ({
   const newDate = new Date();
   newDate.setTime(dateCreated);
   return (
-    <div className="flex min-w-max rounded-xl bg-primary/70 p-4">
+    <div className="flex min-w-max rounded-xl bg-primary/75 p-4">
       <DeleteButton id={id} isEditing={isEditing} />
       <div>
         <Heading department={department} />

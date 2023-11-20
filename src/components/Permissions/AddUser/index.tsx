@@ -19,7 +19,7 @@ const AddUser = ({ children }: AddUserProps) => {
       <div className="grid grid-flow-col">
         <button
           type="button"
-          className="rounded-xl bg-slate-100 p-2 shadow-sm"
+          className="mb-10 rounded-xl bg-slate-100 p-2 shadow-sm"
           onClick={() => handleAddRole(!state.isModalShowing)}
         >
           {state.isModalShowing ? "Collapse" : "Expand"}

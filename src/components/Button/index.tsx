@@ -2,7 +2,7 @@ import type { ButtonType } from "./types";
 
 const Button = (props: ButtonType) => {
   const { primary, error, children, success, text, rounded, ...rest } = props;
-  let base = "p-2 px-4 capitalize duration-300 ease-in-out";
+  let base = " p-2 px-20 capitalize duration-300 ease-in-out";
 
   function style() {
     if (rounded) base += " rounded-xl";

@@ -85,12 +85,13 @@ const RoleModal = () => {
         className="flex flex-col gap-2"
         onSubmit={(e) => void handleSubmit(e)}
       >
-        <div className="flex items-center gap-2">
-          <h2>Role: </h2>
+        <div className="flex items-center gap-2 text-lg">
+          <h2>Role: &nbsp;&nbsp;</h2>
           <RoleSelection
             role={state.role}
             handleRoleSelection={handleRoleSelection}
           />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
           <h2>Partial Access: </h2>
           <AccessLevelSelection
             role={state.role}

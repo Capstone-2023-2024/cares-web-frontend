@@ -11,6 +11,7 @@ import { useAuth } from "~/contexts/AuthContext";
 import { useDate } from "~/contexts/DateContext";
 import { useToggle } from "~/contexts/ToggleContext";
 import { currentMonth } from "~/utils/date";
+import Image from "next/image";
 
 const Announcements = () => {
   const { currentUser } = useAuth();
@@ -55,7 +56,16 @@ const Announcements = () => {
 
   return currentUser !== null ? (
     <Main withPathName moreThanOne>
-      <div className="flex flex-row justify-between">
+      <div className="flex flex-col items-center">
+        <p className="mt-10 text-center"></p>
+
+        <div className=" w-2/5 rounded-2xl bg-gray-300 p-3 px-40">
+          <div className="flex items-center justify-center gap-2 text-center text-3xl font-bold capitalize text-gray-800">
+            <h2>{`${monthName} ${year}`}</h2>
+          </div>
+        </div>
+      </div>
+      <div className="ml-6 mr-6 mt-4 flex flex-row items-center justify-between">
         <Button
           primary
           rounded
@@ -63,9 +73,6 @@ const Announcements = () => {
           onClick={handlePrev}
           text="prev"
         />
-        <div className="flex items-center justify-center gap-2 text-center text-xl font-semibold capitalize">
-          <h2>{`${monthName} ${year}`}</h2>
-        </div>
         <Button
           primary
           rounded
@@ -74,7 +81,7 @@ const Announcements = () => {
           text="next"
         />
       </div>
-      <div className="relative h-[70vh]">
+      <div className="relative mt-2 h-[70vh]">
         <ToggleWrapper condition={showCalendar}>
           <PostForm />
         </ToggleWrapper>

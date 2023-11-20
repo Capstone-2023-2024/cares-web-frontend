@@ -11,12 +11,12 @@ const Header = () => {
   const { toggleNav } = useToggle();
 
   return (
-    <header className="flex w-full justify-between bg-primary p-4 text-paper shadow-md">
+    <header className="mt-0 flex w-full justify-between bg-primary p-4 text-paper shadow-md">
       <button onClick={() => void router.push("/dashboard")} className="w-max">
         <Image
           alt="cares_icon"
           src="/cares_icon.png"
-          className="inline-block h-8 w-8 brightness-0 invert"
+          className="inline-block h-8 w-8 brightness-0 invert "
           {...imageDimension(icon)}
         />
         <h1 className="inline-block p-2 align-middle text-lg font-bold uppercase">

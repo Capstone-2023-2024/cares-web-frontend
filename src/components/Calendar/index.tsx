@@ -6,7 +6,7 @@ const Calendar = () => {
   const { month, year } = useDate();
 
   return (
-    <section className="mt-12 p-2 shadow-sm">
+    <section className=" p-5 shadow-sm ">
       <WeekHeader />
       <Map {...{ month, year }} />
     </section>

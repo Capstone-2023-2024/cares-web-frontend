@@ -21,7 +21,7 @@ const AccessLevelSelection = ({
         required
         {...rest}
         value={String(role.access_level.partial)}
-        className={`${selectionConditionalStyle} w-20 rounded-xl p-2 capitalize duration-300 ease-in-out`}
+        className={`${selectionConditionalStyle} w-40 rounded-xl border border-gray-300 p-2 capitalize duration-300 ease-in-out`}
         onChange={handleAccessLevelSelection}
       >
         <option value={String(true)}>{String(true)}</option>

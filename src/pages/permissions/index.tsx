@@ -249,7 +249,7 @@ const AssignAdmin = () => {
           <RoleModal />
         </AddUser>
         <div>
-          <table className="w-full">
+          <table className="mt-10 w-full">
             <thead className="capitalize">{renderTableHeading()}</thead>
             <tbody>{renderTableBody()}</tbody>
           </table>

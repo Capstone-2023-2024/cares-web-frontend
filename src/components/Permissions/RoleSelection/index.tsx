@@ -9,7 +9,7 @@ const RoleSelection = ({
   function disabledStyle() {
     return rest.disabled
       ? "appearance-none bg-transparent"
-      : "bg-primary text-paper";
+      : "border border-gray-300";
   }
 
   return (
@@ -18,7 +18,7 @@ const RoleSelection = ({
         required
         {...rest}
         value={role.title}
-        className={`${disabledStyle()} w-32 rounded-xl p-2 capitalize duration-300 ease-in-out`}
+        className={`${disabledStyle()} w-40 rounded-xl p-2 capitalize duration-300 ease-in-out`}
         onChange={handleRoleSelection}
       >
         {roleOptions.map(({ title, access_level }) => {

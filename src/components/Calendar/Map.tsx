@@ -118,7 +118,7 @@ const Map = ({ month, year }: Omit<DateType, "date">) => {
               })} ${
                 arrayContainsSelectedDate
                   ? "bg-blue-400 text-white"
-                  : "bg-transparent"
+                  : "rounded-lg bg-gray-100"
               } ${today > noValue ? "text-black" : ""} p-4`}
             >
               {today}

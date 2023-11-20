@@ -1,6 +1,7 @@
 import { useRouter } from "next/router";
 import { useToggle } from "~/contexts/ToggleContext";
 import type { HeaderPathProps } from "./types";
+import Image from "next/image";
 
 const HeaderPath = (props: HeaderPathProps) => {
   const { pathname } = useRouter();
@@ -17,15 +18,21 @@ const HeaderPath = (props: HeaderPathProps) => {
         moreThanOne ? "justify-between" : "justify-start"
       } flex h-min w-full items-center bg-paper p-2 shadow-md`}
     >
-      <h1 className="text-2xl font-semibold capitalize text-charcoal">
-        {pathname.substring(1, pathname.length).replace(/_/g, " ")}
-      </h1>
+      <div className="flex items-center justify-center">
+        <Image
+          src="/announcement.png"
+          alt="Announcement"
+          width={240} // Adjust the width as needed
+          height={240} // Adjust the height as needed
+          className=" ml-5" // Add margin to the right for spacing
+        />
+      </div>
       {pathname === "/announcements" && (
         <button
           onClick={handleCalendar}
-          className="rounded-lg p-2 duration-300 ease-in-out hover:bg-primary hover:text-paper"
+          className="border-1 rounded-lg border  border-gray-500 p-2 pl-6 pr-6 duration-300 ease-in-out hover:bg-primary hover:text-paper"
         >
-          {showCalendar ? "Calendar" : "Post"}
+          {showCalendar ? "CALENDAR" : "POST"}
         </button>
       )}
     </div>

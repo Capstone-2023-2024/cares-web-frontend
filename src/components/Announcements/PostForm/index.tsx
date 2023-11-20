@@ -272,7 +272,7 @@ const PostForm = () => {
   };
   const renderTags = () => (
     <div className="flex flex-row items-center gap-2 text-xs">
-      <p className="px-2 py-5 capitalize">tags:</p>
+      <p className="px-2 py-5 text-base capitalize">tags:</p>
       <div className="flex w-5/6 flex-row gap-2 overflow-x-auto">
         {state.tags.map((v, i) => {
           return (
@@ -310,13 +310,13 @@ const PostForm = () => {
       }}
       className="mx-auto my-10 flex w-5/6 flex-col items-center justify-center gap-2 rounded-xl bg-primary/50 py-4"
     >
-      <h2 className="text-xl">Create Post</h2>
-      <p className="flex items-center gap-2 font-semibold uppercase">
+      <p className="mt-8 flex items-center gap-2 text-2xl font-semibold uppercase">
         <span>
-          <Image src="/CICS.png" {...imageDimension(40)} alt="" />
+          <Image src="/CICS.png" {...imageDimension(50)} alt="" />
         </span>
         CICS Department
       </p>
+      <p className="mt-4 text-center"></p>
       <div className="relative w-3/4">
         <AnnouncementTypesSelection
           disabled={!showCalendar}
@@ -344,9 +344,10 @@ const PostForm = () => {
         {renderSelectedImages()}
       </div>
       <Button
+        className="mb w-1/5"
         type="submit"
         disabled={!showCalendar}
-        text="Post"
+        text="Create Post"
         primary
         rounded
       />

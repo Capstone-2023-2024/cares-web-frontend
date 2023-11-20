@@ -31,7 +31,12 @@ const Main = ({ children, withPathName, ...rest }: MainType) => {
   }, [currentUser, router, signout, typeOfAccount]);
 
   return (
-    <div>
+    <div
+      className="bg-cover bg-no-repeat"
+      style={{
+        backgroundImage: `url('/loginbg.png')`,
+      }}
+    >
       <Head>
         <title>{projectName.toUpperCase()}</title>
         <link rel="ico" href="/favicon.ico" />
@@ -40,7 +45,7 @@ const Main = ({ children, withPathName, ...rest }: MainType) => {
       {typeOfAccount !== null && (
         <div className="flex flex-1">
           <Nav />
-          <div className="w-full sm:w-2/3">
+          <div className="w-full sm:w-full">
             {withPathName && <HeaderPath {...rest} />}
             <div>{children}</div>
           </div>
