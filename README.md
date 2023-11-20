@@ -25,3 +25,43 @@
 - Optimize Firestore Read and Write(s)
 - Resolved Concerns centralized in one container
 - `adviser` and potentially Deleted User has the same render in UI
+
+# Context Provider Boilerplate
+
+```
+import {
+  createContext,
+  useContext,
+  useState,
+  type ReactNode,
+} from "react";
+
+interface UniversalProviderStateProps {}
+const universalInitState: UniversalProviderStateProps = {};
+interface UniversalContextProps extends UniversalProviderStateProps {
+  //   setOtherUniversal: () => void;
+}
+interface UniversalProviderProps {
+  children: ReactNode;
+}
+const UniversalContext = createContext<UniversalContextProps>({
+  ...universalInitState,
+});
+
+const UniversalProvider = ({ children }: UniversalProviderProps) => {
+  const [state, setState] = useState(universalInitState);
+
+  return (
+    <UniversalContext.Provider
+      value={{
+        ...state,
+      }}
+    >
+      {children}
+    </UniversalContext.Provider>
+  );
+};
+
+export const useUniversal = () => useContext(UniversalContext);
+export default UniversalProvider;
+```
