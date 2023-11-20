@@ -1,4 +1,4 @@
-import { collection, doc, setDoc } from "firebase/firestore";
+import { doc, setDoc } from "firebase/firestore";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { useEffect, useState, type FormEvent } from "react";
@@ -47,16 +47,17 @@ const Login = () => {
     e.preventDefault();
     console.log({ ...state, section });
     try {
-      await setDoc(doc(collection(db, "student"), state.studentNo), {
-        section,
+      await setDoc(doc(db, "student", state.studentNo), {
+        section: section ?? "a",
         ...state,
       });
       alert("Student Info sent to firestore");
+      setState(initState);
+      setSection("a" as typeof section);
     } catch (err) {
+      console.log(err);
       alert("Error in writing student info");
     }
-    setState(initState);
-    setSection("a" as typeof section);
   }
 
   useEffect(() => {
