@@ -22,3 +22,8 @@ const FILE: Buffer = JSON.parse(output);
 
 for ~/components/Announcements/PostForm.tsx -> uploadImage()
 
+# Repository Structure:
+
+|\_libs
+|\_web
+|||\_\_\_\_frontend
