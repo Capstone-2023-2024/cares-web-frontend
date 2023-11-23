@@ -23,7 +23,7 @@ const FILE: Buffer = JSON.parse(output);
 for ~/components/Announcements/PostForm.tsx -> uploadImage()
 
 # Repository Structure:
-
-|\_libs
-|\_web
-|||\_\_\_\_frontend
+|_libs<br>
+|_web<br>
+|__|____frontend<br>
+Planning to move the ContextProviders and api from `web/frontend` into `web/backend`
