@@ -19,12 +19,14 @@
     "baseUrl": ".",
     "paths": {
       "~/*": ["./src/*"],
-      "@cares/*": ["../../libs/common/dist/src/*"],
+      "@cares/*": ["../../libs/common/lib/src/*"]
     }
   },
-  "references": [{
-    "path": "../../libs/common"
-  }],
+  "references": [
+    {
+      "path": "../../libs/common"
+    }
+  ],
   "include": [
     ".eslintrc.cjs",
     "next-env.d.ts",
