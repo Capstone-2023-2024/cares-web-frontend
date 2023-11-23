@@ -1,46 +1,53 @@
+import type { AnnouncementProps } from "@cares/types/announcement"
 import {
   collection,
   getCountFromServer,
   query,
   where,
-} from "firebase/firestore";
+} from "firebase/firestore"
 import {
   createContext,
   useCallback,
   useContext,
   useEffect,
   useState,
-} from "react";
-import type { AnnouncementProps } from "~/types/announcement";
-import { db } from "~/utils/firebase";
-import type {
-  DashboardContextProps,
-  DashboardProviderProps,
-  DashboardStateProps,
-} from "./types";
+  type ReactNode,
+} from "react"
+import { db } from "../../utils/firebase"
 
+interface DashboardStateProps {
+  countData: { name: AnnouncementProps["type"]; count: number }[]
+}
+
+interface DashboardContextProps extends DashboardStateProps {
+  refreshCountData: () => void
+}
+
+interface DashboardProviderProps {
+  children: ReactNode
+}
 const initState: DashboardStateProps = {
   countData: [],
-};
+}
 const DashboardContext = createContext<DashboardContextProps>({
   ...initState,
   refreshCountData: () => null,
-});
+})
 
 const DashboardProvider = ({ children }: DashboardProviderProps) => {
-  const [state, setState] = useState(initState);
+  const [state, setState] = useState(initState)
 
   function refreshCountData() {
-    void getDataFromServer();
+    void getDataFromServer()
   }
   const getDataFromServer = useCallback(async () => {
     try {
       const baseQuery = (type: AnnouncementProps["type"]) =>
-        query(collection(db, "announcement"), where("type", "==", type));
-      const memo = await getCountFromServer(baseQuery("university_memorandum"));
-      const event = await getCountFromServer(baseQuery("event"));
-      const others = await getCountFromServer(baseQuery("others"));
-      const recognition = await getCountFromServer(baseQuery("recognition"));
+        query(collection(db, "announcement"), where("type", "==", type))
+      const memo = await getCountFromServer(baseQuery("university_memorandum"))
+      const event = await getCountFromServer(baseQuery("event"))
+      const others = await getCountFromServer(baseQuery("others"))
+      const recognition = await getCountFromServer(baseQuery("recognition"))
       const result = [
         {
           name: "university_memorandum" as AnnouncementProps["type"],
@@ -58,23 +65,28 @@ const DashboardProvider = ({ children }: DashboardProviderProps) => {
           name: "recognition" as AnnouncementProps["type"],
           count: recognition.data().count,
         },
-      ];
-      setState({ countData: result });
+      ]
+      setState({ countData: result })
     } catch (err) {
-      console.log(err);
+      console.log(err)
     }
-  }, []);
+  }, [])
 
   useEffect(() => {
-    return void getDataFromServer();
-  }, [getDataFromServer]);
+    return void getDataFromServer()
+  }, [getDataFromServer])
 
   return (
     <DashboardContext.Provider value={{ ...state, refreshCountData }}>
       {children}
     </DashboardContext.Provider>
-  );
-};
+  )
+}
 
-export const useDashboard = () => useContext(DashboardContext);
-export default DashboardProvider;
+export type {
+  DashboardStateProps,
+  DashboardContextProps,
+  DashboardProviderProps,
+}
+export const useDashboard = () => useContext(DashboardContext)
+export default DashboardProvider

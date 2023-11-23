@@ -1,4 +1,4 @@
-import { useDate } from "~/contexts/DateContext";
+import { useDate } from "~/contexts/DateProvider";
 import Map from "./Map";
 import WeekHeader from "./WeekHeader";
 

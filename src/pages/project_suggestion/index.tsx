@@ -1,21 +1,13 @@
+import type { PollEventProps, PollProps } from "@cares/types/poll";
+import { currentMonth } from "@cares/utils/date";
 import {
   addDoc,
-  collection,
-  doc,
-  increment,
-  updateDoc,
+  collection
 } from "firebase/firestore";
 import React, { useState, type FormEvent } from "react";
-import Masonry from "react-responsive-masonry";
 import Main from "~/components/Main";
-import TickingClock from "~/components/TickingClock";
-import { useAuth } from "~/contexts/AuthContext";
-import ProjectProvider, {
-  useProject,
-  type PollProps,
-} from "~/contexts/ProjectProvider";
-import type { EventProps, StateProps } from "~/types/project_suggestion";
-import { currentMonth } from "~/utils/date";
+import { useAuth } from "~/contexts/AuthProvider";
+import ProjectProvider from "~/contexts/ProjectProvider";
 import { db } from "~/utils/firebase";
 
 const ProjectSuggestion = () => {
@@ -29,7 +21,7 @@ const ProjectSuggestion = () => {
 };
 
 const Content = () => {
-  const initState: StateProps = {
+  const initState: PollProps = {
     type: "poll",
     state: "unpublished",
     options: [],
@@ -40,7 +32,7 @@ const Content = () => {
   const { currentUser } = useAuth();
   const [state, setState] = useState(initState);
   const daysInMilliseconds = 86400000;
-  const event: Omit<EventProps, "dateOfExpiration"> = {
+  const event: Omit<PollEventProps, "dateOfExpiration"> = {
     postedBy: currentUser?.email ?? "null",
     type: state.type,
     state: state.state,
@@ -70,7 +62,7 @@ const Content = () => {
     const totalCalculation = totalMilliseconds + date.getTime();
     const { options, ...rest } = event;
     console.log(options);
-    const newEvent: Omit<EventProps, "options"> = {
+    const newEvent: Omit<PollEventProps, "options"> = {
       ...rest,
       dateOfExpiration: totalCalculation,
     };
@@ -142,88 +134,87 @@ const Content = () => {
 };
 
 const PollsContainer = () => {
-  interface PollsContainerStateProps {
-    target?: PollProps;
-  }
-  const { polls } = useProject();
-  const PollsContainerState: PollsContainerStateProps = { target: undefined };
-  const [state, setState] = useState(PollsContainerState);
-  const items = state.target?.options
-    ? [...shuffle([...state.target.options])].map((props, index) => {
-        const computedNumber = 1 + (props?.value ?? -1);
-        const paragraphStyle = {
-          fontSize: `${computedNumber > 49 ? 50 : 12 + computedNumber}px`,
-        };
+  // interface PollsContainerStateProps extends Partial<PollProps>, Partial<FirestoreDatabaseProps> {
+  // }
+  // const { polls } = useProject();
+  // const PollsContainerState: {target:PollsContainerStateProps} | undefined = undefined
+  // const [state, setState] = useState(PollsContainerState);
+  // const items = state?.target?.options
+  //   ? [...shuffle([...state?.options])].map((props, index) => {
+  //       const computedNumber = 1 + (props?.vote ?? -1);
+  //       const paragraphStyle = {
+  //         fontSize: `${computedNumber > 49 ? 50 : 12 + computedNumber}px`,
+  //       };
 
-        function dynamicBG() {
-          const bgs = [
-            "bg-secondary",
-            "bg-purple-400",
-            "bg-yellow-500",
-            "bg-blue-600",
-            "bg-orange-600",
-          ];
-          const min = 0;
-          const max = bgs.length - 1;
-          const random = Math.floor(Math.random() * (max - min + 1) + min);
-          return bgs[random];
-        }
-        return (
-          <p
-            key={index}
-            className={`${dynamicBG()} min-w-12 inset-y-0 h-max w-max rounded-lg p-2 capitalize text-paper shadow-sm duration-300 ease-in-out hover:z-10 hover:scale-105 hover:bg-primary`}
-            style={paragraphStyle}
-          >
-            {props?.name}
-          </p>
-        );
-      })
-    : [];
-  const dayValue = 1000 * 60 * 60 * 24;
+  //       function dynamicBG() {
+  //         const bgs = [
+  //           "bg-secondary",
+  //           "bg-purple-400",
+  //           "bg-yellow-500",
+  //           "bg-blue-600",
+  //           "bg-orange-600",
+  //         ];
+  //         const min = 0;
+  //         const max = bgs.length - 1;
+  //         const random = Math.floor(Math.random() * (max - min + 1) + min);
+  //         return bgs[random];
+  //       }
+  //       return (
+  //         <p
+  //           key={index}
+  //           className={`${dynamicBG()} min-w-12 inset-y-0 h-max w-max rounded-lg p-2 capitalize text-paper shadow-sm duration-300 ease-in-out hover:z-10 hover:scale-105 hover:bg-primary`}
+  //           style={paragraphStyle}
+  //         >
+  //           {props?.value}
+  //         </p>
+  //       );
+  //     })
+  //   : [];
+  // const dayValue = 1000 * 60 * 60 * 24;
 
-  function shuffle(array: PollProps["options"]) {
-    for (let i = array.length - 1; i > 0; i--) {
-      let arrayI = array[i];
-      const j = Math.floor(Math.random() * (i + 1));
-      let arrayJ = array[j];
-      [arrayI, arrayJ] = [arrayJ, arrayI];
-    }
-    return array;
-  }
+  // function shuffle(array: PollProps["options"]) {
+  //   for (let i = array.length - 1; i > 0; i--) {
+  //     let arrayI = array[i];
+  //     const j = Math.floor(Math.random() * (i + 1));
+  //     let arrayJ = array[j];
+  //     [arrayI, arrayJ] = [arrayJ, arrayI];
+  //   }
+  //   return array;
+  // }
 
-  async function handleExtendTime(id: string) {
-    try {
-      await updateDoc(doc(collection(db, "project_suggestion"), id), {
-        dateOfExpiration: increment(dayValue),
-      });
-    } catch (err) {
-      console.log(err);
-    }
-  }
-  async function handlePublish() {
-    try {
-      if (state.target !== undefined) {
-        const { id, ...rest } = state.target;
-        const options = rest.options;
-        const length = options.length;
-        const sortByVotes = options.sort(
-          (a, b) => (a.value ?? -1) - (b.value ?? -1)
-        );
-        const mostVotedValues = sortByVotes.splice(length - 4);
-        await updateDoc(doc(collection(db, "project_suggestion"), id), {
-          dateOfExpiration: increment(dayValue),
-          state: "published",
-          options: mostVotedValues,
-        });
-      }
-    } catch (err) {
-      console.log(err);
-    }
-  }
+  // async function handleExtendTime(id: string) {
+  //   try {
+  //     await updateDoc(doc(collection(db, "project_suggestion"), id), {
+  //       dateOfExpiration: increment(dayValue),
+  //     });
+  //   } catch (err) {
+  //     console.log(err);
+  //   }
+  // }
+  // async function handlePublish() {
+  //   try {
+  //     if (state.target !== undefined) {
+  //       const { id, ...rest } = state.target;
+  //       const options = rest.options;
+  //       const length = options.length;
+  //       const sortByVotes = options.sort(
+  //         (a, b) => (a.value ?? -1) - (b.value ?? -1)
+  //       );
+  //       const mostVotedValues = sortByVotes.splice(length - 4);
+  //       await updateDoc(doc(collection(db, "project_suggestion"), id), {
+  //         dateOfExpiration: increment(dayValue),
+  //         state: "published",
+  //         options: mostVotedValues,
+  //       });
+  //     }
+  //   } catch (err) {
+  //     console.log(err);
+  //   }
+  // }
 
   return (
     <div className="grid grid-cols-2 items-start">
-      {state.target !== undefined && (
+      {/* {state.target !== undefined && (
         <section className="fixed inset-0 z-30 h-full min-h-screen bg-paper/95">
           <button
             className="rounded-full bg-red-500 p-2 px-3 text-xs text-paper"
@@ -335,7 +326,7 @@ const PollsContainer = () => {
             }
           )}
         </div>
-      </section>
+      </section> */}
     </div>
   );
 };

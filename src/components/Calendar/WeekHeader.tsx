@@ -1,5 +1,5 @@
 import React from "react";
-import { weekNames } from "~/utils/date";
+import { weekNames } from "@cares/utils/date";
 
 const WeekHeader = () => {
   return (

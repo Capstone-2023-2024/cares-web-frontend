@@ -3,9 +3,15 @@ import { useRouter } from "next/router";
 import { type ChangeEvent, type FormEvent, useEffect, useState } from "react";
 import Header from "~/components/Header/Header";
 import Loading from "~/components/Loading";
-import { useAuth } from "~/contexts/AuthContext";
-import type { InitialAuthProps } from "~/types/login";
-import { icon, imageDimension } from "~/utils/image";
+import { useAuth } from "~/contexts/AuthProvider";
+import { imageDimension } from "@cares/utils/media";
+import { ICON } from "~/utils/media";
+
+interface InitialAuthProps {
+  email: string;
+  password: string;
+  error: boolean;
+}
 
 const initialProps: InitialAuthProps = {
   email: "",
@@ -130,7 +136,7 @@ const Login = () => {
                   alt="google"
                   src="/google.svg"
                   className="h-8 w-8"
-                  {...imageDimension(icon)}
+                  {...imageDimension(ICON)}
                 />
               </div>
               <span className="text-black">Sign in with Google</span>

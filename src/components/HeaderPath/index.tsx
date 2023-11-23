@@ -1,5 +1,5 @@
 import { useRouter } from "next/router";
-import { useToggle } from "~/contexts/ToggleContext";
+import { useToggle } from "~/contexts/ToggleProvider";
 import type { HeaderPathProps } from "./types";
 import Image from "next/image";
 

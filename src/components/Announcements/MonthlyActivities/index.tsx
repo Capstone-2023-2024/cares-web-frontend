@@ -1,29 +1,31 @@
+import { getImageFromStorage, imageDimension } from "@cares/utils/media";
 import { deleteDoc, doc } from "firebase/firestore";
 import Image from "next/image";
 import { useState } from "react";
 import Button from "~/components/Button";
-import { useAnnouncement } from "~/contexts/AnnouncementContext";
-import { db, retrieveImageFBStorage } from "~/utils/firebase";
-import { icon, imageDimension } from "~/utils/image";
+import { useAnnouncement } from "~/contexts/AnnouncementProvider";
+import { env } from "~/env.mjs";
+import { db } from "~/utils/firebase";
+import { ICON } from "~/utils/media";
 import AnnouncementTypesSelection from "../PostForm/AnnouncementTypesSelection";
 import type { CardProps, DeleteProps, InitStateProps } from "./types";
 
 const MonthlyActivities = () => {
   const initState: InitStateProps = {
+    title: "",
     toggle: false,
-    isEditing: false,
     message: "",
-    tags: [],
-    photoUrl: [],
+    isEditing: false,
+    photoUrlArray: [],
   };
   const {
-    data,
-    type,
-    handleTypeChange,
-    orderBy,
-    handleOrderBy,
     tag,
+    type,
+    data,
+    orderBy,
     handleTag,
+    handleOrderBy,
+    handleTypeChange,
   } = useAnnouncement();
   const [state, setState] = useState(initState);
 
@@ -72,7 +74,7 @@ const MonthlyActivities = () => {
         </div>
       </div>
       <Button type="button" onClick={toggleEdit}>
-        {<Image src="/pencil.png" alt="" {...imageDimension(icon)} />}
+        {<Image src="/pencil.png" alt="" {...imageDimension(ICON)} />}
       </Button>
       <div className="mx-2 flex gap-2 overflow-x-auto rounded-xl bg-black/10 p-4">
         {data.map((props, index) => {
@@ -84,12 +86,12 @@ const MonthlyActivities = () => {
 };
 
 const Card = ({
+  id,
   dateCreated,
   isEditing,
-  id,
   department,
   message,
-  photoUrl,
+  photoUrlArray,
 }: CardProps) => {
   const newDate = new Date();
   newDate.setTime(dateCreated);
@@ -103,7 +105,7 @@ const Card = ({
           <span className="text-xs">{`Date Created: ${newDate.toLocaleString()}`}</span>
         </p>
       </div>
-      {photoUrl?.map((url, i) => {
+      {photoUrlArray?.map((url, i) => {
         return <RenderPhoto key={i} photoUrl={url} />;
       })}
     </div>
@@ -112,7 +114,7 @@ const Card = ({
 
 const Heading = ({ department }: { department: string }) => (
   <div className="flex w-full min-w-max items-center justify-around">
-    <Image src="/CICS.png" alt="" {...imageDimension(icon * 2)} />
+    <Image src="/CICS.png" alt="" {...imageDimension(ICON * 2)} />
     <h2 className="flex flex-col text-center font-bold uppercase">
       <span>{department}</span>department
     </h2>
@@ -127,7 +129,14 @@ const RenderPhoto = ({ photoUrl }: { photoUrl?: string }) => {
         priority
         quality={5}
         className="h-full w-full object-cover"
-        src={photoUrl ? retrieveImageFBStorage(photoUrl) : "/Image.png"}
+        src={
+          photoUrl
+            ? getImageFromStorage({
+                imageName: photoUrl,
+                storageBucket: env.NEXT_PUBLIC_FIRESTORE_STORAGE_BUCKET,
+              })
+            : "/Image.png"
+        }
         {...imageDimension(120)}
       />
     </div>
@@ -137,7 +146,7 @@ const RenderPhoto = ({ photoUrl }: { photoUrl?: string }) => {
 const DeleteButton = ({ isEditing, id }: DeleteProps) => {
   async function handleDelete(
     event: React.MouseEvent<HTMLButtonElement>,
-    id: string
+    id: string,
   ) {
     event.preventDefault();
     await deleteDoc(doc(db, `announcement/${id}`));

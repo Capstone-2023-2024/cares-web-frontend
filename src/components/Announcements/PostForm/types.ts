@@ -1,20 +1,25 @@
 import type { MutableRefObject } from "react";
-import type { AnnouncementProps } from "~/types/announcement";
+import type { AnnouncementProps } from "@cares/types/announcement";
 
-export interface PostFormStateProps extends Omit<AnnouncementProps, "id"> {
-  tag: string;
+interface PostFormStateProps extends AnnouncementProps {
   files: File[] | null;
 }
-export interface TypesOfAnnouncementProps
-  extends Pick<AnnouncementProps, "type"> {
+interface TypesOfAnnouncementProps extends Pick<AnnouncementProps, "type"> {
   name: string;
 }
-
-export interface CustomUploadButtonType {
+interface CustomUploadButtonType {
   inputRef: InputRef;
   setFile: SetFile;
 }
-export type InputRef = MutableRefObject<HTMLInputElement | null>;
-export type SetFile = React.Dispatch<
+type InputRef = MutableRefObject<HTMLInputElement | null>;
+type SetFile = React.Dispatch<
   React.SetStateAction<PostFormStateProps["files"]>
 >;
+
+export type {
+  PostFormStateProps,
+  TypesOfAnnouncementProps,
+  CustomUploadButtonType,
+  InputRef,
+  SetFile,
+};

@@ -1,48 +1,39 @@
+import type { RoleProps } from "@cares/types/permission";
+import { roleOptions } from "@cares/utils/admin";
+import { validateEmail } from "@cares/utils/validation";
 import { addDoc, getDocs, query, where } from "firebase/firestore";
 import { useState, type ChangeEvent, type FormEvent } from "react";
-import type { RoleModalProps, RoleModalPropsValue } from "~/types/permissions";
-import { permissionColRef, validateEmail } from "~/utils/firebase";
-import { roleOptions } from "~/utils/roles";
-import type { RoleProps } from "~/utils/roles/types";
+import { getCollection } from "~/utils/firebase";
 import AccessLevelSelection from "../AccessLevelSelection";
 import RoleSelection from "../RoleSelection";
 import type { PermissionWithDateProps } from "./types";
 
 const RoleModal = () => {
-  const initialRole: RoleProps = {
-    title: "admin_1",
-    access_level: { name: "super_admin", partial: false },
-  };
+  const initialRole: RoleProps = { name: "super_admin", partial: false };
   const initialProps = {
     email: "",
     role: initialRole,
   };
   const [state, setState] = useState(initialProps);
 
-  function handleState(key: keyof RoleModalProps, value: RoleModalPropsValue) {
-    setState((prevState) => ({ ...prevState, [key]: value }));
-  }
-
   function handleChange(e: ChangeEvent<HTMLInputElement>) {
-    handleState("email", e.target.value);
+    setState((prevState) => ({ ...prevState, email: e.target.value }));
   }
 
   function handleRoleSelection(e: ChangeEvent<HTMLSelectElement>) {
     e.preventDefault();
-    const roleTitle = e.target.value;
-    const role = roleOptions.filter(({ title }) => roleTitle === title)[0];
+    const name = e.target.value;
+    const role = roleOptions.filter((props) => name === props.name)[0];
     if (role !== undefined) {
-      handleState("role", role);
+      setState((prevState) => ({ ...prevState, role }));
     }
   }
 
   function handleAccessLevelSelection(e: ChangeEvent<HTMLSelectElement>): void {
     e.preventDefault();
     const partial_access = JSON.parse(e.target.value) as boolean;
-    const newRole = { ...state.role };
-    const access_level = { ...newRole.access_level, partial: partial_access };
-    const role = { ...newRole, access_level };
-    setState((prevState) => ({ ...prevState, role }));
+    const newRole = { ...state.role, partial: partial_access };
+    setState((prevState) => ({ ...prevState, role: newRole }));
   }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -55,22 +46,24 @@ const RoleModal = () => {
         const perm: Omit<PermissionWithDateProps, "id"> = {
           email: state.email,
           role: state.role,
-          roleInString: state.role.title,
           dateAdded: new Date().getTime(),
           dateModified: null,
         };
         const adminQueryRef = query(
-          permissionColRef,
-          where("email", "==", state.email)
+          getCollection("permission"),
+          where("email", "==", state.email),
         );
         const snapshot = await getDocs(adminQueryRef);
         if (snapshot.empty) {
-          await addDoc(permissionColRef, perm);
+          await addDoc(getCollection("permission"), perm);
         } else {
           alert("User already exist!");
         }
-        handleState("role", initialRole);
-        return handleState("email", "");
+        return setState((prevState) => ({
+          ...prevState,
+          email: "",
+          role: initialRole,
+        }));
       }
       alert("Please enter a email");
     } catch (e) {
@@ -104,8 +97,8 @@ const RoleModal = () => {
             validateEmail(state.email)
               ? "border-green-500"
               : state.email === ""
-              ? "border-slate-300"
-              : "border-red-500"
+                ? "border-slate-300"
+                : "border-red-500"
           } rounded-lg border p-4 shadow-sm outline-none duration-300 ease-in-out`}
           value={state.email}
           onChange={handleChange}

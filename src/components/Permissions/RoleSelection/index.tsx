@@ -1,4 +1,4 @@
-import { roleOptions } from "~/utils/roles";
+import { roleOptions } from "@cares/utils/admin";
 import type { RoleSelectionProps } from "./types";
 
 const RoleSelection = ({
@@ -17,14 +17,14 @@ const RoleSelection = ({
       <select
         required
         {...rest}
-        value={role.title}
+        value={role.name}
         className={`${disabledStyle()} w-40 rounded-xl p-2 capitalize duration-300 ease-in-out`}
         onChange={handleRoleSelection}
       >
-        {roleOptions.map(({ title, access_level }) => {
+        {roleOptions.map(({ name }) => {
           return (
-            <option key={title} value={title}>
-              {access_level.name.replace(/_/g, " ")}
+            <option key={name} value={name}>
+              {name.replace(/_/g, " ")}
             </option>
           );
         })}

@@ -1,8 +1,8 @@
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
-import { useAuth } from "~/contexts/AuthContext";
-import { projectName } from "~/utils/names";
+import { useAuth } from "~/contexts/AuthProvider";
+import { projectName } from "@cares/utils/config";
 import Header from "../Header/Header";
 import HeaderPath from "../HeaderPath";
 import Nav from "../Nav/Nav";

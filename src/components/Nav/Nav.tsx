@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import type { PathType } from "./types";
-import { useToggle } from "~/contexts/ToggleContext";
+import { useToggle } from "~/contexts/ToggleProvider";
 
 const Nav = () => {
   const { showNav, toggleNav } = useToggle();

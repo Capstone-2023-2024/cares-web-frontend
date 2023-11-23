@@ -1,14 +1,14 @@
-import React, { type ReactNode } from "react";
-import AuthProvider from "./AuthContext";
-import DateProvider from "./DateContext";
-import ToggleProvider from "./ToggleContext";
-import AnnouncementProvider from "./AnnouncementContext";
+import React, { type ReactNode } from "react"
+import AuthProvider from "./AuthProvider"
+import DateProvider from "./DateProvider"
+import ToggleProvider from "./ToggleProvider"
+import AnnouncementProvider from "./AnnouncementProvider"
 
-interface ContextProviders {
-  children: ReactNode;
+interface ContextProvidersProps {
+  children: ReactNode
 }
 
-const ContextProviders = (props: ContextProviders) => {
+const ContextProviders = (props: ContextProvidersProps) => {
   return (
     <AuthProvider>
       <DateProvider>
@@ -17,7 +17,8 @@ const ContextProviders = (props: ContextProviders) => {
         </ToggleProvider>
       </DateProvider>
     </AuthProvider>
-  );
-};
+  )
+}
 
-export default ContextProviders;
+export type { ContextProvidersProps }
+export default ContextProviders

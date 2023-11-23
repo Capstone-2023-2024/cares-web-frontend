@@ -1,23 +1,26 @@
+import { useRouter } from "next/router";
+import { useEffect } from "react";
 import Loading, { BoxContainer } from "~/components/Loading";
 import Main from "~/components/Main";
-import { useAuth } from "~/contexts/AuthContext";
+import { useAuth } from "~/contexts/AuthProvider";
 import DashboardProvider, { useDashboard } from "~/contexts/DashbroadProvider";
 
 const Dashboard = () => {
   const { currentUser } = useAuth();
+  const router = useRouter()
 
-  // useEffect(() => {
-  //   async function setup() {
-  //     try {
-  //       if (currentUser === null) {
-  //         await router.replace("login");
-  //       }
-  //     } catch (err) {
-  //       console.log(err);
-  //     }
-  //   }
-  //   return void setup();
-  // }, [currentUser, router]);
+  useEffect(() => {
+    async function setup() {
+      try {
+        if (currentUser === null) {
+          await router.replace("login");
+        }
+      } catch (err) {
+        console.log(err);
+      }
+    }
+    return void setup();
+  }, [currentUser, router]);
 
   return currentUser === null ? (
     <Loading />

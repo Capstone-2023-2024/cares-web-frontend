@@ -1,4 +1,4 @@
-import { typesOfAnnouncement } from "~/utils/announcement";
+import { announcementType } from "@cares/utils/announcement";
 import type { AnnouncementTypesSelectionProps } from "./types";
 
 const AnnouncementTypesSelection = (props: AnnouncementTypesSelectionProps) => {
@@ -7,7 +7,7 @@ const AnnouncementTypesSelection = (props: AnnouncementTypesSelectionProps) => {
       {...props}
       className="w-full rounded-lg bg-primary p-2 pl-10 pr-14 text-center capitalize text-paper"
     >
-      {typesOfAnnouncement.map(({ name, type }) => {
+      {announcementType.map(({ name, type }) => {
         return (
           <option key={type} value={type}>
             {name.replace(/_/g, " ")}

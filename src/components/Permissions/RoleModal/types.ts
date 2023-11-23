@@ -1,13 +1,14 @@
-import type { FirestoreDatabaseProps } from "~/types/firebase";
-import type { RoleProps } from "~/utils/roles/types";
+import type {
+  DateFileProps,
+  FirestoreDatabaseProps,
+} from "@cares/types/document";
+import type { RoleProps } from "@cares/types/permission";
 
 export interface PermissionProps extends FirestoreDatabaseProps {
   email: string;
   role: RoleProps;
 }
 
-export interface PermissionWithDateProps extends PermissionProps {
-  dateAdded: number;
-  roleInString: string;
-  dateModified: number | null;
-}
+export interface PermissionWithDateProps
+  extends PermissionProps,
+    DateFileProps {}

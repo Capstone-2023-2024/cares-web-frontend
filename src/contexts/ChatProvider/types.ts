@@ -1,25 +1,34 @@
-import type { ReactNode } from "react";
-import type { FirestoreDatabaseProps } from "~/types/firebase";
+import type { ReactNode } from "react"
+import type { FirestoreDatabaseProps } from "@cares/types/document"
 
-export interface InitialProps {
-  people: Omit<PeopleProps, "id">[];
-  registered: Omit<RegisteredPeopleProps, "id">[];
+interface InitialProps {
+  people: Omit<PeopleProps, "id">[]
+  registered: Omit<RegisteredPeopleProps, "id">[]
 }
-export type StateType = InitialProps["people"] | InitialProps["registered"];
-export interface PeopleProps extends FirestoreDatabaseProps {
-  dateUpdated: number;
-}
-
-export interface ChatContextProps extends InitialProps {
-  arbitrary?: () => Promise<void>;
+type StateType = InitialProps["people"] | InitialProps["registered"]
+interface PeopleProps extends FirestoreDatabaseProps {
+  dateUpdated: number
 }
 
-export interface ChatProviderProps {
-  children: ReactNode;
+interface ChatContextProps extends InitialProps {
+  arbitrary?: () => Promise<void>
 }
 
-export interface RegisteredPeopleProps extends FirestoreDatabaseProps {
-  displayName: string;
-  email: string;
-  photoUrl: string;
+interface ChatProviderProps {
+  children: ReactNode
+}
+
+interface RegisteredPeopleProps extends FirestoreDatabaseProps {
+  displayName: string
+  email: string
+  photoUrl: string
+}
+
+export type {
+  InitialProps,
+  StateType,
+  PeopleProps,
+  ChatContextProps,
+  ChatProviderProps,
+  RegisteredPeopleProps,
 }

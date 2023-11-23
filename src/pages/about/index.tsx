@@ -1,31 +1,47 @@
 import { collection, doc, getDocs, runTransaction } from "firebase/firestore";
 import Image from "next/image";
-import { useEffect, useState, type ChangeEvent, type MouseEvent } from "react";
+import {
+  useEffect,
+  useState,
+  type ChangeEvent,
+  type MouseEvent,
+  type ReactNode,
+} from "react";
 import Loading from "~/components/Loading";
 import Main from "~/components/Main";
-import { useAuth } from "~/contexts/AuthContext";
+import { useAuth } from "~/contexts/AuthProvider";
 import { db } from "~/utils/firebase";
-import type {
-  AboutType,
-  ContainerType,
-  ParagaphValuesType,
-  ParagraphType,
-} from "~/types/about";
+
+interface AboutProps {
+  summary: string;
+  vision: string;
+  mission: string;
+}
+interface ParagraphProps {
+  keyName: keyof AboutProps;
+  content: string;
+}
+interface ParagaphStateProps extends ParagraphProps {
+  isEditing: boolean;
+}
+interface ContainerProps {
+  children: ReactNode;
+  bg?: string;
+}
 
 const About = () => {
-  const NOVALUE = "";
+  const EMPTY_STRING = "";
   const { currentUser } = useAuth();
-  const [state, setState] = useState<AboutType>({
-    summary: NOVALUE,
-    vision: NOVALUE,
-    mission: NOVALUE,
+  const [state, setState] = useState<AboutProps>({
+    summary: EMPTY_STRING,
+    vision: EMPTY_STRING,
+    mission: EMPTY_STRING,
   });
-  const { summary, vision, mission } = state;
 
-  const isValueEmpty = (keyName: ParagraphType["keyName"]): ParagraphType => {
-    const condition = state[keyName] === NOVALUE;
+  const isValueEmpty = (keyName: keyof AboutProps) => {
+    const condition = state[keyName] === EMPTY_STRING;
     const data = {
-      content: condition ? NOVALUE : state[keyName],
+      content: condition ? EMPTY_STRING : state[keyName],
       keyName,
     };
     return data;
@@ -39,7 +55,7 @@ const About = () => {
         const { docs } = await getDocs(collection(db, "about"));
         const docsHasData = docs.length > 0;
         if (docsHasData) {
-          setState(docs[0]?.data() as AboutType);
+          setState(docs[0]?.data() as AboutProps);
         }
       } catch (err) {
         console.log(err);
@@ -55,22 +71,10 @@ const About = () => {
 
   return currentUser !== null ? (
     <Main withPathName>
-      <Paragraph
-        {...isValueEmpty(
-          Object.keys({ summary })[0] as ParagraphType["keyName"]
-        )}
-      />
+      <Paragraph {...isValueEmpty("summary")} />
       <div className="grid grid-flow-col">
-        <Paragraph
-          {...isValueEmpty(
-            Object.keys({ vision })[0] as ParagraphType["keyName"]
-          )}
-        />
-        <Paragraph
-          {...isValueEmpty(
-            Object.keys({ mission })[0] as ParagraphType["keyName"]
-          )}
-        />
+        <Paragraph {...isValueEmpty("vision")} />
+        <Paragraph {...isValueEmpty("mission")} />
       </div>
     </Main>
   ) : (
@@ -78,9 +82,9 @@ const About = () => {
   );
 };
 
-const Paragraph = ({ content, keyName }: ParagraphType) => {
+const Paragraph = ({ content, keyName }: ParagraphProps) => {
   const dimension = 20;
-  const [values, setValues] = useState<ParagaphValuesType>({
+  const [values, setValues] = useState<Omit<ParagaphStateProps, "keyName">>({
     content,
     isEditing: false,
   });
@@ -88,8 +92,8 @@ const Paragraph = ({ content, keyName }: ParagraphType) => {
   const rowsOffset = 40;
 
   function handleState(
-    name: keyof ParagaphValuesType,
-    value: boolean | string
+    name: keyof ParagaphStateProps,
+    value: boolean | string,
   ) {
     setValues((prevState) => ({ ...prevState, [name]: value }));
   }
@@ -185,7 +189,7 @@ const Paragraph = ({ content, keyName }: ParagraphType) => {
   }
 };
 
-const Container = ({ children, bg }: ContainerType) => {
+const Container = ({ children, bg }: ContainerProps) => {
   return (
     <div
       className={`${

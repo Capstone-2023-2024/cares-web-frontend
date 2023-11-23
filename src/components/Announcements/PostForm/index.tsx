@@ -1,23 +1,19 @@
+import type { AnnouncementProps } from "@cares/types/announcement";
+import { announcementType } from "@cares/utils/announcement";
+import { formatDateOrMonth } from "@cares/utils/document";
+import { imageDimension } from "@cares/utils/media";
 import { addDoc, collection } from "firebase/firestore";
 import { uploadBytes } from "firebase/storage";
 import Image from "next/image";
-import React, {
-  type ChangeEvent,
-  type KeyboardEvent,
-  useRef,
-  useState,
-} from "react";
-import { useAuth } from "~/contexts/AuthContext";
-import { useDate } from "~/contexts/DateContext";
-import { useToggle } from "~/contexts/ToggleContext";
-import type { AnnouncementProps } from "~/types/announcement";
-import { db, intToStringTwoChar, storageRef } from "~/utils/firebase";
-import { icon, imageDimension } from "~/utils/image";
+import React, { useRef, useState, type ChangeEvent } from "react";
+import type { AnnouncementStateProps } from "~/contexts/AnnouncementProvider/types";
+import { useAuth } from "~/contexts/AuthProvider";
+import { useDate } from "~/contexts/DateProvider";
+import { useToggle } from "~/contexts/ToggleProvider";
+import { db, storageRef } from "~/utils/firebase";
 import Button from "../../Button";
-import type { InputRef, PostFormStateProps } from "./types";
-import { typesOfAnnouncement } from "~/utils/announcement";
 import AnnouncementTypesSelection from "./AnnouncementTypesSelection";
-import type { AnnouncementStateProps } from "~/contexts/AnnouncementContext/types";
+import type { InputRef, PostFormStateProps } from "./types";
 
 const PostForm = () => {
   const { currentUser } = useAuth();
@@ -25,14 +21,12 @@ const PostForm = () => {
   const initState: PostFormStateProps = {
     postedBy: currentUser?.email ?? "",
     files: null,
-    tag: "",
-    tags: [],
-    type: typesOfAnnouncement[0]?.type ?? "event",
+    title: "",
+    type: announcementType[0]?.type ?? "event",
     message: "",
     state: "unpinned",
     department: "cics",
     dateCreated: new Date().getTime(),
-    dateEdited: null,
     markedDates: [],
     endDate: 0,
   };
@@ -46,8 +40,8 @@ const PostForm = () => {
     state.type === "event"
       ? "What's happening in our campus?"
       : state.type === "recognition"
-      ? "Tell the details for the recognition"
-      : "Create a summary of the University Memorandum";
+        ? "Tell the details for the recognition"
+        : "Create a summary of the University Memorandum";
 
   function previewImage(file: File, index: number) {
     const oFReader = new FileReader();
@@ -56,7 +50,7 @@ const PostForm = () => {
       const result = oFREvent.target?.result;
       if (result !== null && result !== undefined) {
         const imageContainer = document.getElementById(
-          `${imagePrefix}${index}`
+          `${imagePrefix}${index}`,
         ) as HTMLImageElement;
         return (imageContainer.src = result as string);
       }
@@ -102,25 +96,8 @@ const PostForm = () => {
       return setState((prevState) => ({ ...prevState, files }));
     }
   }
-  function handleTagChange(event: ChangeEvent<HTMLInputElement>) {
-    const tag = event.target.value;
-    const invalidChar = "0123456789./;'[]\\/,";
-    const length = invalidChar.length;
-    for (let x = 0; x < length; x++) {
-      if (event.target.value.charAt(tag.length - 1) === invalidChar[x]) {
-        return;
-      }
-    }
-    setState((prevState) => ({ ...prevState, tag }));
-  }
-  function handleTagEnter(event: KeyboardEvent<HTMLInputElement>) {
-    if (event.key.toLowerCase() === "," && state.tag?.trim() !== "") {
-      const tag = "";
-      const tags = [
-        ...new Set([...state.tags, state.tag.trim().toLowerCase()]),
-      ];
-      setState((prevState) => ({ ...prevState, tags, tag }));
-    }
+  function handleTitle(event: ChangeEvent<HTMLTextAreaElement>) {
+    setState((prevState) => ({ ...prevState, title: event.target.value }));
   }
   function handleTypeChange(event: ChangeEvent<HTMLSelectElement>) {
     const type = event.target.value as AnnouncementStateProps["type"];
@@ -160,12 +137,12 @@ const PostForm = () => {
         const textarea = form.querySelector("textarea");
         const markedDates = selectedDateArray.map(
           (value) =>
-            `${year}-${intToStringTwoChar(month + 1)}-${intToStringTwoChar(
-              value
-            )}`
+            `${year}-${formatDateOrMonth(month + 1)}-${formatDateOrMonth(
+              value,
+            )}`,
         );
 
-        if (textarea !== null && state.tags.length > 0) {
+        if (textarea !== null && state.title.trim() === "") {
           const photoUrl: string[] = [];
           state.files?.map(async (props) => {
             photoUrl.push(props.name);
@@ -184,15 +161,14 @@ const PostForm = () => {
           newDate.setMonth(stringedNumDateFormatter(month));
           newDate.setDate(stringedNumDateFormatter(date));
 
-          const announcement: Omit<AnnouncementProps, "id"> = {
+          const announcement: AnnouncementProps = {
             postedBy: state.postedBy,
             type: state.type,
-            tags: state.tags,
+            title: state.title,
             state: state.state,
             message: textarea.value,
             department: "cics",
             dateCreated: new Date().getTime(),
-            dateEdited: null,
             endDate: newDate.getTime(),
             markedDates,
           };
@@ -200,7 +176,7 @@ const PostForm = () => {
             collection(db, "announcement"),
             state.files === null
               ? { ...announcement }
-              : { ...announcement, photoUrl }
+              : { ...announcement, photoUrl },
           );
 
           changeSelectedDateArray([]);
@@ -262,7 +238,7 @@ const PostForm = () => {
                 alt=""
                 id={`${imagePrefix}${i.toString()}`}
                 className="h-auto w-auto"
-                {...imageDimension(icon)}
+                {...value}
               />
             </div>
           );
@@ -270,36 +246,6 @@ const PostForm = () => {
       </div>
     );
   };
-  const renderTags = () => (
-    <div className="flex flex-row items-center gap-2 text-xs">
-      <p className="px-2 py-5 text-base capitalize">tags:</p>
-      <div className="flex w-5/6 flex-row gap-2 overflow-x-auto">
-        {state.tags.map((v, i) => {
-          return (
-            <div
-              key={i}
-              className="relative w-fit gap-2 rounded-lg bg-paper/90 px-6 py-2"
-            >
-              <button
-                disabled={!showCalendar}
-                type="button"
-                onClick={() =>
-                  handleRemoveFromArray({
-                    array: state.tags,
-                    index: i,
-                  })
-                }
-                className="absolute right-0 top-0 rounded-full bg-primary/40 px-2 py-1 text-xs text-paper duration-300 ease-in-out hover:bg-red-500"
-              >
-                x
-              </button>
-              <p>{v}</p>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
 
   return (
     <form
@@ -331,15 +277,14 @@ const PostForm = () => {
           className="w-full resize-none rounded-xl p-4 pb-16"
           placeholder={placeholderText}
         />
-        <input
+        <textarea
           disabled={!showCalendar}
-          value={state.tag}
-          onChange={handleTagChange}
-          onKeyDown={handleTagEnter}
+          value={state.title}
+          onChange={handleTitle}
           className="w-full rounded-xl p-2"
-          placeholder="Separate tags with ,"
+          placeholder="Enter title"
         />
-        {renderTags()}
+        <p>{state.title}</p>
         {renderUploadButton()}
         {renderSelectedImages()}
       </div>

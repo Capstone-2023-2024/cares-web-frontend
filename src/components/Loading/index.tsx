@@ -1,5 +1,5 @@
 import React from "react";
-import { projectName } from "~/utils/names";
+import { projectName } from "@cares/utils/config";
 
 const Loading = () => {
   return (

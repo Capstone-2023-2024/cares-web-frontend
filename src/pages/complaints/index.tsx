@@ -1,3 +1,6 @@
+import type { ComplaintBaseProps } from "@cares/types/complaint";
+import type { FirestoreDatabaseProps } from "@cares/types/document";
+import type { StudentInfoProps } from "@cares/types/user";
 import {
   addDoc,
   collection,
@@ -12,15 +15,27 @@ import {
 import React, { useEffect, useState } from "react";
 import ActionButton from "~/components/Actionbutton";
 import Main from "~/components/Main";
-import { useAuth } from "~/contexts/AuthContext";
-import type { ConcernProps } from "~/types/complaints";
-import type { StudentWithSectionProps } from "~/types/student";
+import { useAuth } from "~/contexts/AuthProvider";
 import { db } from "~/utils/firebase";
-import type {
-  ChatTextProps,
-  ComplaintsStateProps,
-  ComplaintsStateValues,
-} from "~/types/complaintsPage";
+
+interface ReadStudentInfoProps
+  extends StudentInfoProps,
+    FirestoreDatabaseProps {}
+interface ReadComplaintBaseProps
+  extends ComplaintBaseProps,
+    FirestoreDatabaseProps {}
+
+interface ComplaintsStateProps {
+  students: ReadStudentInfoProps[];
+  concerns: ReadComplaintBaseProps[];
+  message: string;
+  collectionReference: string | null;
+}
+interface ChatTextProps {
+  text: string;
+  condition: boolean;
+  size?: "xs" | "sm" | "lg" | "xl";
+}
 
 const Complaints = () => {
   const initialState: ComplaintsStateProps = {
@@ -33,45 +48,43 @@ const Complaints = () => {
   const [state, setState] = useState(initialState);
   const studentNoSelected = state.collectionReference?.substring(8, 18);
 
-  function handleState(
-    key: keyof ComplaintsStateProps,
-    value: ComplaintsStateValues
-  ) {
-    setState((prevState) => ({ ...prevState, [key]: value }));
-  }
   function handleChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
-    handleState("message", e.target.value);
+    setState((prevState) => ({ ...prevState, message: e.target.value }));
   }
   async function handleEnter(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     try {
       if (e.key === "Enter" && state.message.trim() !== "") {
-        const concern: Omit<ConcernProps, "id"> = {
+        const concern: ComplaintBaseProps = {
           sender: currentUser?.email ?? "admin",
-          withDocument: false,
           message: state.message,
-          dateCreated: new Date().getTime(),
+          timestamp: new Date().getTime(),
         };
         await addDoc(collection(db, state.collectionReference ?? ""), concern);
-        handleState("message", "");
+        setState((prevState) => ({
+          ...prevState,
+          message: initialState.message,
+        }));
       }
     } catch (err) {
       console.log(err);
     }
   }
   async function handleResolution() {
-    const concerns: Omit<ConcernProps, "id"> = {
+    const concerns: ComplaintBaseProps = {
       sender: "system",
-      withDocument: false,
-      dateCreated: new Date().getTime(),
       message: "resolved",
+      timestamp: new Date().getTime(),
     };
     try {
       await addDoc(collection(db, state.collectionReference ?? ""), concerns);
       await updateDoc(doc(collection(db, "student"), studentNoSelected), {
         recipient: "class_section",
       });
-      handleState("concerns", []);
-      handleState("collectionReference", null);
+      setState((prevState) => ({
+        ...prevState,
+        concerns: [],
+        collectionReference: null,
+      }));
     } catch (err) {
       console.log(err);
     }
@@ -81,37 +94,41 @@ const Complaints = () => {
       currentUser?.email === "bm@cares.com"
         ? "program_chair"
         : "department_head";
-    const concerns: Omit<ConcernProps, "id"> = {
+    const concerns: ComplaintBaseProps = {
       sender: "system",
-      withDocument: false,
-      dateCreated: new Date().getTime(),
       message: `turnover to ${recipient.replace(/_/, " ")}`,
+      timestamp: new Date().getTime(),
     };
     try {
       await addDoc(collection(db, state.collectionReference ?? ""), concerns);
       await updateDoc(doc(collection(db, "student"), studentNoSelected), {
         recipient,
       });
-      handleState("concerns", []);
-      handleState("collectionReference", null);
+      setState((prevState) => ({
+        ...prevState,
+        concerns: [],
+        collectionReference: null,
+      }));
     } catch (err) {
       console.log(err);
     }
   }
   async function handleRejection() {
-    const concerns: Omit<ConcernProps, "id"> = {
+    const concerns: ComplaintBaseProps = {
       sender: "system",
-      withDocument: false,
-      dateCreated: new Date().getTime(),
       message: "rejected",
+      timestamp: new Date().getTime(),
     };
     try {
       await addDoc(collection(db, state.collectionReference ?? ""), concerns);
       await updateDoc(doc(collection(db, "student"), studentNoSelected), {
         recipient: "class_section",
       });
-      handleState("concerns", []);
-      handleState("collectionReference", null);
+      setState((prevState) => ({
+        ...prevState,
+        concerns: [],
+        collectionReference: null,
+      }));
     } catch (err) {
       console.log(err);
     }
@@ -121,15 +138,18 @@ const Complaints = () => {
     return onSnapshot(
       query(collection(db, colPath), orderBy("dateCreated"), limit(15)),
       (snapshot) => {
-        const placeholder: ConcernProps[] = [];
+        const placeholder: ReadComplaintBaseProps[] = [];
         snapshot.forEach((doc) => {
-          const data = doc.data() as Omit<ConcernProps, "id">;
           const id = doc.id;
+          const data = doc.data() as ComplaintBaseProps;
           placeholder.push({ ...data, id });
         });
-        handleState("collectionReference", colPath);
-        handleState("concerns", placeholder);
-      }
+        setState((prevState) => ({
+          ...prevState,
+          concerns: placeholder,
+          collectionReference: colPath,
+        }));
+      },
     );
   }
   function renderTickets() {
@@ -151,7 +171,7 @@ const Complaints = () => {
   }
   const renderActionButtons = () => {
     const student = state.students.filter(
-      ({ studentNo }) => studentNoSelected === studentNo
+      ({ studentNo }) => studentNoSelected === studentNo,
     )[0];
     return (
       <div className="bg-primary/25 p-2">
@@ -178,9 +198,9 @@ const Complaints = () => {
   };
   function renderConcerns() {
     const authenticated = currentUser?.email;
-    return state.concerns.map(({ id, sender, message, dateCreated }) => {
+    return state.concerns.map(({ id, sender, message, timestamp }) => {
       const date = new Date();
-      date.setTime(dateCreated);
+      date.setTime(timestamp);
       console.log(message);
       return (
         <div
@@ -189,8 +209,8 @@ const Complaints = () => {
             sender === authenticated
               ? "self-end bg-blue-400"
               : sender === "system"
-              ? "self-center text-center"
-              : "self-start bg-slate-200"
+                ? "self-center text-center"
+                : "self-start bg-slate-200"
           }`}
         >
           {sender !== "system" && (
@@ -211,17 +231,17 @@ const Complaints = () => {
       query(
         collection(db, "student"),
         where("recipient", "==", "bm"),
-        limit(6)
+        limit(6),
       ),
       (snapshot) => {
-        const placeholder: StudentWithSectionProps[] = [];
+        const placeholder: ReadStudentInfoProps[] = [];
         snapshot.forEach((doc) => {
-          const studentNo = doc.id;
-          const data = doc.data() as StudentWithSectionProps;
-          placeholder.push({ ...data, studentNo });
+          const id = doc.id;
+          const data = doc.data() as StudentInfoProps;
+          placeholder.push({ ...data, id });
         });
-        handleState("students", placeholder);
-      }
+        setState((prevState) => ({ ...prevState, students: placeholder }));
+      },
     );
     return unsub;
   }, [currentUser]);
@@ -251,31 +271,35 @@ const Complaints = () => {
   );
 };
 
-const ChatText = ({ text, condition, textSize }: ChatTextProps) => {
+const ChatText = ({ text, condition, size }: ChatTextProps) => {
   function getTextSize() {
-    if (textSize === "xs") {
-      return "text-xs";
-    } else if (textSize === "sm") {
-      return "text-sm";
-    } else if (textSize === "lg") {
-      return "text-lg";
-    } else if (textSize === "xl") {
-      return "text-xl";
+    switch (size) {
+      case "xs":
+        return "text-xs";
+      case "sm":
+        return "text-sm";
+      case "lg":
+        return "text-lg";
+      case "xl":
+        return "text-xl";
+      default:
+        return "text-md";
     }
-    return "text-md";
+  }
+  function getTextColor() {
+    switch (text) {
+      case "resolved":
+        return "text-green-500";
+      case "turn-over":
+        return "text-green-500";
+      default:
+        return "text-yellow-500";
+    }
   }
   return (
     <p
       className={`${
-        condition
-          ? "text-white"
-          : text === "resolved"
-          ? "text-green-400"
-          : text === "rejected"
-          ? "text-red-400"
-          : text.startsWith("turn")
-          ? "text-yellow-400"
-          : "text-black"
+        condition ? "text-white" : getTextColor()
       } ${getTextSize()}`}
     >
       {text}

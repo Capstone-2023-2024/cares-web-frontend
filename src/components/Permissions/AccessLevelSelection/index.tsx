@@ -6,9 +6,7 @@ const AccessLevelSelection = ({
   ...rest
 }: AccessLevelProps) => {
   const selectionConditionalStyle = `${
-    String(role.access_level.partial) === "true"
-      ? "text-green-500"
-      : "text-red-500"
+    String(role.partial) === "true" ? "text-green-500" : "text-red-500"
   } ${disabledStyle()}`;
 
   function disabledStyle() {
@@ -20,7 +18,7 @@ const AccessLevelSelection = ({
       <select
         required
         {...rest}
-        value={String(role.access_level.partial)}
+        value={String(role.partial)}
         className={`${selectionConditionalStyle} w-40 rounded-xl border border-gray-300 p-2 capitalize duration-300 ease-in-out`}
         onChange={handleAccessLevelSelection}
       >

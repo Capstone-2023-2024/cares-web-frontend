@@ -1,3 +1,4 @@
+import { currentMonth } from "@cares/utils/date";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 import MonthlyActivities from "~/components/Announcements/MonthlyActivities";
@@ -7,11 +8,9 @@ import Button from "~/components/Button";
 import Calendar from "~/components/Calendar";
 import Loading from "~/components/Loading";
 import Main from "~/components/Main";
-import { useAuth } from "~/contexts/AuthContext";
-import { useDate } from "~/contexts/DateContext";
-import { useToggle } from "~/contexts/ToggleContext";
-import { currentMonth } from "~/utils/date";
-import Image from "next/image";
+import { useAuth } from "~/contexts/AuthProvider";
+import { useDate } from "~/contexts/DateProvider";
+import { useToggle } from "~/contexts/ToggleProvider";
 
 const Announcements = () => {
   const { currentUser } = useAuth();

@@ -1,15 +1,14 @@
-import type { AnnouncementProps } from "~/types/announcement";
+import type { AnnouncementProps } from "@cares/types/announcement";
+import type { FirestoreDatabaseProps } from "@cares/types/document";
 
-export interface InitStateProps {
+export interface InitStateProps
+  extends Pick<AnnouncementProps, "message" | "title" | "photoUrlArray"> {
   toggle: boolean;
   isEditing: boolean;
-  message: string;
-  tags: string[];
-  photoUrl: string[];
 }
 
-export interface DeleteProps extends Pick<InitStateProps, "isEditing"> {
-  id: string;
-}
+export interface DeleteProps
+  extends Pick<InitStateProps, "isEditing">,
+    FirestoreDatabaseProps {}
 
 export interface CardProps extends AnnouncementProps, DeleteProps {}

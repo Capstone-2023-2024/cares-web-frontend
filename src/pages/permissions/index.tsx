@@ -1,6 +1,13 @@
+import type { FirestoreDatabaseProps } from "@cares/types/document";
+import type {
+  AdviserInfoProps,
+  ClassSectionProps,
+  FacultyInfoProps,
+  MayorInfoProps,
+  StudentInfoProps,
+} from "@cares/types/user";
+import { roleOptions } from "@cares/utils/admin";
 import {
-  type DocumentData,
-  type DocumentReference,
   addDoc,
   and,
   collection,
@@ -13,9 +20,11 @@ import {
   query,
   updateDoc,
   where,
+  type DocumentData,
+  type DocumentReference,
 } from "firebase/firestore";
 import { useRouter } from "next/router";
-import { type MouseEvent, useEffect, useState, type ChangeEvent } from "react";
+import { useEffect, useState, type ChangeEvent, type MouseEvent } from "react";
 import ActionButton from "~/components/Actionbutton";
 import Main from "~/components/Main";
 import {
@@ -27,19 +36,34 @@ import type { PermissionWithDateProps } from "~/components/Permissions/RoleModal
 import RoleSelection from "~/components/Permissions/RoleSelection";
 import SectionContainer from "~/components/Permissions/SectionContainer";
 import Selection from "~/components/Permissions/Selection";
-import { useAuth } from "~/contexts/AuthContext";
-import type { StudentWithSectionProps } from "~/types/student";
-import { db, permissionColRef } from "~/utils/firebase";
-import { roleOptions } from "~/utils/roles";
-import type {
-  AdviserProps,
-  AssignAdminProps,
-  AssignAdminPropsValue,
-  AssignAdviserStateProps,
-  AssignMayorStateProps,
-  FacultyProps,
-  MayorProps,
-} from "~/types/permissions";
+import { useAuth } from "~/contexts/AuthProvider";
+import { db, getCollection } from "~/utils/firebase";
+
+interface ReadStudentInfoProps
+  extends StudentInfoProps,
+    FirestoreDatabaseProps {}
+interface ReadAdviserInfoProps
+  extends AdviserInfoProps,
+    FirestoreDatabaseProps {}
+interface ReadFacultyInfoProps
+  extends FacultyInfoProps,
+    FirestoreDatabaseProps {}
+interface ReadMayorInfoProps extends MayorInfoProps, FirestoreDatabaseProps {}
+
+interface AssignAdviserStateProps extends ClassSectionProps {
+  adviser: ReadAdviserInfoProps[];
+  faculty: ReadFacultyInfoProps[];
+  selectedFaculty: string | null;
+}
+interface AssignMayorStateProps extends ClassSectionProps {
+  mayors: ReadMayorInfoProps[];
+  selectedMayor: string | null;
+  studentsWithSection: ReadStudentInfoProps[];
+}
+
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
 const Permission = () => {
   const { typeOfAccount } = useAuth();
@@ -52,8 +76,13 @@ const Permission = () => {
   );
 };
 
+interface InitialStateProps {
+  permissionArray: PermissionWithDateProps[];
+  toggleEdit: string;
+}
+
 const AssignAdmin = () => {
-  const initialProps: AssignAdminProps = {
+  const initialProps: InitialStateProps = {
     permissionArray: [],
     toggleEdit: "",
   };
@@ -62,22 +91,16 @@ const AssignAdmin = () => {
   const [state, setState] = useState(initialProps);
   const isStateHasNoContent = state.permissionArray.length === 0;
 
-  function handleState(
-    key: keyof AssignAdminProps,
-    value: AssignAdminPropsValue
-  ) {
-    setState((prevState) => ({ ...prevState, [key]: value }));
-  }
   function handleToggleEdit(value: string) {
     state.toggleEdit.trim() === ""
-      ? handleState("toggleEdit", value)
+      ? setState((prevState) => ({ ...prevState, toggleEdit: value }))
       : state.toggleEdit.trim() === value
-      ? handleState("toggleEdit", "")
-      : handleState("toggleEdit", value);
+        ? setState((prevState) => ({ ...prevState, toggleEdit: "" }))
+        : setState((prevState) => ({ ...prevState, toggleEdit: value }));
   }
   async function toggleDelete(value: string) {
     try {
-      await deleteDoc(doc(permissionColRef, value));
+      await deleteDoc(doc(getCollection("permission"), value));
     } catch (err) {
       console.log(err);
     }
@@ -85,15 +108,15 @@ const AssignAdmin = () => {
   function handleRoleSelection(e: ChangeEvent<HTMLSelectElement>, id: string) {
     e.preventDefault();
     const roleTitle = e.target.value;
-    const role = roleOptions.filter(({ title }) => roleTitle === title)[0];
+    const role = roleOptions.filter(({ name }) => roleTitle === name)[0];
 
     async function changeRole() {
       try {
-        const docRef = doc(permissionColRef, id);
+        const docRef = doc(getCollection("permission"), id);
         await updateDoc(docRef, {
           role,
-          roleInString: role?.title,
-          dateModified: new Date().getTime(),
+          roleInString: role?.name,
+          dateEdited: new Date().getTime(),
         });
       } catch (err) {
         const error = err as Error;
@@ -105,32 +128,27 @@ const AssignAdmin = () => {
   }
   function handleAccessLevelSelection(
     e: ChangeEvent<HTMLSelectElement>,
-    id: string
+    id: string,
   ): void {
     e.preventDefault();
     const partial_access = JSON.parse(e.target.value) as boolean;
 
     async function fetchRole(
       partial_access: boolean,
-      docRef: DocumentReference<DocumentData, DocumentData>
+      docRef: DocumentReference<DocumentData, DocumentData>,
     ) {
       const permDoc = await getDoc(docRef);
-      const data = permDoc.data() as PermissionWithDateProps;
-      const access_level: PermissionWithDateProps["role"]["access_level"] = {
-        ...data.role.access_level,
-        partial: partial_access,
-      };
-      const role = { ...data.role, access_level };
+      const role = permDoc.data() as PermissionWithDateProps;
       return role;
     }
 
     async function changeAccessLevel() {
       try {
-        const docRef = doc(permissionColRef, id);
+        const docRef = doc(getCollection("permission"), id);
         const role = await fetchRole(partial_access, docRef);
         await updateDoc(docRef, {
           role,
-          dateModified: new Date().getTime(),
+          dateEdited: new Date().getTime(),
         });
       } catch (err) {
         const error = err as Error;
@@ -152,12 +170,12 @@ const AssignAdmin = () => {
   );
   const renderTableBody = () =>
     state.permissionArray.map(
-      ({ email, role, dateAdded, dateModified, id }) => {
+      ({ email, role, dateCreated, dateEdited, id }) => {
         const date = () => new Date();
         const added = date();
         const modified = date();
-        added.setTime(dateAdded);
-        typeof dateModified === "number" && modified.setTime(dateModified);
+        added.setTime(dateCreated);
+        typeof dateEdited === "number" && modified.setTime(dateEdited);
         const addedDateToString = added.toLocaleString();
         const modifiedDateToString = modified.toLocaleString();
         const indexCondition = state.toggleEdit === id;
@@ -192,7 +210,7 @@ const AssignAdmin = () => {
             </td>
             <td>
               <p className="text-sm">
-                {dateModified === null ? "N/A" : modifiedDateToString}
+                {dateEdited === null ? "N/A" : modifiedDateToString}
               </p>
             </td>
             <td className="flex flex-row items-center justify-center">
@@ -213,22 +231,25 @@ const AssignAdmin = () => {
             </td>
           </tr>
         );
-      }
+      },
     );
 
   useEffect(() => {
     async function setup() {
       const unsub = onSnapshot(
-        query(permissionColRef, orderBy("dateAdded", "desc")),
+        query(getCollection("permission"), orderBy("dateAdded", "desc")),
         (snapshot) => {
-          const placeholder: PermissionWithDateProps[] = [];
+          const permissionArray: PermissionWithDateProps[] = [];
           snapshot.forEach((doc) => {
-            const data = doc.data() as Omit<PermissionWithDateProps, "id">;
             const id = doc.id;
-            placeholder.push({ ...data, id });
+            const data = doc.data() as PermissionWithDateProps;
+            permissionArray.push({ ...data, id });
           });
-          handleState("permissionArray", placeholder);
-        }
+          setState((prevState) => ({
+            ...prevState,
+            permissionArray,
+          }));
+        },
       );
       try {
         if (currentUser === null) {
@@ -284,54 +305,56 @@ const AssignAdviser = () => {
     }
   }
   async function handleSubmitAdviser(e: MouseEvent<HTMLButtonElement>) {
-    e.preventDefault();
-    const adviserColRef = collection(db, collectionPath);
-    const formattedSection = `${state.yearLevel.charAt(
-      0
-    )}${state.section.toUpperCase()}`;
+    try {
+      e.preventDefault();
+      if (state.section !== undefined) {
+        const section = state.section;
+        const upperCaseSection = section.toUpperCase();
+        const yearNumber = state.yearLevel.charAt(0);
+        const adviserColRef = collection(db, collectionPath);
+        const formattedSection = `${yearNumber}${upperCaseSection}`;
 
-    if (typeof state.selectedFaculty === "string") {
-      const section = state.section;
-      const adviserInfo: Omit<AdviserProps, "name" | "id"> = {
-        section,
-        email: state.selectedFaculty,
-        yearLevel: state?.yearLevel ?? "",
-        dateCreated: new Date().getTime(),
-      };
+        if (typeof state.selectedFaculty === "string") {
+          const adviserInfo: Omit<AdviserInfoProps, "name" | "id"> = {
+            section: state.section,
+            email: state.selectedFaculty,
+            yearLevel: state?.yearLevel ?? "",
+            dateCreated: new Date().getTime(),
+          };
 
-      try {
-        const isRegisteredAdviser = await getDocs(
-          query(adviserColRef, where("email", "==", state.selectedFaculty))
-        );
-        const isSectionHasAdviser = await getDocs(
-          query(
-            adviserColRef,
-            and(
-              where("yearLevel", "==", state.yearLevel),
-              where("section", "==", state.section)
-            )
-          )
-        );
+          const isRegisteredAdviser = await getDocs(
+            query(adviserColRef, where("email", "==", state.selectedFaculty)),
+          );
+          const isSectionHasAdviser = await getDocs(
+            query(
+              adviserColRef,
+              and(
+                where("yearLevel", "==", state.yearLevel),
+                where("section", "==", state.section),
+              ),
+            ),
+          );
 
-        if (!isRegisteredAdviser.empty) {
-          return alert(`${state.selectedFaculty} is already a adviser`);
+          if (!isRegisteredAdviser.empty) {
+            return alert(`${state.selectedFaculty} is already a adviser`);
+          }
+          if (!isSectionHasAdviser.empty) {
+            return alert(`There is already a adviser in ${formattedSection}`);
+          }
+          await addDoc(adviserColRef, adviserInfo);
+          const yearLevel = initState.yearLevel;
+          const section = initState.section;
+          const selectedFaculty = initState.selectedFaculty;
+          setState((prevState) => ({
+            ...prevState,
+            yearLevel,
+            section,
+            selectedFaculty,
+          }));
         }
-        if (!isSectionHasAdviser.empty) {
-          return alert(`There is already a adviser in ${formattedSection}`);
-        }
-        await addDoc(adviserColRef, adviserInfo);
-        const yearLevel = initState.yearLevel;
-        const section = initState.section;
-        const selectedFaculty = initState.selectedFaculty;
-        setState((prevState) => ({
-          ...prevState,
-          yearLevel,
-          section,
-          selectedFaculty,
-        }));
-      } catch (err) {
-        console.log(err);
       }
+    } catch (err) {
+      console.log(err);
     }
   }
   const renderFaculty = () => (
@@ -372,7 +395,7 @@ const AssignAdviser = () => {
     <div className="flex items-center justify-center gap-2">
       <p className="w-24">Section:</p>
       <Selection
-        value={state.section}
+        value={state.section ?? ""}
         onChange={handleSection}
         array={sections}
       />
@@ -424,10 +447,10 @@ const AssignAdviser = () => {
 
     function getAdviser() {
       return onSnapshot(query(adviserColRef), (snapshot) => {
-        const adviser: AdviserProps[] = [];
+        const adviser: ReadAdviserInfoProps[] = [];
         snapshot.forEach((doc) => {
-          const data = doc.data() as Omit<AdviserProps, "id">;
           const id = doc.id;
+          const data = doc.data() as AdviserInfoProps;
           adviser.push({ ...data, id });
         });
         setState((prevState) => ({ ...prevState, adviser }));
@@ -437,14 +460,14 @@ const AssignAdviser = () => {
       return onSnapshot(
         query(facultyColRef, where("roleInString", "==", "faculty")),
         (snapshot) => {
-          const faculty: FacultyProps[] = [];
+          const faculty: ReadFacultyInfoProps[] = [];
           snapshot.forEach((doc) => {
-            const data = doc.data() as Omit<FacultyProps, "id">;
             const id = doc.id;
+            const data = doc.data() as FacultyInfoProps;
             faculty.push({ ...data, id });
           });
           setState((prevState) => ({ ...prevState, faculty }));
-        }
+        },
       );
     }
 
@@ -484,9 +507,9 @@ const AssignMayor = () => {
   const yearLevels = ["1st Year", "2nd Year", "3rd Year", "4th Year"];
   const sections = ["a", "b", "c", "d", "e", "f", "g"];
   const initState: AssignMayorStateProps = {
-    yearLevel: "1st Year",
-    section: "a",
     mayors: [],
+    section: "a",
+    yearLevel: "1st Year",
     selectedMayor: null,
     studentsWithSection: [],
   };
@@ -515,36 +538,36 @@ const AssignMayor = () => {
   async function handleClassMayor() {
     const { yearLevel, section, selectedMayor, studentsWithSection } = state;
     const localSelected = studentsWithSection.filter(
-      (student) => selectedMayor === student.studentNo
+      (student) => selectedMayor === student.studentNo,
     )[0];
     const mayorColRef = collection(db, "mayor");
-    const formattedSection = `${yearLevel.charAt(0)}${section.toUpperCase()}`;
-    const mayorInfo: Omit<MayorProps, "id"> = {
+    const formattedSection = `${yearLevel.charAt(0)}${section?.toUpperCase()}`;
+    const mayorInfo: Omit<MayorInfoProps, "id"> = {
       name: localSelected?.name ?? "",
       email: localSelected?.email ?? "",
       studentNo: selectedMayor ?? "",
       dateCreated: new Date().getTime(),
       yearLevel,
-      section: section as MayorProps["section"],
+      section: section as MayorInfoProps["section"],
     };
 
     try {
       const isRegisteredMayor = await getDocs(
-        query(mayorColRef, where("studentNo", "==", selectedMayor))
+        query(mayorColRef, where("studentNo", "==", selectedMayor)),
       );
       const isSectionHasMayor = await getDocs(
         query(
           mayorColRef,
           and(
             where("yearLevel", "==", yearLevel),
-            where("section", "==", section)
-          )
-        )
+            where("section", "==", section),
+          ),
+        ),
       );
 
       if (!isRegisteredMayor.empty) {
         return alert(
-          `${localSelected?.name} is already the mayor in ${formattedSection}`
+          `${localSelected?.name} is already the mayor in ${formattedSection}`,
         );
       }
       if (!isSectionHasMayor.empty) {
@@ -569,7 +592,7 @@ const AssignMayor = () => {
     setState((prevState) => ({ ...prevState, yearLevel }));
   }
   function handleSection(event: ChangeEvent<HTMLSelectElement>) {
-    const section = event.target.value;
+    const section = event.target.value as ClassSectionProps["section"];
     setState((prevState) => ({ ...prevState, section }));
   }
   const renderHeadings = () => (
@@ -602,7 +625,7 @@ const AssignMayor = () => {
     <div className="flex items-center justify-center gap-2">
       <p className="w-24">Section:</p>
       <Selection
-        value={state.section}
+        value={state.section ?? "a"}
         onChange={handleSection}
         array={sections}
       />
@@ -652,17 +675,17 @@ const AssignMayor = () => {
       studentColRef,
       and(
         where("section", "==", state.section),
-        where("yearLevel", "==", state.yearLevel)
-      )
+        where("yearLevel", "==", state.yearLevel),
+      ),
     );
 
     function getStudentWithSection() {
       return onSnapshot(studentQuery, (snapshot) => {
-        const studentsWithSection: StudentWithSectionProps[] = [];
+        const studentsWithSection: ReadStudentInfoProps[] = [];
         snapshot.forEach((doc) => {
-          const data = doc.data() as Omit<StudentWithSectionProps, "studentNo">;
-          const studentNo = doc.id;
-          studentsWithSection.push({ ...data, studentNo });
+          const id = doc.id;
+          const data = doc.data() as StudentInfoProps;
+          studentsWithSection.push({ ...data, id });
         });
         setState((prevState) => ({ ...prevState, studentsWithSection }));
       });
@@ -674,10 +697,10 @@ const AssignMayor = () => {
 
     function getMayors() {
       return onSnapshot(query(mayorColRef), (snapshot) => {
-        const mayors: MayorProps[] = [];
+        const mayors: ReadMayorInfoProps[] = [];
         snapshot.forEach((doc) => {
-          const data = doc.data() as Omit<MayorProps, "id">;
           const id = doc.id;
+          const data = doc.data() as MayorInfoProps;
           mayors.push({ ...data, id });
         });
         setState((prevState) => ({ ...prevState, mayors }));

@@ -1,3 +1,7 @@
-import type { HeaderPathType } from "~/utils/types";
+interface HeaderPathType {
+  moreThanOne: boolean;
+}
 
-export type HeaderPathProps = Partial<HeaderPathType>;
+type HeaderPathProps = Partial<HeaderPathType>;
+
+export type { HeaderPathType, HeaderPathProps };
