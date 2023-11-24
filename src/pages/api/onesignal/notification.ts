@@ -16,9 +16,9 @@ export default async function handler({
     method: "POST",
     url: "https://onesignal.com/api/v1/notifications",
     headers: {
-      "access-control-allow-origin": "*", 
+      accept: 'application/json',
       Authorization: `Basic ${env.NEXT_PUBLIC_ONESIGNAL_REST_API_KEY}`,
-      "Content-Type": "application/json",
+      "content-type": "application/json",
     },
     data: {
       app_id: `${env.NEXT_PUBLIC_ONESIGNAL_APP_ID}`,

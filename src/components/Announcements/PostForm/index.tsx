@@ -173,6 +173,14 @@ const PostForm = () => {
             endDate: newDate.getTime(),
             markedDates,
           };
+
+          const result = await notification({
+            englishContent: state.message,
+            name: state.title,
+            included_segments: ["Student and Faculty"],
+          });
+          console.log(result.data);
+
           await addDoc(
             collection(db, "announcement"),
             state.files === null
@@ -180,23 +188,13 @@ const PostForm = () => {
               : { ...announcement, photoUrl },
           );
 
-          const result = await notification({
-            englishContent: state.message,
-            name: state.title,
-            included_segments: ["Student and Faculty"],
-          });
-
-          console.log(result.data);
-
           changeSelectedDateArray([]);
           toggleCalendar();
           return setState(initState);
         }
-        return alert("Please enter atleast one tag");
+        return alert("Please enter a title");
       } catch (err) {
-        console.log(err);
-        const files = null;
-        return setState((prevState) => ({ ...prevState, files }));
+        return console.log(err);
       }
     }
     alert("You do not have the permission to do this action");
