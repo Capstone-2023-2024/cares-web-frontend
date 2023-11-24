@@ -548,7 +548,7 @@ const AssignMayor = () => {
       studentNo: selectedMayor ?? "",
       dateCreated: new Date().getTime(),
       yearLevel,
-      section: section as MayorInfoProps["section"],
+      section: section ?? 'a',
     };
 
     try {

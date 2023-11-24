@@ -22,6 +22,7 @@ interface AnnouncementProviderProps {
 }
 
 export type {
+  ReadAnnouncementProps,
   AnnouncementStateProps,
   AnnouncementContextProps,
   AnnouncementProviderProps,

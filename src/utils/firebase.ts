@@ -3,7 +3,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { collection, getFirestore } from "firebase/firestore";
 import { getStorage, ref } from "firebase/storage";
-import { env } from "~/env.mjs";
+import { env } from "~/env.js";
 
 const firebaseApp = initializeApp({
   apiKey: env.NEXT_PUBLIC_FIRESTORE_API_KEY,

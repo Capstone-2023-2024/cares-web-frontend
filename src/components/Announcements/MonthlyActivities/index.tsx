@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 import Button from "~/components/Button";
 import { useAnnouncement } from "~/contexts/AnnouncementProvider";
-import { env } from "~/env.mjs";
+import { env } from "~/env.js";
 import { db } from "~/utils/firebase";
 import { ICON } from "~/utils/media";
 import AnnouncementTypesSelection from "../PostForm/AnnouncementTypesSelection";

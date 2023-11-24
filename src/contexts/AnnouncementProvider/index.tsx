@@ -1,4 +1,4 @@
-import type { AnnouncementProps } from "cares-common/src/types/announcement"
+import type { AnnouncementProps } from "@cares/types/announcement"
 import {
   and,
   collection,
@@ -20,6 +20,7 @@ import type {
   AnnouncementContextProps,
   AnnouncementProviderProps,
   AnnouncementStateProps,
+  ReadAnnouncementProps,
 } from "./types"
 
 const initState: AnnouncementStateProps = {
@@ -96,14 +97,14 @@ const AnnouncementProvider = ({ children }: AnnouncementProviderProps) => {
         ? eventRecognitionWithTagsQuery
         : eventRecognitionQuery,
       (snapshot) => {
-        const placeholder: AnnouncementProps[] = []
+        const placeholder: ReadAnnouncementProps[] = []
         snapshot.docs.forEach((doc) => {
-          const data = doc.data()
           const id = doc.id
+          const data = doc.data() as AnnouncementProps
           placeholder.push({
             ...data,
-            id,
-          } as AnnouncementProps)
+            id
+          })
         })
         const data = placeholder
         setState((prevState) => ({ ...prevState, data }))

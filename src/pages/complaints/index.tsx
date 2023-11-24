@@ -156,7 +156,7 @@ const Complaints = () => {
     return state.students.map(({ studentNo }) => {
       return (
         <button
-          onClick={handleIdClicked({ id: studentNo })}
+          onClick={() => handleIdClicked({ id: studentNo })}
           key={studentNo}
           className={`${
             studentNoSelected === studentNo

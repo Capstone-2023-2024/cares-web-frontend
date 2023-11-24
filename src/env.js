@@ -23,6 +23,8 @@ export const env = createEnv({
     NEXT_PUBLIC_FIRESTORE_MESSAGING_SENDER_ID: z.string(),
     NEXT_PUBLIC_FIRESTORE_APP_ID: z.string(),
     NEXT_PUBLIC_FIRESTORE_MEASUREMENT_ID: z.string(),
+    NEXT_PUBLIC_ONESIGNAL_APP_ID: z.string(),
+    NEXT_PUBLIC_ONESIGNAL_REST_API_KEY: z.string(),
   },
 
   /**
@@ -43,10 +45,18 @@ export const env = createEnv({
     NEXT_PUBLIC_FIRESTORE_APP_ID: process.env.NEXT_PUBLIC_FIRESTORE_APP_ID,
     NEXT_PUBLIC_FIRESTORE_MEASUREMENT_ID:
       process.env.NEXT_PUBLIC_FIRESTORE_MEASUREMENT_ID,
+    NEXT_PUBLIC_ONESIGNAL_APP_ID: process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID,
+    NEXT_PUBLIC_ONESIGNAL_REST_API_KEY:
+      process.env.NEXT_PUBLIC_ONESIGNAL_REST_API_KEY,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation.
    * This is especially useful for Docker builds.
    */
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,
+  /**
+   * Makes it so that empty strings are treated as undefined. `SOME_VAR: z.string()` and
+   * `SOME_VAR=''` will throw an error.
+   */
+  // emptyStringAsUndefined: true,
 });

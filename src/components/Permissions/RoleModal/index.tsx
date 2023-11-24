@@ -46,8 +46,7 @@ const RoleModal = () => {
         const perm: Omit<PermissionWithDateProps, "id"> = {
           email: state.email,
           role: state.role,
-          dateAdded: new Date().getTime(),
-          dateModified: null,
+          dateCreated: new Date().getTime(),
         };
         const adminQueryRef = query(
           getCollection("permission"),
