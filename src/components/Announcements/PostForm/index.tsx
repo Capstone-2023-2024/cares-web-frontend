@@ -14,6 +14,7 @@ import { db, storageRef } from "~/utils/firebase";
 import Button from "../../Button";
 import AnnouncementTypesSelection from "./AnnouncementTypesSelection";
 import type { InputRef, PostFormStateProps } from "./types";
+import { notification } from "~/pages/api/onesignal";
 
 const PostForm = () => {
   const { currentUser } = useAuth();
@@ -142,7 +143,7 @@ const PostForm = () => {
             )}`,
         );
 
-        if (textarea !== null && state.title.trim() === "") {
+        if (textarea !== null && state.title.trim() !== "") {
           const photoUrl: string[] = [];
           state.files?.map(async (props) => {
             photoUrl.push(props.name);
@@ -178,6 +179,14 @@ const PostForm = () => {
               ? { ...announcement }
               : { ...announcement, photoUrl },
           );
+
+          const result = await notification({
+            englishContent: state.message,
+            name: state.title,
+            included_segments: ["Student and Faculty"],
+          });
+
+          console.log(result.data);
 
           changeSelectedDateArray([]);
           toggleCalendar();
