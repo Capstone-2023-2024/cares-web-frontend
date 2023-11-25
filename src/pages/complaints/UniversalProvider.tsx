@@ -1,11 +1,20 @@
 import type { CurrentUserRoleType } from "@cares/types/user";
 import {
+  and,
+  getCountFromServer,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore";
+import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useState,
   type ReactNode,
 } from "react";
+import { collectionRef } from "~/types/firebase";
 import type { AdviserProps } from "~/types/permissions";
 import type { StudentWithClassSection } from "~/types/student";
 
@@ -51,7 +60,8 @@ const UniversalContext = createContext<UniversalContextProps>({
 
 const UniversalProvider = ({ children }: UniversalProviderProps) => {
   const [state, setState] = useState(universalInitState);
-  console.log({ universal: state });
+  const { adviserInfo, currentStudentInfo } = state;
+
   const setRole = useCallback(
     (role: UniversalProviderStateProps["role"]) =>
       setState((prevState) => ({ ...prevState, role })),
@@ -80,6 +90,54 @@ const UniversalProvider = ({ children }: UniversalProviderProps) => {
       setState((prevState) => ({ ...prevState, currentStudentInfo })),
     [],
   );
+
+  useEffect(() => {
+    const yearLevel = adviserInfo?.yearLevel ?? currentStudentInfo?.yearLevel;
+    const section = adviserInfo?.section ?? currentStudentInfo?.section;
+    if (yearLevel !== undefined && section !== undefined) {
+      const studentsArrayKey = "cares-students";
+      const cachedStudents = localStorage.getItem(studentsArrayKey);
+      const studentQuery = query(
+        collectionRef("student"),
+        and(
+          where("yearLevel", "==", yearLevel),
+          where("section", "==", section),
+        ),
+      );
+      async function getStudentsFromServer() {
+        const snapshot = await getDocs(studentQuery);
+        const studentsHolder: StudentWithClassSection[] = [];
+        snapshot.forEach((doc) => {
+          const data = doc.data() as StudentWithClassSection;
+          studentsHolder.push(data);
+        });
+        localStorage.setItem(studentsArrayKey, JSON.stringify(studentsHolder));
+        setStudentsInfo(studentsHolder);
+      }
+      /** Caches students into local storage, and TODO: remove cache if logging out */
+      async function setStudents() {
+        const result = await getCountFromServer(studentQuery);
+        if (typeof cachedStudents === "string") {
+          const parsedCachedStudents = JSON.parse(
+            cachedStudents,
+          ) as StudentWithClassSection[];
+          const thereIsNewUpdate =
+            result.data().count > parsedCachedStudents.length;
+          return thereIsNewUpdate
+            ? void getStudentsFromServer()
+            : setStudentsInfo(parsedCachedStudents);
+        }
+        return void getStudentsFromServer();
+      }
+      return void setStudents();
+    }
+  }, [
+    setStudentsInfo,
+    adviserInfo?.yearLevel,
+    adviserInfo?.section,
+    currentStudentInfo?.yearLevel,
+    currentStudentInfo?.section,
+  ]);
 
   return (
     <UniversalContext.Provider

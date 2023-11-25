@@ -26,7 +26,10 @@ const Nav = () => {
           </button>
           <button
             className="rounded-lg bg-red-500 p-2 text-white"
-            onClick={() => void signout()}
+            onClick={() => {
+              localStorage.clear();
+              void signout();
+            }}
           >
             logout
           </button>
