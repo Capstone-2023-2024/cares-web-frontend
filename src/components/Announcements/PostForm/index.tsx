@@ -177,7 +177,7 @@ const PostForm = () => {
           const result = await notification({
             englishContent: state.message,
             name: state.title,
-            included_segments: ["Student and Faculty"],
+            filters: [{field: 'tag', key: 'role', value: 'student', relation: '='}],
           });
           console.log(result.data);
 

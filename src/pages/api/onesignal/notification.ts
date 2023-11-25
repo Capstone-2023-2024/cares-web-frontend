@@ -1,8 +1,21 @@
 import axios from "axios";
 import { env } from "~/env";
 
+/** @Reference_here https://documentation.onesignal.com/reference/create-notification#send-to-users-based-on-filters */
+interface FilterProps {
+  field: 'amount_spent' | 'last_session' | 'first_session' | 'session_count' | 'session_time' | 'bought_sku' | 'tag' | 'language' | 'app_version' | 'location' | 'country'
+  key?: string
+  value: string
+  relation: '<' | '>' | '=' | '!=',
+}
+
+interface OperatorProps {
+  operator: 'AND' | 'OR'
+}
+
 interface NotificationProps {
-  included_segments: ("Student and Faculty" | "Subscribed Users")[];
+  included_segments?: ("Student and Faculty" | "Subscribed Users")[];
+  filters?: (FilterProps | OperatorProps)[];
   englishContent: string;
   name: string;
 }
