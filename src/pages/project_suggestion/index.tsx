@@ -6,7 +6,6 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import React, { useState, type FormEvent } from "react";
-import Masonry from "react-responsive-masonry";
 import Main from "~/components/Main";
 import TickingClock from "~/components/TickingClock";
 import { useAuth } from "~/contexts/AuthContext";
@@ -148,48 +147,48 @@ const PollsContainer = () => {
   const { polls } = useProject();
   const PollsContainerState: PollsContainerStateProps = { target: undefined };
   const [state, setState] = useState(PollsContainerState);
-  const items = state.target?.options
-    ? [...shuffle([...state.target.options])].map((props, index) => {
-        const computedNumber = 1 + (props?.value ?? -1);
-        const paragraphStyle = {
-          fontSize: `${computedNumber > 49 ? 50 : 12 + computedNumber}px`,
-        };
+  // const items = state.target?.options
+  //   ? [...shuffle([...state.target.options])].map((props, index) => {
+  //       const computedNumber = 1 + (props?.value ?? -1);
+  //       const paragraphStyle = {
+  //         fontSize: `${computedNumber > 49 ? 50 : 12 + computedNumber}px`,
+  //       };
 
-        function dynamicBG() {
-          const bgs = [
-            "bg-secondary",
-            "bg-purple-400",
-            "bg-yellow-500",
-            "bg-blue-600",
-            "bg-orange-600",
-          ];
-          const min = 0;
-          const max = bgs.length - 1;
-          const random = Math.floor(Math.random() * (max - min + 1) + min);
-          return bgs[random];
-        }
-        return (
-          <p
-            key={index}
-            className={`${dynamicBG()} min-w-12 inset-y-0 h-max w-max rounded-lg p-2 capitalize text-paper shadow-sm duration-300 ease-in-out hover:z-10 hover:scale-105 hover:bg-primary`}
-            style={paragraphStyle}
-          >
-            {props?.name}
-          </p>
-        );
-      })
-    : [];
+  //       function dynamicBG() {
+  //         const bgs = [
+  //           "bg-secondary",
+  //           "bg-purple-400",
+  //           "bg-yellow-500",
+  //           "bg-blue-600",
+  //           "bg-orange-600",
+  //         ];
+  //         const min = 0;
+  //         const max = bgs.length - 1;
+  //         const random = Math.floor(Math.random() * (max - min + 1) + min);
+  //         return bgs[random];
+  //       }
+  //       return (
+  //         <p
+  //           key={index}
+  //           className={`${dynamicBG()} min-w-12 inset-y-0 h-max w-max rounded-lg p-2 capitalize text-paper shadow-sm duration-300 ease-in-out hover:z-10 hover:scale-105 hover:bg-primary`}
+  //           style={paragraphStyle}
+  //         >
+  //           {props?.name}
+  //         </p>
+  //       );
+  //     })
+  //   : [];
   const dayValue = 1000 * 60 * 60 * 24;
 
-  function shuffle(array: PollProps["options"]) {
-    for (let i = array.length - 1; i > 0; i--) {
-      let arrayI = array[i];
-      const j = Math.floor(Math.random() * (i + 1));
-      let arrayJ = array[j];
-      [arrayI, arrayJ] = [arrayJ, arrayI];
-    }
-    return array;
-  }
+  // function shuffle(array: PollProps["options"]) {
+  //   for (let i = array.length - 1; i > 0; i--) {
+  //     let arrayI = array[i];
+  //     const j = Math.floor(Math.random() * (i + 1));
+  //     let arrayJ = array[j];
+  //     [arrayI, arrayJ] = [arrayJ, arrayI];
+  //   }
+  //   return array;
+  // }
 
   async function handleExtendTime(id: string) {
     try {
@@ -207,7 +206,7 @@ const PollsContainer = () => {
         const options = rest.options;
         const length = options.length;
         const sortByVotes = options.sort(
-          (a, b) => (a.value ?? -1) - (b.value ?? -1)
+          (a, b) => (a.value ?? -1) - (b.value ?? -1),
         );
         const mostVotedValues = sortByVotes.splice(length - 4);
         await updateDoc(doc(collection(db, "project_suggestion"), id), {
@@ -253,9 +252,9 @@ const PollsContainer = () => {
           </div>
           <div className="mx-auto w-1/2 rounded-lg bg-paper p-4 shadow-sm">
             <p className="text-center text-lg font-semibold">Consensus</p>
-            <Masonry columnsCount={6} gutter="1.5rem">
+            {/* <Masonry columnsCount={6} gutter="1.5rem">
               {items}
-            </Masonry>
+            </Masonry> */}
           </div>
           <div className="mx-auto w-max rounded-lg p-2">
             <button
@@ -297,7 +296,7 @@ const PollsContainer = () => {
                       "inset-x-0",
                       "top-0",
                       "z-10",
-                      "helper"
+                      "helper",
                     );
                     button.appendChild(holder);
                   }}
@@ -315,7 +314,7 @@ const PollsContainer = () => {
                   </p>
                 </button>
               );
-            }
+            },
           )}
         </div>
       </section>
@@ -332,7 +331,7 @@ const PollsContainer = () => {
                   <p>{question}</p>
                 </button>
               );
-            }
+            },
           )}
         </div>
       </section>

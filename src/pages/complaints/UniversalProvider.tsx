@@ -1,3 +1,4 @@
+import type { CurrentUserRoleType } from "@cares/types/user";
 import {
   createContext,
   useCallback,
@@ -22,7 +23,7 @@ interface ReadAdviserProps extends WriteAdviserProps {
   id: string;
 }
 export interface UniversalProviderStateProps {
-  role?: "student" | "mayor" | "adviser";
+  role?: CurrentUserRoleType;
   mayorInfo?: StudentWithClassSection;
   adviserInfo?: ReadAdviserProps;
   studentsInfo?: StudentWithClassSection[];
@@ -54,12 +55,12 @@ const UniversalProvider = ({ children }: UniversalProviderProps) => {
   const setRole = useCallback(
     (role: UniversalProviderStateProps["role"]) =>
       setState((prevState) => ({ ...prevState, role })),
-    []
+    [],
   );
   const setMayorInfo = useCallback(
     (mayorInfo: StudentWithClassSection) =>
       setState((prevState) => ({ ...prevState, mayorInfo })),
-    []
+    [],
   );
   const setAdviserInfo = useCallback(
     (adviserInfo: WriteAdviserProps, id: string) =>
@@ -67,17 +68,17 @@ const UniversalProvider = ({ children }: UniversalProviderProps) => {
         ...prevState,
         adviserInfo: { id, ...adviserInfo },
       })),
-    []
+    [],
   );
   const setStudentsInfo = useCallback(
     (studentsInfo: StudentWithClassSection[]) =>
       setState((prevState) => ({ ...prevState, studentsInfo })),
-    []
+    [],
   );
   const setCurrentStudentInfo = useCallback(
     (currentStudentInfo: StudentWithClassSection) =>
       setState((prevState) => ({ ...prevState, currentStudentInfo })),
-    []
+    [],
   );
 
   return (

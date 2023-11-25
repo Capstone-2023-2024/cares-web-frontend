@@ -19,8 +19,14 @@
     "baseUrl": ".",
     "paths": {
       "~/*": ["./src/*"],
+      "@cares/*": ["../../libs/typescript/lib/src/*"]
     }
   },
+  "references": [
+    {
+      "path": "../../libs/typescript"
+    }
+  ],
   "include": [
     ".eslintrc.cjs",
     "next-env.d.ts",

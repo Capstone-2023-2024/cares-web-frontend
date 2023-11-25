@@ -2,6 +2,7 @@
 
 # Changelog:
 
+- [FIXED]: Complaint Box UI conflicting with class_section ChatHeadButton
 - [FIXED]: `adviser` is not sharing components with `student`
 - [REMOVED]: Hero UI in rendering ComplaintBox's complaints [CHANGED]: selected Ticket is highlighted
 - [FIXED]: Duplicate groupComplaints onSnapshot
@@ -16,7 +17,7 @@
 
 # Issues:
 
-- Complaint Box UI conflicting with class_section ChatHeadButton
+- Nothingggg!
 
 # For improvements
 
@@ -24,6 +25,10 @@
 - Optimize Firestore Read and Write(s)
 - Resolved Concerns centralized in one container
 - `adviser` and potentially Deleted User has the same render in UI
+- Cache students
+- Remove chat heads if there are no complaints
+- Add notifications see TODO's
+- Move resolved complaints to another clickable
 
 # Context Provider Boilerplate
 

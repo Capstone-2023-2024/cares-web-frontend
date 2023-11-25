@@ -48,6 +48,7 @@ import type {
   YearLevelSectionProps,
 } from "./UniversalProvider";
 import UniversalProvider, { useUniversal } from "./UniversalProvider";
+import { recipientEscalation } from "@cares/utils/validation";
 
 const LIMIT = 15;
 const Complaints = () => {
@@ -70,10 +71,13 @@ const ComplaintsWrapper = () => {
   const fetchUserInfo = useCallback(async () => {
     if (typeof currentUser?.email === "string") {
       const studentSnapshot = await getDocs(
-        query(collectionRef("student"), where("email", "==", currentUser.email))
+        query(
+          collectionRef("student"),
+          where("email", "==", currentUser.email),
+        ),
       );
       const mayorSnapshot = await getDocs(
-        query(collectionRef("mayor"), where("email", "==", currentUser.email))
+        query(collectionRef("mayor"), where("email", "==", currentUser.email)),
       );
 
       if (!studentSnapshot.empty) {
@@ -86,9 +90,9 @@ const ComplaintsWrapper = () => {
             collectionRef("advisers"),
             and(
               where("yearLevel", "==", data.yearLevel),
-              where("section", "==", data.section)
-            )
-          )
+              where("section", "==", data.section),
+            ),
+          ),
         );
         if (!adviserSnapshot.empty) {
           const doc = adviserSnapshot.docs[0];
@@ -100,8 +104,8 @@ const ComplaintsWrapper = () => {
         const adviserSnapshot = await getDocs(
           query(
             collectionRef("advisers"),
-            where("email", "==", currentUser.email)
-          )
+            where("email", "==", currentUser.email),
+          ),
         );
         if (!adviserSnapshot.empty) {
           const doc = adviserSnapshot.docs[0];
@@ -208,8 +212,8 @@ const MainPage = () => {
         and(
           where("yearLevel", "==", yearLevel),
           where("section", "==", section),
-          where("academicYear", "==", formatYearStringify)
-        )
+          where("academicYear", "==", formatYearStringify),
+        ),
       );
       try {
         const snapshot = await getDocs(generatedQuery);
@@ -228,7 +232,7 @@ const MainPage = () => {
         console.log(err, "Error in returning complaints Query");
       }
     },
-    []
+    [],
   );
 
   /**TODO: Store classmate info into Local Storage */
@@ -238,8 +242,8 @@ const MainPage = () => {
         collectionRef("student"),
         and(
           where("yearLevel", "==", yearLevel),
-          where("section", "==", section)
-        )
+          where("section", "==", section),
+        ),
       );
       return onSnapshot(studentQuery, (snapshot) => {
         const studentsHolder: StudentWithClassSection[] = [];
@@ -250,7 +254,7 @@ const MainPage = () => {
         setStudentsInfo(studentsHolder);
       });
     },
-    [setStudentsInfo]
+    [setStudentsInfo],
   );
   const getChattablesForStudent = useCallback(
     async ({ yearLevel, section }: YearLevelSectionProps) => {
@@ -260,9 +264,9 @@ const MainPage = () => {
             collectionRef("mayor"),
             and(
               where("yearLevel", "==", yearLevel),
-              where("section", "==", section)
-            )
-          )
+              where("section", "==", section),
+            ),
+          ),
         );
         if (!mayorSnapshot.empty) {
           const doc = mayorSnapshot.docs[0];
@@ -273,7 +277,7 @@ const MainPage = () => {
         console.log(err, "Error in getting other chattables for student");
       }
     },
-    [setMayorInfo]
+    [setMayorInfo],
   );
   /** if role is === `mayor`, recipient is set to `adviser` and if called in student follow-up set-up, studentNo should be undefined */
   const fetchClassSectionComplaints = useCallback(() => {
@@ -283,10 +287,10 @@ const MainPage = () => {
         query(
           collection(
             doc(collection(db, "complaints"), currentYearSectionComplaintDocId),
-            "group"
+            "group",
           ),
           orderBy("timestamp", "desc"),
-          limit(LIMIT)
+          limit(LIMIT),
         ),
         (snapshot) => {
           const groupComplaintsHolder: ReadConcernBaseProps[] = [];
@@ -297,7 +301,7 @@ const MainPage = () => {
             groupComplaintsHolder.push({ ...data, id });
           });
           setClassSectionComplaints(groupComplaintsHolder);
-        }
+        },
       );
     return unsub ? unsub : () => null;
   }, [setClassSectionComplaints, currentYearSectionComplaintDocId]);
@@ -312,24 +316,24 @@ const MainPage = () => {
                 collection(
                   doc(
                     collection(db, "complaints"),
-                    currentYearSectionComplaintDocId
+                    currentYearSectionComplaintDocId,
                   ),
-                  "individual"
+                  "individual",
                 ),
                 where("recipient", "==", recipient),
                 orderBy("dateCreated", "desc"),
-                limit(LIMIT)
+                limit(LIMIT),
               )
             : query(
                 collection(
                   doc(
                     collection(db, "complaints"),
-                    currentYearSectionComplaintDocId
+                    currentYearSectionComplaintDocId,
                   ),
-                  "individual"
+                  "individual",
                 ),
                 where("studentNo", "==", studentNo),
-                limit(LIMIT)
+                limit(LIMIT),
               ),
           (snapshot) => {
             const concernsHolder: ReadConcernProps[] = [];
@@ -340,10 +344,11 @@ const MainPage = () => {
               concernsHolder.push({ ...data, id });
             });
             if (studentNo === undefined) {
+              console.log({ concernsHolder });
               return setCurrentStudentComplaints(concernsHolder);
             }
             setOtherComplaints(concernsHolder);
-          }
+          },
         );
       return unsub;
     },
@@ -351,7 +356,7 @@ const MainPage = () => {
       setCurrentStudentComplaints,
       setOtherComplaints,
       currentYearSectionComplaintDocId,
-    ]
+    ],
   );
   /** Setup `targetDocument`, `complaintRecord`, and `groupComplaints` in state.*/
   const fetchStudentConcerns = useCallback(
@@ -370,10 +375,11 @@ const MainPage = () => {
           const fetchComplaintProps: FetchComplaintCollectionsProps = {
             recipient: "mayor",
           };
+          console.log({ complaintsFetch: fetchComplaintProps });
           fetchOtherComplaints(
             role === "mayor"
               ? fetchComplaintProps
-              : { studentNo, ...fetchComplaintProps }
+              : { studentNo, ...fetchComplaintProps },
           );
         }
       } catch (err) {
@@ -385,7 +391,7 @@ const MainPage = () => {
       fetchOtherComplaints,
       returnComplaintsQuery,
       setCurrentYearSectionComplaintDocId,
-    ]
+    ],
   );
   /** Mayor's Setup for Student concerns, and Mayor's concern for Adviser */
   const mayorSetup = useCallback(
@@ -411,7 +417,7 @@ const MainPage = () => {
       returnComplaintsQuery,
       fetchOtherComplaints,
       setCurrentYearSectionComplaintDocId,
-    ]
+    ],
   );
   /** Adviser's Setup for Student concerns, and Mayor's concerns */
   const adviserSetup = useCallback(
@@ -436,9 +442,9 @@ const MainPage = () => {
       returnComplaintsQuery,
       fetchOtherComplaints,
       setCurrentYearSectionComplaintDocId,
-    ]
+    ],
   );
-  /** If sender is anonymous, currentStudentInfo is not loaded properly */
+  /** TODO: Add notification. If sender is anonymous, currentStudentInfo is not loaded properly */
   async function handleSend(event: MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
     const complaint: WriteConcernBaseProps = {
@@ -452,7 +458,7 @@ const MainPage = () => {
     if (currentYearSectionComplaintDocId !== null) {
       const complaintDocRef = doc(
         collection(db, "complaints"),
-        currentYearSectionComplaintDocId
+        currentYearSectionComplaintDocId,
       );
       if (typeof selectedChatId === "string") {
         if (
@@ -466,7 +472,7 @@ const MainPage = () => {
           try {
             const document = await addDoc(
               collection(complaintDocRef, "individual"),
-              data
+              data,
             );
             setSelectedChatHead(role === "mayor" ? "adviser" : "mayor");
             setSelectedChatId(document.id);
@@ -478,7 +484,7 @@ const MainPage = () => {
           } catch (err) {
             console.log(
               err,
-              "Sending message through complaints => individual"
+              "Sending message through complaints => individual",
             );
           }
         } else if (selectedChatId === "class_section") {
@@ -492,7 +498,7 @@ const MainPage = () => {
         /** ELSE: This is for student forwarding messages to the existing complaint */
         const docRef = doc(
           collection(complaintDocRef, "individual"),
-          selectedChatId
+          selectedChatId,
         );
         try {
           await updateDoc(docRef, {
@@ -505,7 +511,7 @@ const MainPage = () => {
           }));
         } catch (err) {
           return console.log(
-            "Failed in forwarding messages to the existing complaint"
+            "Failed in forwarding messages to the existing complaint",
           );
         }
       }
@@ -540,14 +546,14 @@ const MainPage = () => {
       selectedChatId === "class_section"
         ? "Compose a message to send in your class section"
         : selectedChatHead === null && role !== "mayor"
-        ? "Compose a new complaint"
-        : "Compose a message";
+          ? "Compose a new complaint"
+          : "Compose a message";
 
     const complaintRecord = currentStudentComplaints?.filter(
-      (props) => props.id === selectedChatId
+      (props) => props.id === selectedChatId,
     );
     const higherUpComplaintRecord = otherComplaints?.filter(
-      (props) => props.id === selectedChatId
+      (props) => props.id === selectedChatId,
     );
     const renderCondition =
       (complaintRecord.length > 0 &&
@@ -582,6 +588,7 @@ const MainPage = () => {
         onClick={() => {
           setSelectedChatHead(classSectionName);
           setSelectedChatId(classSectionName);
+          setSelectedStudent(null);
           setShowStudents(false);
           setShowMayorModal(false);
           setState((prevState) => ({
@@ -677,13 +684,6 @@ const MainPage = () => {
         {role !== "student" ? (
           <>
             <RenderChatHeads
-              recipientArray={[
-                ...new Set(
-                  otherComplaints
-                    .map((props) => props.recipient)
-                    .filter((props) => props !== "mayor")
-                ),
-              ]}
               handleNewConcern={handleNewConcern}
               data={otherComplaints
                 .filter((props) => selectedChatHead === props.recipient)
@@ -738,15 +738,13 @@ const MainPage = () => {
                   );
                 })}
             </div>
-            <ComplainBoxRenderer
+            <ComplaintBoxRenderer
               data={currentStudentComplaints
                 ?.filter((props) => props.studentNo === selectedStudent)
                 ?.sort((a, b) => b.dateCreated - a.dateCreated)}
-              heading={`${
-                studentsInfo
-                  ?.filter((props) => selectedStudent === props.studentNo)[0]
-                  ?.name.split(",")[0]
-              }'s Complaint/Concern(s):`}
+              heading={`${studentsInfo
+                ?.filter((props) => selectedStudent === props.studentNo)[0]
+                ?.name.split(",")[0]}'s Complaint/Concern(s):`}
               condition={selectedStudent !== null}
               setIdExtended={() => {
                 selectedChatHead !== "students" && setSelectedStudent(null);
@@ -759,9 +757,6 @@ const MainPage = () => {
           </>
         ) : (
           <RenderChatHeads
-            recipientArray={[
-              ...new Set(otherComplaints.map((props) => props.recipient)),
-            ]}
             handleNewConcern={handleNewConcern}
             data={otherComplaints
               .filter((props) => props.recipient === selectedChatHead)
@@ -787,25 +782,36 @@ const MainPage = () => {
   );
 };
 
-interface RenderChatHeadsProps extends ComplainBoxRendererProps {
-  recipientArray?: string[];
+interface RenderChatHeadsProps extends ComplaintBoxRendererProps {
   children?: ReactNode;
   chatHeadOnClick: (
-    value: ContentManipulationProviderStateProps["selectedChatHead"]
+    value: ContentManipulationProviderStateProps["selectedChatHead"],
   ) => void;
 }
 const RenderChatHeads = ({
   children,
-  recipientArray,
   chatHeadOnClick,
   ...rest
 }: RenderChatHeadsProps) => {
+  const { role } = useUniversal();
+  const { otherComplaints } = useComplaints();
   const { selectedChatId, selectedChatHead } = useContentManipulation();
+  const recipients = otherComplaints.map((props) => props.recipient);
+  console.log(otherComplaints);
+  if (role === "student") {
+    recipients.push("mayor");
+  } else if (role === "mayor") {
+    const mayorIndex = recipients.indexOf(role);
+    if (mayorIndex > -1) {
+      recipients.splice(mayorIndex);
+    }
+    recipients.push("adviser");
+  }
 
   return (
     <div className="bg-primary/30 p-2">
       <div className="flex w-full flex-row gap-2 overflow-x-auto">
-        {recipientArray?.map((value) => {
+        {[...new Set(recipients)].map((value) => {
           return (
             <ChatHeadButton
               key={value}
@@ -817,7 +823,7 @@ const RenderChatHeads = ({
               }
               onClick={() =>
                 chatHeadOnClick(
-                  value as ContentManipulationProviderStateProps["selectedChatHead"]
+                  value as ContentManipulationProviderStateProps["selectedChatHead"],
                 )
               }
             />
@@ -825,12 +831,12 @@ const RenderChatHeads = ({
         })}
         {children}
       </div>
-      <ComplainBoxRenderer {...rest} />
+      <ComplaintBoxRenderer {...rest} />
     </div>
   );
 };
 
-interface ComplainBoxRendererProps {
+interface ComplaintBoxRendererProps {
   data: ReadConcernProps[] | undefined;
   heading?: string;
   condition: boolean;
@@ -838,14 +844,14 @@ interface ComplainBoxRendererProps {
   closingCondition: () => void;
   handleNewConcern?: () => void;
 }
-const ComplainBoxRenderer = ({
+const ComplaintBoxRenderer = ({
   data,
   heading,
   condition,
   setIdExtended,
   closingCondition,
   handleNewConcern,
-}: ComplainBoxRendererProps) => {
+}: ComplaintBoxRendererProps) => {
   const { role } = useUniversal();
   const { selectedChatHead, selectedChatId, setSelectedChatId } =
     useContentManipulation();
@@ -902,8 +908,8 @@ const ComplainBoxRenderer = ({
                         status === "processing"
                           ? "text-yellow-500"
                           : status === "resolved"
-                          ? "text-green-500"
-                          : "text-red-400"
+                            ? "text-green-500"
+                            : "text-red-400"
                       } pl-2 font-bold capitalize`}
                     >
                       <RenderTurnOverStatus
@@ -917,12 +923,12 @@ const ComplainBoxRenderer = ({
                     0,
                     selectedMessage.message.length > 6
                       ? 4
-                      : selectedMessage.message.length
+                      : selectedMessage.message.length,
                   )}...`}</p>
                   <p className="text-xs font-thin text-paper">{`Date: ${date.toLocaleDateString()}`}</p>
                 </button>
               );
-            }
+            },
           )}
         </div>
       </>
@@ -1131,21 +1137,21 @@ const ComplaintBox = ({}) => {
   });
 
   const currentStudentInfoRoot = currentStudentComplaints.filter(
-    (props) => selectedStudent === props.studentNo
+    (props) => selectedStudent === props.studentNo,
   );
   const filterOtherComplaints = otherComplaints.filter(
-    (props) => selectedChatId === props.id
+    (props) => selectedChatId === props.id,
   );
   const filterCurrentStudent = currentStudentInfoRoot.filter(
-    (props) => selectedChatId === props.id
+    (props) => selectedChatId === props.id,
   );
 
   const renderThisArray =
     selectedChatHead === "class_section"
       ? classSectionComplaints
       : filterOtherComplaints.length > 0
-      ? filterOtherComplaints[0]?.messages
-      : filterCurrentStudent[0]?.messages;
+        ? filterOtherComplaints[0]?.messages
+        : filterCurrentStudent[0]?.messages;
 
   const targetArray = filterOtherComplaints[0] ?? filterCurrentStudent[0];
 
@@ -1164,8 +1170,8 @@ const ComplaintBox = ({}) => {
         and(
           where("yearLevel", "==", yearLevel),
           where("section", "==", section),
-          where("academicYear", "==", formatYearStringify)
-        )
+          where("academicYear", "==", formatYearStringify),
+        ),
       );
       try {
         const snapshot = await getDocs(generatedQuery);
@@ -1184,7 +1190,7 @@ const ComplaintBox = ({}) => {
         console.log(err, "Error in returning complaints Query");
       }
     },
-    []
+    [],
   );
 
   async function actionButton(type: "resolved" | "turn-over") {
@@ -1198,33 +1204,36 @@ const ComplaintBox = ({}) => {
         if (reference !== undefined) {
           const individualColRef = collection(
             doc(db, "complaints", reference.queryId),
-            "individual"
+            "individual",
           );
           const targetDoc = doc(individualColRef, selectedChatId);
           if (type === "resolved") {
             await updateDoc(targetDoc, { status: type });
           } else if (type === "turn-over") {
-            await updateDoc(targetDoc, {
-              status: type,
-              turnOvers: increment(1),
-            });
-            await addDoc(individualColRef, {
-              dateCreated: new Date().getTime(),
-              referenceId: selectedChatId,
-              messages: [
-                {
-                  sender: "adviser",
-                  message: state.turnOverMessage,
-                  timestamp: new Date().getTime(),
-                },
-              ],
-              recipient: "program_chair",
-              status: "processing",
-              studentNo:
-                currentStudentComplaints?.filter(
-                  (props) => selectedChatId === props.id
-                )[0]?.studentNo ?? "null",
-            });
+            if (role !== undefined) {
+              const turnOverDetails = {
+                dateCreated: new Date().getTime(),
+                referenceId: selectedChatId,
+                messages: [
+                  {
+                    sender: currentStudentInfo?.studentNo ?? role,
+                    message: state.turnOverMessage,
+                    timestamp: new Date().getTime(),
+                  },
+                ],
+                recipient: recipientEscalation(role),
+                status: "processing",
+                studentNo:
+                  currentStudentComplaints?.filter(
+                    (props) => selectedChatId === props.id,
+                  )[0]?.studentNo ?? "null",
+              };
+              await updateDoc(targetDoc, {
+                status: type,
+                turnOvers: increment(1),
+              });
+              await addDoc(individualColRef, turnOverDetails);
+            }
           }
         }
       }
@@ -1233,6 +1242,7 @@ const ComplaintBox = ({}) => {
     }
   }
 
+  /** TODO: Add notification here */
   const renderActionButtons = () => {
     const condition =
       targetArray?.status === "processing" &&
@@ -1285,7 +1295,7 @@ const ComplaintBox = ({}) => {
           newTimestamp.setTime(timestamp);
           console.log({ studentsInfo });
           const targetStudent = studentsInfo?.filter(
-            (props) => sender === props.studentNo
+            (props) => sender === props.studentNo,
           )[0];
 
           return (
@@ -1315,7 +1325,7 @@ const ComplaintBox = ({}) => {
                     {sender === adviserInfo?.email
                       ? `${adviserInfo?.yearLevel.substring(
                           0,
-                          1
+                          1,
                         )}${adviserInfo?.section?.toUpperCase()} Adviser`
                       : sender}
                   </p>
