@@ -1,7 +1,7 @@
 import type { AnnouncementProps } from "@cares/types/announcement";
 import { announcementType } from "@cares/utils/announcement";
 import { formatDateOrMonth } from "@cares/utils/date";
-import { imageDimension } from "@cares/utils/media";
+import { getImageFromStorage, imageDimension } from "@cares/utils/media";
 import { addDoc, collection } from "firebase/firestore";
 import { uploadBytes } from "firebase/storage";
 import Image from "next/image";
@@ -15,6 +15,7 @@ import Button from "../../Button";
 import AnnouncementTypesSelection from "./AnnouncementTypesSelection";
 import type { InputRef, PostFormStateProps } from "./types";
 import { notification } from "~/pages/api/onesignal";
+import { env } from "~/env";
 
 const PostForm = () => {
   const { currentUser } = useAuth();
@@ -173,13 +174,34 @@ const PostForm = () => {
             endDate: newDate.getTime(),
             markedDates,
           };
-
+          const name = state.files?.map((props) => props.name);
+          const storageName = getImageFromStorage({
+            imageName: name?.[0] ?? "",
+            storageBucket: env.NEXT_PUBLIC_FIRESTORE_STORAGE_BUCKET,
+          });
           const result = await notification({
-            englishContent: state.message,
-            name: state.title,
-            filters: [
-              { field: "tag", key: "role", value: "student", relation: "=" },
+            contents: {
+              en: state.message,
+            },
+            headings: {
+              en: state.title,
+            },
+            web_buttons: [
+              {
+                id: "pick",
+                text: "Pick",
+                icon: "",
+                url: "",
+              },
             ],
+            name: state.title,
+            include_external_user_ids: ["carranzagcarlo@gmail.com"],
+            // included_segments: ["Student and Faculty"],
+            // filters: [
+            //   { field: "tag", key: "role", value: "student", relation: "=" },
+            // ],
+            big_picture: storageName,
+            priority: 10,
           });
           console.log(result.data);
 
