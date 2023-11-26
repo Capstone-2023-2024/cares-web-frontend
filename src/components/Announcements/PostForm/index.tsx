@@ -1,6 +1,6 @@
 import type { AnnouncementProps } from "@cares/types/announcement";
 import { announcementType } from "@cares/utils/announcement";
-import { formatDateOrMonth } from "@cares/utils/document";
+import { formatDateOrMonth } from "@cares/utils/date";
 import { imageDimension } from "@cares/utils/media";
 import { addDoc, collection } from "firebase/firestore";
 import { uploadBytes } from "firebase/storage";
@@ -177,7 +177,9 @@ const PostForm = () => {
           const result = await notification({
             englishContent: state.message,
             name: state.title,
-            filters: [{field: 'tag', key: 'role', value: 'student', relation: '='}],
+            filters: [
+              { field: "tag", key: "role", value: "student", relation: "=" },
+            ],
           });
           console.log(result.data);
 
