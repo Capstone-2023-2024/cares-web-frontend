@@ -13,9 +13,18 @@ import ProjectProvider, {
   useProject,
   type PollProps,
 } from "~/contexts/ProjectProvider";
-import type { EventProps, StateProps } from "~/types/project_suggestion";
+import type { OptionProps, PollEventProps } from "@cares/types/poll";
 import { currentMonth } from "~/utils/date";
 import { db } from "~/utils/firebase";
+
+interface StateProps {
+  type: "poll";
+  state: "unpublished";
+  options: OptionProps[];
+  question: string;
+  text: string;
+  days: number | null;
+}
 
 const ProjectSuggestion = () => {
   return (
@@ -39,7 +48,7 @@ const Content = () => {
   const { currentUser } = useAuth();
   const [state, setState] = useState(initState);
   const daysInMilliseconds = 86400000;
-  const event: Omit<EventProps, "dateOfExpiration"> = {
+  const event: Omit<PollEventProps, "dateOfExpiration"> = {
     postedBy: currentUser?.email ?? "null",
     type: state.type,
     state: state.state,
@@ -68,7 +77,8 @@ const Content = () => {
     const totalMilliseconds = (state.days ?? 1) * daysInMilliseconds;
     const totalCalculation = totalMilliseconds + date.getTime();
     const { options, ...rest } = event;
-    const newEvent: Omit<EventProps, "options"> = {
+    console.log(options);
+    const newEvent: Omit<PollEventProps, "options"> = {
       ...rest,
       dateOfExpiration: totalCalculation,
     };

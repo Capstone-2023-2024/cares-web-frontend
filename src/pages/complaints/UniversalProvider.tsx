@@ -76,7 +76,6 @@ const UniversalContext = createContext<UniversalContextProps>({
 const UniversalProvider = ({ children }: UniversalProviderProps) => {
   const [state, setState] = useState(universalInitState);
   const { adviserInfo, currentStudentInfo } = state;
-  console.log({ queryId: state.queryId });
   const setRole = useCallback(
     (role: UniversalProviderStateProps["role"]) =>
       setState((prevState) => ({ ...prevState, role })),
@@ -119,30 +118,33 @@ const UniversalProvider = ({ children }: UniversalProviderProps) => {
         ),
       );
       try {
+        let test = 1;
         const result = await getCountFromServer(complaintQuery);
         if (result.data().count === 0) {
+          console.log((test += 1), "first");
           const documentRef = await addDoc(collectionRef("complaints"), {
             time: new Date().getTime(),
             section,
             yearLevel,
             academicYear: formatYearStringify,
           });
-          console.log({ documentRef }, documentRef.id);
-          return setState((prevState) => ({
-            ...prevState,
-            queryId: documentRef.id,
-          }));
+          return console.log(documentRef.id);
+          //   return setState((prevState) => ({
+          //     ...prevState,
+          //     queryId: documentRef.id,
+          //   }));
         }
-        console.log("Catch write");
-        const snapshot = await getDocs(complaintQuery);
-        const doc = snapshot.docs[0];
-        if (doc?.exists()) {
-          console.log("Exists", doc.id);
-          setState((prevState) => ({
-            ...prevState,
-            queryId: doc.id,
-          }));
-        }
+        console.log((test += 1), "second");
+        // console.log("Catch write");
+        // const snapshot = await getDocs(complaintQuery);
+        // const doc = snapshot.docs[0];
+        // if (doc?.exists()) {
+        //   console.log("Exists", doc.id);
+        //   setState((prevState) => ({
+        //     ...prevState,
+        //     queryId: doc.id,
+        //   }));
+        // }
       } catch (err) {
         console.log(err, "Error in returning complaints Query");
       }
@@ -192,6 +194,7 @@ const UniversalProvider = ({ children }: UniversalProviderProps) => {
     }
   }, [
     setStudentsInfo,
+    // returnComplaintsQuery,
     adviserInfo?.yearLevel,
     adviserInfo?.section,
     currentStudentInfo?.yearLevel,

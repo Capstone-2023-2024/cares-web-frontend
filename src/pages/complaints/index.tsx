@@ -68,12 +68,7 @@ const Complaints = () => {
 /** User's initial Set-up */
 const ComplaintsWrapper = () => {
   const { currentUser } = useAuth();
-  const {
-    setRole,
-    setAdviserInfo,
-    setCurrentStudentInfo,
-    returnComplaintsQuery,
-  } = useUniversal();
+  const { setRole, setAdviserInfo, setCurrentStudentInfo } = useUniversal();
 
   /** Setting up setRole, setCurrentStudentInfo, and setAdviserInfo */
   const fetchUserInfo = useCallback(async () => {
@@ -87,22 +82,13 @@ const ComplaintsWrapper = () => {
       const mayorSnapshot = await getDocs(
         query(collectionRef("mayor"), where("email", "==", currentUser.email)),
       );
-      console.log(
-        currentUser?.email,
-        setAdviserInfo,
-        setCurrentStudentInfo,
-        returnComplaintsQuery,
-        setRole,
-      );
 
       if (!studentSnapshot.empty) {
         const doc = studentSnapshot.docs[0];
         const data = doc?.data() as StudentInfoProps;
         const { yearLevel, section } = data;
-        const classSection = { yearLevel, section };
-        setRole("student");
         setCurrentStudentInfo(data);
-        void returnComplaintsQuery(classSection);
+        setRole("student");
         const adviserSnapshot = await getDocs(
           query(
             collectionRef("adviser"),
@@ -129,10 +115,6 @@ const ComplaintsWrapper = () => {
           const doc = adviserSnapshot.docs[0];
           const adviserData = doc?.data() as AdviserInfoProps;
           const id = doc?.id ?? "";
-          const classSection = {
-            yearLevel: adviserData.yearLevel,
-            section: adviserData.section,
-          };
           setAdviserInfo(adviserData, id);
           setRole("adviser");
         }
@@ -141,13 +123,7 @@ const ComplaintsWrapper = () => {
         setRole("mayor");
       }
     }
-  }, [
-    currentUser?.email,
-    setAdviserInfo,
-    setCurrentStudentInfo,
-    returnComplaintsQuery,
-    setRole,
-  ]);
+  }, [currentUser?.email, setAdviserInfo, setCurrentStudentInfo, setRole]);
 
   useEffect(() => {
     return void fetchUserInfo();
@@ -190,8 +166,15 @@ const MainPage = () => {
     setSelectedChatId,
     setSelectedStudent,
   } = useContentManipulation();
-  const { role, queryId, studentsInfo, currentStudentInfo, setMayorInfo } =
-    useUniversal();
+  const {
+    role,
+    queryId,
+    studentsInfo,
+    currentStudentInfo,
+    adviserInfo,
+    setMayorInfo,
+    returnComplaintsQuery,
+  } = useUniversal();
   const { showMayorModal, setShowMayorModal, setShowStudents } = useModal();
 
   /** TODO: Don't include in react-native */
@@ -500,8 +483,20 @@ const MainPage = () => {
 
   /** Set-up for whole class section with same `yearLevel` and `section`*/
   useEffect(() => {
+    const yearLevel = adviserInfo?.yearLevel ?? currentStudentInfo?.yearLevel;
+    const section = adviserInfo?.section ?? currentStudentInfo?.section;
+    if (yearLevel !== undefined && section !== undefined) {
+      void returnComplaintsQuery({ yearLevel, section });
+    }
     return fetchClassSectionComplaints();
-  }, [fetchClassSectionComplaints, queryId]);
+  }, [
+    returnComplaintsQuery,
+    fetchClassSectionComplaints,
+    currentStudentInfo?.yearLevel,
+    currentStudentInfo?.section,
+    adviserInfo?.yearLevel,
+    adviserInfo?.section,
+  ]);
   /** Student follow-up Set-up */
   useEffect(() => {
     const yearLevel = currentStudentInfo?.yearLevel;

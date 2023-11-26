@@ -5,13 +5,14 @@ import { useEffect, useState, type FormEvent } from "react";
 import Header from "~/components/Header/Header";
 import Loading from "~/components/Loading";
 import { useAuth } from "~/contexts/AuthContext";
-import type { StudentWithClassSection } from "~/types/student";
+import type { StudentInfoProps } from "@cares/types/user";
 import { db } from "~/utils/firebase";
 import { icon, imageDimension } from "~/utils/image";
 
 const Login = () => {
   const alphabet = "abcdefghijkl";
-  const initState: Omit<StudentWithClassSection, "section"> = {
+  const initState: Omit<StudentInfoProps, "section"> = {
+    dateCreated: new Date().getTime(),
     studentNo: `${new Date().getFullYear()}200200`,
     college: "College of Information and Communications",
     schoolYear: "1st Semester AY 2023-2024",
@@ -28,8 +29,7 @@ const Login = () => {
   const { currentUser, loading, signInWithGoogle } = useAuth();
   const router = useRouter();
   const [state, setState] = useState(initState);
-  const [section, setSection] =
-    useState<Pick<StudentWithClassSection, "section">>();
+  const [section, setSection] = useState<Pick<StudentInfoProps, "section">>();
 
   function handleState(key: keyof typeof state, value: string) {
     setState((prevState) => ({ ...prevState, [key]: value }));
@@ -44,9 +44,10 @@ const Login = () => {
   }
 
   async function handleFormSubmit(e: FormEvent<HTMLFormElement>) {
+    const studentNo = state.studentNo;
     e.preventDefault();
     try {
-      await setDoc(doc(db, "student", state.studentNo), {
+      await setDoc(doc(db, "student", studentNo), {
         section: section ?? "a",
         ...state,
       });
