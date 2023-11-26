@@ -35,10 +35,23 @@ export default {
             backgroundColor: "#f5f5f5",
           },
         },
+        gradient: {
+          "0%": {
+            backgroundPosition: "0% 50% translateX(0)",
+          },
+          "50%": {
+            backgroundPosition: "100% 50%",
+          },
+          "100%": {
+            backgroundPosition: "0% 50% translateX(300)",
+          },
+        },
       },
+
       animation: {
         "spin-slow": "spin 3s linear infinite",
         loading: "loading 1s ease-in-out infinite",
+        gradient: "gradient 8s ease infinite",
       },
     },
   },

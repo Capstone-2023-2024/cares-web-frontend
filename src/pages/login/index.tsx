@@ -1,10 +1,11 @@
+import { imageDimension } from "@cares/utils/media";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { type ChangeEvent, type FormEvent, useEffect, useState } from "react";
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import Header from "~/components/Header/Header";
 import Loading from "~/components/Loading";
+import TextInput from "~/components/TextInput";
 import { useAuth } from "~/contexts/AuthProvider";
-import { imageDimension } from "@cares/utils/media";
 import { ICON } from "~/utils/media";
 
 interface InitialAuthProps {
@@ -20,12 +21,10 @@ const initialProps: InitialAuthProps = {
 };
 
 const Login = () => {
-  const [state, setState] = useState(initialProps);
-  const { emailAndPassSignin, currentUser, loading, signInWithGoogle } =
-    useAuth();
   const router = useRouter();
-  const inputBaseStyle =
-    "rounded-lg border py-2 px-6 shadow-sm outline-none duration-300 ease-in-out";
+  const [state, setState] = useState(initialProps);
+  const { currentUser, loading, emailAndPassSignin, signInWithGoogle } =
+    useAuth();
 
   function handleEmail(event: ChangeEvent<HTMLInputElement>) {
     event.preventDefault();
@@ -81,54 +80,49 @@ const Login = () => {
   }, [currentUser, router]);
 
   return !loading ? (
-    <div
-      className="relative min-h-screen bg-cover bg-center"
-      style={{ backgroundImage: "url('/loginbg.png')" }}
-    >
+    <div className="animate-gradient relative min-h-screen bg-gradient-to-t from-slate-200 via-paper to-paper bg-[length:400%_400%]">
+      <div className="animate-gradient absolute z-0 h-full w-screen bg-[url('/bg-login.png')] bg-cover bg-center" />
       <Header />
-
-      <div className="flex h-full items-center justify-center">
-        <div className="mt-20 w-96 rounded-lg bg-white p-8 shadow-xl transition duration-300 ease-in-out hover:shadow-2xl">
+      <div className="relative flex h-full items-center justify-center">
+        <div className="absolute inset-y-0 z-10 mt-20 h-max w-4/5 rounded-lg bg-white p-8 shadow-xl transition duration-300 ease-in-out hover:shadow-2xl sm:w-96">
           <form
             onSubmit={(e) => void handleSubmitEmailAndPassword(e)}
             className="flex flex-col items-center gap-4"
           >
             <h2 className="mb-4 text-center text-3xl font-bold">Login</h2>
             <p className="mt-0 text-center"></p>
-            <input
-              className={`${
-                state.error
-                  ? "animate-shake border-red-500 animate-infinite animate-ease-in"
-                  : "border-primary"
-              } ${inputBaseStyle}`}
+            <TextInput
               required
+              background="bg-white"
+              condition={state.error}
+              name="email"
+              id="email"
               type="email"
+              value={state.email}
               onChange={handleEmail}
-              placeholder="Email"
             />
-            <input
-              className={`${
-                state.error
-                  ? "animate-shake border-red-500 animate-infinite animate-ease-in"
-                  : "border-primary"
-              } ${inputBaseStyle}`}
+            <TextInput
               required
+              background="bg-white"
+              condition={state.error}
+              name="password"
+              id="password"
               type="password"
+              value={state.password}
               onChange={handlePassword}
-              placeholder="Password"
             />
             <p className="mt-4 text-center"></p>
             <button
               id="submit"
               type="submit"
-              className={`rounded-lg bg-primary px-20 py-3 text-white shadow-md duration-300 ease-in-out hover:scale-105 active:bg-paper active:text-primary`}
+              className={`rounded-lg bg-primary px-20 py-3 text-white shadow-md duration-300 ease-in-out ease-in-out hover:scale-105 hover:bg-secondary active:bg-paper active:text-primary`}
             >
               Login
             </button>
             <p className="mt-0 text-center">or</p>
             <button
               type="button"
-              className="flex transform items-center justify-between gap-2 rounded-lg bg-white px-6 py-2 shadow-md duration-300 ease-in-out hover:scale-105 hover:bg-blue-500 hover:text-white active:bg-secondary active:text-paper"
+              className="flex transform items-center justify-between gap-2 rounded-lg bg-white px-6 py-2 shadow-md duration-300 duration-300 ease-in-out ease-in-out hover:scale-105 hover:bg-blue-500 hover:text-paper hover:text-white active:bg-secondary active:text-paper"
               onClick={() => void handleGoogleSignIn()}
             >
               <div className="rounded-full bg-white p-1">
@@ -139,7 +133,7 @@ const Login = () => {
                   {...imageDimension(ICON)}
                 />
               </div>
-              <span className="text-black">Sign in with Google</span>
+              <span>Sign in with Google</span>
             </button>
           </form>
           <p
