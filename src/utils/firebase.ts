@@ -2,6 +2,7 @@ import { initializeApp } from "firebase/app";
 import { collection, getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getStorage, ref } from "firebase/storage";
+import type { CollectionPathType } from "@cares/types/firebase";
 
 const firebaseApp = initializeApp({
   apiKey: process.env.NEXT_PUBLIC_FIRESTORE_API_KEY,
@@ -39,4 +40,4 @@ export const validateEmail = (email: string) => {
   return bulsuRegex.test(email);
 };
 
-export const permissionColRef = collection(db, "permission");
+export const collectionRef = (path: CollectionPathType) => collection(db, path);

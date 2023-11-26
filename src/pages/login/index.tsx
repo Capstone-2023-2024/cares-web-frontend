@@ -45,7 +45,6 @@ const Login = () => {
 
   async function handleFormSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    console.log({ ...state, section });
     try {
       await setDoc(doc(db, "student", state.studentNo), {
         section: section ?? "a",

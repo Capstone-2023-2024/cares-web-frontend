@@ -1,42 +1,56 @@
-import type { ChangeEvent } from "react";
 import type { ComplaintProps } from "@cares/types/complaint";
+import { useState, type ChangeEvent } from "react";
+import { useContentManipulation } from "../ContentManipulationProvider";
+import { useModal } from "../ModalProvider";
 
-interface TurnOverModalProps {
-  closingModal: () => void;
-  handleTurnOverMessage: (event: ChangeEvent<HTMLTextAreaElement>) => void;
-  turnOverMessage: string;
-  handleTurnOver: () => void;
-}
 interface TurnOverMessageProps {
   recipient?: ComplaintProps["recipient"];
   status?: "turn-over" | "resolved" | "processing";
   turnOvers?: number;
 }
 
-const TurnOverModal = ({
-  closingModal,
-  handleTurnOver,
-  turnOverMessage,
-  handleTurnOverMessage,
-}: TurnOverModalProps) => {
+const TurnOverModal = () => {
+  const { setShowTurnOverModal } = useModal();
+  const { actionButton, setTurnOverMessage } = useContentManipulation();
+  const [state, setState] = useState({
+    turnOverMessage: "",
+  });
+
+  function closeTurnOverModal() {
+    setShowTurnOverModal(false);
+  }
+
+  function handleTurnOver() {
+    setShowTurnOverModal(false);
+    setTurnOverMessage(state.turnOverMessage);
+    void actionButton("turn-over");
+    setTurnOverMessage(null);
+    setState((prevState) => ({ ...prevState, turnOverMessage: "" }));
+  }
+
+  function handleTurnOverMessage(event: ChangeEvent<HTMLTextAreaElement>) {
+    const turnOverMessage = event.target.value;
+    setState((prevState) => ({ ...prevState, turnOverMessage }));
+  }
+
   return (
     <div className="fixed inset-0 z-20 bg-blue-400">
       <button
         className="absolute right-2 top-2 rounded-full bg-red-500 px-2"
-        onClick={closingModal}
+        onClick={closeTurnOverModal}
       >
         <p className="text-white">x</p>
       </button>
       <textarea
         className="p-2"
         placeholder="Compose a turn-over message to send to your adviser"
-        value={turnOverMessage}
-        onChange={(e) => handleTurnOverMessage(e)}
+        value={state.turnOverMessage}
+        onChange={handleTurnOverMessage}
       />
       <button
-        disabled={turnOverMessage.trim() === ""}
+        disabled={state.turnOverMessage.trim() === ""}
         className={`${
-          turnOverMessage.trim() === ""
+          state.turnOverMessage.trim() === ""
             ? "bg-slate-200 text-slate-300"
             : "bg-green text-paper"
         } rounded-lg p-2 capitalize duration-300 ease-in-out`}
@@ -89,4 +103,4 @@ const TurnOverMessage = ({
   }
 };
 
-export { TurnOverModal, TurnOverMessage };
+export { TurnOverMessage, TurnOverModal };

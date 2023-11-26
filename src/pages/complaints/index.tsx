@@ -1,3 +1,9 @@
+import type {
+  ComplaintBaseProps,
+  ComplaintProps,
+} from "@cares/types/complaint";
+import type { FirestoreDatabaseProps } from "@cares/types/document";
+import type { AdviserInfoProps, StudentInfoProps } from "@cares/types/user";
 import {
   addDoc,
   and,
@@ -23,16 +29,7 @@ import {
 import Loading from "~/components/Loading";
 import Main from "~/components/Main";
 import { useAuth } from "~/contexts/AuthContext";
-import type {
-  ReadConcernBaseProps,
-  ReadConcernProps,
-  WriteConcernBaseProps,
-  WriteConcernProps,
-} from "~/types/complaints";
-import { collectionRef } from "~/types/firebase";
-import type { AdviserProps } from "~/types/permissions";
-import type { StudentWithClassSection } from "~/types/student";
-import { db } from "~/utils/firebase";
+import { collectionRef, db } from "~/utils/firebase";
 import ComplaintsProvider, { useComplaints } from "./ComplaintsProvider";
 import ContentManipulationProvider, {
   useContentManipulation,
@@ -51,22 +48,32 @@ import {
   RenderStudents,
 } from "./components";
 
+interface ReadComplaintBaseProps
+  extends ComplaintBaseProps,
+    FirestoreDatabaseProps {}
+interface ReadComplaintProps extends ComplaintProps, FirestoreDatabaseProps {}
+
 const LIMIT = 15;
 const Complaints = () => {
   return (
-    <ModalProvider>
-      <ContentManipulationProvider>
-        <UniversalProvider>
+    <UniversalProvider>
+      <ModalProvider>
+        <ContentManipulationProvider>
           <ComplaintsWrapper />
-        </UniversalProvider>
-      </ContentManipulationProvider>
-    </ModalProvider>
+        </ContentManipulationProvider>
+      </ModalProvider>
+    </UniversalProvider>
   );
 };
 /** User's initial Set-up */
 const ComplaintsWrapper = () => {
   const { currentUser } = useAuth();
-  const { setRole, setCurrentStudentInfo, setAdviserInfo } = useUniversal();
+  const {
+    setRole,
+    setAdviserInfo,
+    setCurrentStudentInfo,
+    returnComplaintsQuery,
+  } = useUniversal();
 
   /** Setting up setRole, setCurrentStudentInfo, and setAdviserInfo */
   const fetchUserInfo = useCallback(async () => {
@@ -80,38 +87,52 @@ const ComplaintsWrapper = () => {
       const mayorSnapshot = await getDocs(
         query(collectionRef("mayor"), where("email", "==", currentUser.email)),
       );
+      console.log(
+        currentUser?.email,
+        setAdviserInfo,
+        setCurrentStudentInfo,
+        returnComplaintsQuery,
+        setRole,
+      );
 
       if (!studentSnapshot.empty) {
         const doc = studentSnapshot.docs[0];
-        const data = doc?.data() as StudentWithClassSection;
+        const data = doc?.data() as StudentInfoProps;
+        const { yearLevel, section } = data;
+        const classSection = { yearLevel, section };
         setRole("student");
         setCurrentStudentInfo(data);
+        void returnComplaintsQuery(classSection);
         const adviserSnapshot = await getDocs(
           query(
-            collectionRef("advisers"),
+            collectionRef("adviser"),
             and(
-              where("yearLevel", "==", data.yearLevel),
-              where("section", "==", data.section),
+              where("yearLevel", "==", yearLevel),
+              where("section", "==", section),
             ),
           ),
         );
         if (!adviserSnapshot.empty) {
           const doc = adviserSnapshot.docs[0];
-          const adviserData = doc?.data() as AdviserProps;
+          const adviserData = doc?.data() as AdviserInfoProps;
           const id = doc?.id ?? "null";
           setAdviserInfo(adviserData, id);
         }
       } else {
         const adviserSnapshot = await getDocs(
           query(
-            collectionRef("advisers"),
+            collectionRef("adviser"),
             where("email", "==", currentUser.email),
           ),
         );
         if (!adviserSnapshot.empty) {
           const doc = adviserSnapshot.docs[0];
-          const adviserData = doc?.data() as AdviserProps;
+          const adviserData = doc?.data() as AdviserInfoProps;
           const id = doc?.id ?? "";
+          const classSection = {
+            yearLevel: adviserData.yearLevel,
+            section: adviserData.section,
+          };
           setAdviserInfo(adviserData, id);
           setRole("adviser");
         }
@@ -120,7 +141,13 @@ const ComplaintsWrapper = () => {
         setRole("mayor");
       }
     }
-  }, [currentUser?.email, setAdviserInfo, setCurrentStudentInfo, setRole]);
+  }, [
+    currentUser?.email,
+    setAdviserInfo,
+    setCurrentStudentInfo,
+    returnComplaintsQuery,
+    setRole,
+  ]);
 
   useEffect(() => {
     return void fetchUserInfo();
@@ -134,17 +161,13 @@ const ComplaintsWrapper = () => {
     </Main>
   );
 };
-
-interface MayorSetUpProps extends YearLevelSectionProps {
-  studentNo: string;
-}
 interface FetchComplaintCollectionsProps {
   studentNo?: string;
   recipient: UniversalProviderStateProps["role"];
 }
 interface InitStateProps {
   message: string;
-  newConcernDetails?: Omit<WriteConcernProps, "messages">;
+  newConcernDetails?: Omit<ComplaintProps, "messages">;
 }
 const MainPage = () => {
   const initState: InitStateProps = {
@@ -163,13 +186,11 @@ const MainPage = () => {
     selectedChatHead,
     selectedChatId,
     selectedStudent,
-    currentYearSectionComplaintDocId,
-    setCurrentYearSectionComplaintDocId,
     setSelectedChatHead,
     setSelectedChatId,
     setSelectedStudent,
   } = useContentManipulation();
-  const { role, studentsInfo, adviserInfo, currentStudentInfo, setMayorInfo } =
+  const { role, queryId, studentsInfo, currentStudentInfo, setMayorInfo } =
     useUniversal();
   const { showMayorModal, setShowMayorModal, setShowStudents } = useModal();
 
@@ -192,39 +213,7 @@ const MainPage = () => {
     const message = event.target.value;
     setState((prevState) => ({ ...prevState, message }));
   }
-  const returnComplaintsQuery = useCallback(
-    async ({ yearLevel, section }: YearLevelSectionProps) => {
-      const thisYear = new Date().getFullYear();
-      const nextYear = thisYear + 1;
-      const formatYearStringify = `${thisYear}-${nextYear}`;
-      const generatedQuery = query(
-        collectionRef("complaints"),
-        and(
-          where("yearLevel", "==", yearLevel),
-          where("section", "==", section),
-          where("academicYear", "==", formatYearStringify),
-        ),
-      );
-      try {
-        const snapshot = await getDocs(generatedQuery);
-        if (snapshot.docs.length > 0) {
-          const result = snapshot.docs[0];
-          return { queryId: result ? result.id : "" };
-        }
-        const reference = await addDoc(collectionRef("complaints"), {
-          time: new Date().getTime(),
-          section,
-          yearLevel,
-          academicYear: formatYearStringify,
-        });
-        return { queryId: reference.id };
-      } catch (err) {
-        console.log(err, "Error in returning complaints Query");
-      }
-    },
-    [],
-  );
-
+  /** Can be moved to useUniversal's useEffect */
   const getChattablesForStudent = useCallback(
     async ({ yearLevel, section }: YearLevelSectionProps) => {
       try {
@@ -239,7 +228,7 @@ const MainPage = () => {
         );
         if (!mayorSnapshot.empty) {
           const doc = mayorSnapshot.docs[0];
-          const data = doc?.data() as StudentWithClassSection;
+          const data = doc?.data() as StudentInfoProps;
           setMayorInfo(data);
         }
       } catch (err) {
@@ -251,21 +240,18 @@ const MainPage = () => {
   /** if role is === `mayor`, recipient is set to `adviser` and if called in student follow-up set-up, studentNo should be undefined */
   const fetchClassSectionComplaints = useCallback(() => {
     const unsub =
-      currentYearSectionComplaintDocId !== null &&
+      queryId !== null &&
       onSnapshot(
         query(
-          collection(
-            doc(collection(db, "complaints"), currentYearSectionComplaintDocId),
-            "group",
-          ),
+          collection(doc(collection(db, "complaints"), queryId), "group"),
           orderBy("timestamp", "desc"),
           limit(LIMIT),
         ),
         (snapshot) => {
-          const groupComplaintsHolder: ReadConcernBaseProps[] = [];
+          const groupComplaintsHolder: ReadComplaintBaseProps[] = [];
           const newSnapshot = snapshot.docs.reverse();
           newSnapshot.forEach((doc) => {
-            const data = doc.data() as WriteConcernBaseProps;
+            const data = doc.data() as ComplaintBaseProps;
             const id = doc.id;
             groupComplaintsHolder.push({ ...data, id });
           });
@@ -273,20 +259,17 @@ const MainPage = () => {
         },
       );
     return unsub ? unsub : () => null;
-  }, [setClassSectionComplaints, currentYearSectionComplaintDocId]);
+  }, [setClassSectionComplaints, queryId]);
   /** If studentNo is undefined, concerns will be redirected to currentStudentComplaints */
   const fetchOtherComplaints = useCallback(
     ({ studentNo, recipient }: FetchComplaintCollectionsProps) => {
       const unsub =
-        currentYearSectionComplaintDocId !== null &&
+        queryId !== null &&
         onSnapshot(
           studentNo === undefined
             ? query(
                 collection(
-                  doc(
-                    collection(db, "complaints"),
-                    currentYearSectionComplaintDocId,
-                  ),
+                  doc(collection(db, "complaints"), queryId),
                   "individual",
                 ),
                 where("recipient", "==", recipient),
@@ -295,25 +278,21 @@ const MainPage = () => {
               )
             : query(
                 collection(
-                  doc(
-                    collection(db, "complaints"),
-                    currentYearSectionComplaintDocId,
-                  ),
+                  doc(collection(db, "complaints"), queryId),
                   "individual",
                 ),
                 where("studentNo", "==", studentNo),
                 limit(LIMIT),
               ),
           (snapshot) => {
-            const concernsHolder: ReadConcernProps[] = [];
+            const concernsHolder: ReadComplaintProps[] = [];
             const newSnapshot = snapshot.docs.reverse();
             newSnapshot.forEach((doc) => {
-              const data = doc.data() as WriteConcernProps;
+              const data = doc.data() as ComplaintProps;
               const id = doc.id;
               concernsHolder.push({ ...data, id });
             });
             if (studentNo === undefined) {
-              console.log({ concernsHolder });
               return setCurrentStudentComplaints(concernsHolder);
             }
             setOtherComplaints(concernsHolder);
@@ -321,102 +300,54 @@ const MainPage = () => {
         );
       return unsub;
     },
-    [
-      setCurrentStudentComplaints,
-      setOtherComplaints,
-      currentYearSectionComplaintDocId,
-    ],
+    [setCurrentStudentComplaints, setOtherComplaints, queryId],
   );
   /** Setup `targetDocument`, `complaintRecord`, and `groupComplaints` in state.*/
   const fetchStudentConcerns = useCallback(
-    async ({
-      yearLevel,
-      section,
-      studentNo,
-    }: Omit<MayorSetUpProps, "email">) => {
+    ({ studentNo }: Pick<StudentInfoProps, "studentNo">) => {
       try {
-        const reference = await returnComplaintsQuery({
-          yearLevel,
-          section,
-        });
-        if (reference !== undefined) {
-          setCurrentYearSectionComplaintDocId(reference.queryId);
-          const fetchComplaintProps: FetchComplaintCollectionsProps = {
-            recipient: "mayor",
-          };
-          console.log({ complaintsFetch: fetchComplaintProps });
-          fetchOtherComplaints(
-            role === "mayor"
-              ? fetchComplaintProps
-              : { studentNo, ...fetchComplaintProps },
-          );
-        }
+        const fetchComplaintProps: FetchComplaintCollectionsProps = {
+          recipient: "mayor",
+        };
+        fetchOtherComplaints(
+          role === "mayor"
+            ? fetchComplaintProps
+            : { studentNo, ...fetchComplaintProps },
+        );
       } catch (err) {
         console.log(err, "fetch student concerns");
       }
     },
-    [
-      role,
-      fetchOtherComplaints,
-      returnComplaintsQuery,
-      setCurrentYearSectionComplaintDocId,
-    ],
+    [role, fetchOtherComplaints],
   );
   /** Mayor's Setup for Student concerns, and Mayor's concern for Adviser */
   const mayorSetup = useCallback(
-    async ({ yearLevel, section, studentNo }: MayorSetUpProps) => {
+    ({ studentNo }: Pick<StudentInfoProps, "studentNo">) => {
       try {
-        const reference = await returnComplaintsQuery({
-          yearLevel,
-          section,
+        return fetchOtherComplaints({
+          recipient: "adviser",
+          studentNo: studentNo,
         });
-
-        if (reference !== undefined) {
-          setCurrentYearSectionComplaintDocId(reference.queryId);
-          return fetchOtherComplaints({
-            recipient: "adviser",
-            studentNo: studentNo,
-          });
-        }
       } catch (err) {
         console.log(err, "fetch student concerns");
       }
     },
-    [
-      returnComplaintsQuery,
-      fetchOtherComplaints,
-      setCurrentYearSectionComplaintDocId,
-    ],
+    [fetchOtherComplaints],
   );
   /** Adviser's Setup for Student concerns, and Mayor's concerns */
-  const adviserSetup = useCallback(
-    async ({ yearLevel, section }: YearLevelSectionProps) => {
-      try {
-        const reference = await returnComplaintsQuery({
-          yearLevel,
-          section,
-        });
-
-        if (reference !== undefined) {
-          setCurrentYearSectionComplaintDocId(reference.queryId);
-          return fetchOtherComplaints({
-            recipient: "adviser",
-          });
-        }
-      } catch (err) {
-        console.log(err, "fetch student concerns");
-      }
-    },
-    [
-      returnComplaintsQuery,
-      fetchOtherComplaints,
-      setCurrentYearSectionComplaintDocId,
-    ],
-  );
+  const adviserSetup = useCallback(() => {
+    try {
+      return fetchOtherComplaints({
+        recipient: "adviser",
+      });
+    } catch (err) {
+      console.log(err, "fetch student concerns");
+    }
+  }, [fetchOtherComplaints]);
   /** TODO: Add notification. If sender is anonymous, currentStudentInfo is not loaded properly */
   async function handleSend(event: MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
-    const complaint: WriteConcernBaseProps = {
+    const complaint: ComplaintBaseProps = {
       timestamp: new Date().getTime(),
       sender:
         role === "adviser"
@@ -424,17 +355,14 @@ const MainPage = () => {
           : currentStudentInfo?.studentNo ?? "anonymous",
       message: state.message,
     };
-    if (currentYearSectionComplaintDocId !== null) {
-      const complaintDocRef = doc(
-        collection(db, "complaints"),
-        currentYearSectionComplaintDocId,
-      );
+    if (queryId !== null) {
+      const complaintDocRef = doc(collection(db, "complaints"), queryId);
       if (typeof selectedChatId === "string") {
         if (
           selectedChatId === "object" &&
           typeof state.newConcernDetails === "object"
         ) {
-          const data: WriteConcernProps = {
+          const data: ComplaintProps = {
             messages: [complaint],
             ...state.newConcernDetails,
           };
@@ -492,7 +420,7 @@ const MainPage = () => {
   function handleNewConcern() {
     if (currentStudentInfo?.studentNo !== undefined) {
       const recipient = role === "mayor" ? "adviser" : "mayor";
-      const newConcernDetails: Omit<WriteConcernProps, "messages"> = {
+      const newConcernDetails: Omit<ComplaintProps, "messages"> = {
         status: "processing",
         recipient,
         studentNo: currentStudentInfo.studentNo,
@@ -573,7 +501,7 @@ const MainPage = () => {
   /** Set-up for whole class section with same `yearLevel` and `section`*/
   useEffect(() => {
     return fetchClassSectionComplaints();
-  }, [fetchClassSectionComplaints, currentYearSectionComplaintDocId]);
+  }, [fetchClassSectionComplaints, queryId]);
   /** Student follow-up Set-up */
   useEffect(() => {
     const yearLevel = currentStudentInfo?.yearLevel;
@@ -584,9 +512,8 @@ const MainPage = () => {
       section !== undefined &&
       studentNo !== undefined
     ) {
-      console.log("student");
       void getChattablesForStudent({ yearLevel, section });
-      void fetchStudentConcerns({ yearLevel, section, studentNo });
+      void fetchStudentConcerns({ studentNo });
     }
   }, [
     currentStudentInfo?.section,
@@ -597,38 +524,17 @@ const MainPage = () => {
   ]);
   /** Mayor Set-up for fetching complaints */
   useEffect(() => {
-    const yearLevel = currentStudentInfo?.yearLevel;
-    const section = currentStudentInfo?.section;
     const studentNo = currentStudentInfo?.studentNo;
-    if (
-      role === "mayor" &&
-      yearLevel !== undefined &&
-      section !== undefined &&
-      studentNo !== undefined
-    ) {
-      console.log("mayor");
-      void mayorSetup({ yearLevel, section, studentNo });
+    if (role === "mayor" && studentNo !== undefined) {
+      void mayorSetup({ studentNo });
     }
-  }, [
-    role,
-    currentStudentInfo?.studentNo,
-    currentStudentInfo?.yearLevel,
-    currentStudentInfo?.section,
-    mayorSetup,
-  ]);
+  }, [role, currentStudentInfo?.studentNo, mayorSetup]);
   /** Adviser set-up for fetching complaints */
   useEffect(() => {
-    const yearLevel = adviserInfo?.yearLevel;
-    const section = adviserInfo?.section;
-    if (
-      role === "adviser" &&
-      yearLevel !== undefined &&
-      section !== undefined
-    ) {
-      console.log("adviser");
-      void adviserSetup({ yearLevel, section });
+    if (role === "adviser") {
+      void adviserSetup();
     }
-  }, [role, adviserInfo?.yearLevel, adviserInfo?.section, adviserSetup]);
+  }, [role, adviserSetup]);
 
   if (role === undefined) {
     return <Loading />;
@@ -699,4 +605,5 @@ const MainPage = () => {
   );
 };
 
+export type { ReadComplaintBaseProps, ReadComplaintProps };
 export default Complaints;

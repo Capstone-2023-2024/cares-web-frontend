@@ -31,7 +31,7 @@ const ModalContext = createContext<ModalContextProps>({
 
 const ModalProvider = ({ children }: ModalProviderProps) => {
   const [state, setState] = useState(modalInitState);
-  console.log({ modals: state });
+  // console.log({ modals: state });
   function handleState(key: keyof ModalProviderStateProps, value: boolean) {
     setState((prevState) => ({ ...prevState, [key]: value }));
   }

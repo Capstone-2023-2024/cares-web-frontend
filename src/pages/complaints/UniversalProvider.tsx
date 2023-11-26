@@ -1,5 +1,12 @@
-import type { CurrentUserRoleType } from "@cares/types/user";
+import type { FirestoreDatabaseProps } from "@cares/types/document";
+import type {
+  AdviserInfoProps,
+  ClassSectionProps,
+  CurrentUserRoleType,
+  StudentInfoProps,
+} from "@cares/types/user";
 import {
+  addDoc,
   and,
   getCountFromServer,
   getDocs,
@@ -14,37 +21,35 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { collectionRef } from "~/types/firebase";
-import type { AdviserProps } from "~/types/permissions";
-import type { StudentWithClassSection } from "~/types/student";
+import { collectionRef } from "~/utils/firebase";
 
 export interface YearLevelSectionProps {
   yearLevel: string;
-  section: StudentWithClassSection["section"];
+  section: StudentInfoProps["section"];
 }
-interface WriteAdviserProps extends YearLevelSectionProps {
+interface ReadAdviserInfoProps
+  extends AdviserInfoProps,
+    FirestoreDatabaseProps {
   src?: string;
-  email: string;
-  name?: string;
-  dateCreated: number;
-}
-interface ReadAdviserProps extends WriteAdviserProps {
-  id: string;
 }
 export interface UniversalProviderStateProps {
   role?: CurrentUserRoleType;
-  mayorInfo?: StudentWithClassSection;
-  adviserInfo?: ReadAdviserProps;
-  studentsInfo?: StudentWithClassSection[];
-  currentStudentInfo?: StudentWithClassSection;
+  queryId: string | null;
+  mayorInfo?: StudentInfoProps;
+  adviserInfo?: ReadAdviserInfoProps;
+  studentsInfo?: StudentInfoProps[];
+  currentStudentInfo?: StudentInfoProps;
 }
-const universalInitState: UniversalProviderStateProps = {};
+const universalInitState: UniversalProviderStateProps = {
+  queryId: null,
+};
 interface UniversalContextProps extends UniversalProviderStateProps {
   setRole: (value: UniversalProviderStateProps["role"]) => void;
-  setMayorInfo: (value: StudentWithClassSection) => void;
-  setAdviserInfo: (value: AdviserProps, id: string) => void;
-  setStudentsInfo: (value: StudentWithClassSection[]) => void;
-  setCurrentStudentInfo: (value: StudentWithClassSection) => void;
+  setMayorInfo: (value: StudentInfoProps) => void;
+  setAdviserInfo: (value: AdviserInfoProps, id: string) => void;
+  setStudentsInfo: (value: StudentInfoProps[]) => void;
+  setCurrentStudentInfo: (value: StudentInfoProps) => void;
+  returnComplaintsQuery: (props: ClassSectionProps) => Promise<void>;
 }
 interface UniversalProviderProps {
   children: ReactNode;
@@ -56,24 +61,34 @@ const UniversalContext = createContext<UniversalContextProps>({
   setAdviserInfo: () => null,
   setStudentsInfo: () => null,
   setCurrentStudentInfo: () => null,
+  returnComplaintsQuery: async () => {
+    const promise = new Promise(function (
+      resolve: (props: void) => void,
+      reject: (props: void) => void,
+    ) {
+      resolve;
+      reject;
+    });
+    return promise;
+  },
 });
 
 const UniversalProvider = ({ children }: UniversalProviderProps) => {
   const [state, setState] = useState(universalInitState);
   const { adviserInfo, currentStudentInfo } = state;
-
+  console.log({ queryId: state.queryId });
   const setRole = useCallback(
     (role: UniversalProviderStateProps["role"]) =>
       setState((prevState) => ({ ...prevState, role })),
     [],
   );
   const setMayorInfo = useCallback(
-    (mayorInfo: StudentWithClassSection) =>
+    (mayorInfo: StudentInfoProps) =>
       setState((prevState) => ({ ...prevState, mayorInfo })),
     [],
   );
   const setAdviserInfo = useCallback(
-    (adviserInfo: WriteAdviserProps, id: string) =>
+    (adviserInfo: AdviserInfoProps, id: string) =>
       setState((prevState) => ({
         ...prevState,
         adviserInfo: { id, ...adviserInfo },
@@ -81,16 +96,60 @@ const UniversalProvider = ({ children }: UniversalProviderProps) => {
     [],
   );
   const setStudentsInfo = useCallback(
-    (studentsInfo: StudentWithClassSection[]) =>
+    (studentsInfo: StudentInfoProps[]) =>
       setState((prevState) => ({ ...prevState, studentsInfo })),
     [],
   );
   const setCurrentStudentInfo = useCallback(
-    (currentStudentInfo: StudentWithClassSection) =>
+    (currentStudentInfo: StudentInfoProps) =>
       setState((prevState) => ({ ...prevState, currentStudentInfo })),
     [],
   );
-
+  const returnComplaintsQuery = useCallback(
+    async ({ yearLevel, section }: ClassSectionProps) => {
+      const thisYear = new Date().getFullYear();
+      const nextYear = thisYear + 1;
+      const formatYearStringify = `${thisYear}-${nextYear}`;
+      const complaintQuery = query(
+        collectionRef("complaints"),
+        and(
+          where("yearLevel", "==", yearLevel),
+          where("section", "==", section),
+          where("academicYear", "==", formatYearStringify),
+        ),
+      );
+      try {
+        const result = await getCountFromServer(complaintQuery);
+        if (result.data().count === 0) {
+          const documentRef = await addDoc(collectionRef("complaints"), {
+            time: new Date().getTime(),
+            section,
+            yearLevel,
+            academicYear: formatYearStringify,
+          });
+          console.log({ documentRef }, documentRef.id);
+          return setState((prevState) => ({
+            ...prevState,
+            queryId: documentRef.id,
+          }));
+        }
+        console.log("Catch write");
+        const snapshot = await getDocs(complaintQuery);
+        const doc = snapshot.docs[0];
+        if (doc?.exists()) {
+          console.log("Exists", doc.id);
+          setState((prevState) => ({
+            ...prevState,
+            queryId: doc.id,
+          }));
+        }
+      } catch (err) {
+        console.log(err, "Error in returning complaints Query");
+      }
+    },
+    [],
+  );
+  /** Year Level and Sections set-up */
   useEffect(() => {
     const yearLevel = adviserInfo?.yearLevel ?? currentStudentInfo?.yearLevel;
     const section = adviserInfo?.section ?? currentStudentInfo?.section;
@@ -106,9 +165,9 @@ const UniversalProvider = ({ children }: UniversalProviderProps) => {
       );
       async function getStudentsFromServer() {
         const snapshot = await getDocs(studentQuery);
-        const studentsHolder: StudentWithClassSection[] = [];
+        const studentsHolder: StudentInfoProps[] = [];
         snapshot.forEach((doc) => {
-          const data = doc.data() as StudentWithClassSection;
+          const data = doc.data() as StudentInfoProps;
           studentsHolder.push(data);
         });
         localStorage.setItem(studentsArrayKey, JSON.stringify(studentsHolder));
@@ -120,7 +179,7 @@ const UniversalProvider = ({ children }: UniversalProviderProps) => {
         if (typeof cachedStudents === "string") {
           const parsedCachedStudents = JSON.parse(
             cachedStudents,
-          ) as StudentWithClassSection[];
+          ) as StudentInfoProps[];
           const thereIsNewUpdate =
             result.data().count > parsedCachedStudents.length;
           return thereIsNewUpdate
@@ -147,6 +206,7 @@ const UniversalProvider = ({ children }: UniversalProviderProps) => {
         setMayorInfo,
         setAdviserInfo,
         setStudentsInfo,
+        returnComplaintsQuery,
         setCurrentStudentInfo,
       }}
     >
@@ -155,6 +215,5 @@ const UniversalProvider = ({ children }: UniversalProviderProps) => {
   );
 };
 
-/** Data in here are set-up in line 79 */
 export const useUniversal = () => useContext(UniversalContext);
 export default UniversalProvider;

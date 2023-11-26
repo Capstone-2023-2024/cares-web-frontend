@@ -68,7 +68,6 @@ const Content = () => {
     const totalMilliseconds = (state.days ?? 1) * daysInMilliseconds;
     const totalCalculation = totalMilliseconds + date.getTime();
     const { options, ...rest } = event;
-    console.log(options);
     const newEvent: Omit<EventProps, "options"> = {
       ...rest,
       dateOfExpiration: totalCalculation,

@@ -6,14 +6,14 @@ import {
   type ReactNode,
 } from "react";
 import type {
-  ReadConcernBaseProps,
-  ReadConcernProps,
-} from "~/types/complaints";
+  ReadComplaintBaseProps,
+  ReadComplaintProps,
+} from "~/pages/complaints";
 
 interface ComplaintsProviderStateProps {
-  otherComplaints: ReadConcernProps[];
-  classSectionComplaints: ReadConcernBaseProps[];
-  currentStudentComplaints: ReadConcernProps[];
+  otherComplaints: ReadComplaintProps[];
+  classSectionComplaints: ReadComplaintBaseProps[];
+  currentStudentComplaints: ReadComplaintProps[];
 }
 const complaintsInitState: ComplaintsProviderStateProps = {
   otherComplaints: [],
@@ -22,13 +22,13 @@ const complaintsInitState: ComplaintsProviderStateProps = {
 };
 interface ComplaintsContextProps extends ComplaintsProviderStateProps {
   setOtherComplaints: (
-    array: ComplaintsProviderStateProps["otherComplaints"]
+    array: ComplaintsProviderStateProps["otherComplaints"],
   ) => void;
   setClassSectionComplaints: (
-    array: ComplaintsProviderStateProps["classSectionComplaints"]
+    array: ComplaintsProviderStateProps["classSectionComplaints"],
   ) => void;
   setCurrentStudentComplaints: (
-    array: ComplaintsProviderStateProps["currentStudentComplaints"]
+    array: ComplaintsProviderStateProps["currentStudentComplaints"],
   ) => void;
 }
 interface ComplaintsProviderProps {
@@ -43,31 +43,27 @@ const ComplaintsContext = createContext<ComplaintsContextProps>({
 
 const ComplaintsProvider = ({ children }: ComplaintsProviderProps) => {
   const [state, setState] = useState(complaintsInitState);
-  console.log({ complaints: state });
   const setOtherComplaints = useCallback(
     (otherComplaints: ComplaintsProviderStateProps["otherComplaints"]) => {
-      console.log({ otherComplaints });
       setState((prevState) => ({ ...prevState, otherComplaints }));
     },
-    []
+    [],
   );
   const setClassSectionComplaints = useCallback(
     (
-      classSectionComplaints: ComplaintsProviderStateProps["classSectionComplaints"]
+      classSectionComplaints: ComplaintsProviderStateProps["classSectionComplaints"],
     ) => {
-      console.log({ classSectionComplaints });
       setState((prevState) => ({ ...prevState, classSectionComplaints }));
     },
-    []
+    [],
   );
   const setCurrentStudentComplaints = useCallback(
     (
-      currentStudentComplaints: ComplaintsProviderStateProps["currentStudentComplaints"]
+      currentStudentComplaints: ComplaintsProviderStateProps["currentStudentComplaints"],
     ) => {
-      console.log({ currentStudentComplaints });
       setState((prevState) => ({ ...prevState, currentStudentComplaints }));
     },
-    []
+    [],
   );
 
   return (

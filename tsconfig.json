@@ -34,6 +34,6 @@
     "**/*.tsx",
     "**/*.cjs",
     "**/*.mjs"
-  ],
+, "src/pages/complaints/components/RenderActionButtons"  ],
   "exclude": ["node_modules"]
 }
