@@ -1,5 +1,5 @@
 {
-  "name": "frontend",
+  "name": "cares-web-frontend",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -30,7 +30,7 @@
     "@typescript-eslint/eslint-plugin": "6.0.0",
     "@typescript-eslint/parser": "6.0.0",
     "autoprefixer": "^10.4.14",
-    "cares-common": "file:../../libs/common/dist/src/utils",
+    "cares-common": "file:../../libs/typescript/dist/src/utils",
     "eslint": "^8.54.0",
     "eslint-config-next": "^14.0.3",
     "postcss": "^8.4.21",

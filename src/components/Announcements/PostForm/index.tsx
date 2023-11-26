@@ -1,6 +1,6 @@
 import type { AnnouncementProps } from "@cares/types/announcement";
 import { announcementType } from "@cares/utils/announcement";
-import { formatDateOrMonth } from "@cares/utils/document";
+import { formatDateOrMonth } from "@cares/utils/date";
 import { imageDimension } from "@cares/utils/media";
 import { addDoc, collection } from "firebase/firestore";
 import { uploadBytes } from "firebase/storage";

@@ -19,12 +19,12 @@
     "baseUrl": ".",
     "paths": {
       "~/*": ["./src/*"],
-      "@cares/*": ["../../libs/common/lib/src/*"]
+      "@cares/*": ["../../libs/typescript/lib/src/*"]
     }
   },
   "references": [
     {
-      "path": "../../libs/common"
+      "path": "../../libs/typescript"
     }
   ],
   "include": [
