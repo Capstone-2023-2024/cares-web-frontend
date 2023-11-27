@@ -68,8 +68,8 @@ const Header = () => {
         className="w-max text-paper"
       >
         <Image
-          alt="cares_ICON"
-          src="/cares_ICON.png"
+          alt="cares._icon"
+          src="/cares_icon.png"
           className="inline-block h-8 w-8 brightness-0 invert"
           {...imageDimension(ICON)}
         />
@@ -82,7 +82,7 @@ const Header = () => {
       </div>
       <button className="sm:hidden" onClick={() => toggleNav(true)}>
         <Image
-          alt="cares_ICON"
+          alt="cares._icon"
           src="/ellipsis.png"
           className="inline-block h-8 w-8 brightness-0 invert"
           {...imageDimension(ICON)}

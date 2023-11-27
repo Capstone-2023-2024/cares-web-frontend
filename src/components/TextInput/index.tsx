@@ -1,6 +1,8 @@
 import { useRef } from "react";
 import type { FocusEvent, MouseEvent } from "react";
 import type { TextInputProps } from "./type";
+import Image from "next/image";
+import { imageDimension } from "@cares/utils/media";
 
 /** Add the styles array unto the base style before modifying it in `inputFocusEvent` */
 function addClassListToBaseStyle(baseStyle: string, classList: string[]) {
@@ -158,6 +160,13 @@ const TextInput = ({
       const parentDiv = divRef.current;
       const inputElement = parentDiv.querySelector("input");
 
+      const eyeconSrc = eyecon?.getAttribute("src");
+      console.log(eyeconSrc);
+      eyecon?.setAttribute(
+        "src",
+        eyeconSrc === "/hide.png" ? "/view.png" : "/hide.png",
+      );
+
       if (button.classList.contains("opacity-100")) {
         if (inputElement !== null) {
           const type = inputElement.getAttribute("type");
@@ -192,9 +201,16 @@ const TextInput = ({
           onMouseDown={eyeconMouseDown}
           className={eyeconBaseTotalStyle}
         >
-          <p className={addClassListToBaseStyle("", [...sharedBaseStyle])}>
-            eyecon
-          </p>
+          <Image
+            alt="eyecon"
+            src="/view.png"
+            {...imageDimension(48)}
+            className={addClassListToBaseStyle("", [
+              ...sharedBaseStyle,
+              "h-8",
+              "w-8",
+            ])}
+          />
         </button>
       )}
     </div>

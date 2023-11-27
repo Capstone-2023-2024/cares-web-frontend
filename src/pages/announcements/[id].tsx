@@ -140,9 +140,9 @@ const AnnouncementWithId = () => {
                     </button>
                     <div className="flex w-full items-center justify-center gap-6">
                       <Image
-                        alt="'cares_icon"
+                        alt="'cares._icon"
                         className="h-8 w-8"
-                        src={"/cares_ICON.png"}
+                        src="/cares_icon.png"
                         {...imageDimension(48)}
                       />
                       <h1 className="text-2xl font-bold uppercase">{`Department: ${department.toUpperCase()}`}</h1>
