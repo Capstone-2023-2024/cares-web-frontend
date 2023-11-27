@@ -60,15 +60,15 @@ const TextInput = ({
   /** SHARED styles accross all elements */
   const sharedBaseStyle = ["ease-in-out", "duration-300"];
   /** NOT SHARED styles */
-  const divClassList = ["border-primary"];
+  const divClassList = ["border-paper"];
   const divClassListOnFocus = ["border-blue-500"];
-  const labelClassList = ["top-2", "left-2", "text-sm", "bg-transparent"];
-  const labelClassListWithValue = ["-top-2", "left-3", "text-xs", "bg-inherit"];
-  const eyeconClassList = ["opacity-0", "-z-10"];
+  const labelClassList = ["top-4", "left-4", "bg-transparent"];
+  const labelClassListWithValue = ["-top-2", "left-3", "text-sm", "bg-inherit"];
+  const eyeconClassList = ["opacity-0", "cursor-default"];
   const eyeconClassListOnFocus = ["opacity-100", "select-none"];
 
   /** DIV Base Styling */
-  const inputContainerBaseStyle = `rounded-lg shadow-sm border p-2 relative ${
+  const inputContainerBaseStyle = `w-full rounded-lg shadow-md  border p-4 relative ${
     background ?? "bg-transparent"
   }`;
   const inputContainerBaseErrorStyle = "animate-shake border-red-500";
@@ -152,21 +152,23 @@ const TextInput = ({
 
   function eyeconMouseDown(mouseDown: MouseEvent<HTMLButtonElement>) {
     mouseDown.preventDefault();
+    const button = mouseDown.currentTarget;
     if (divRef.current !== null) {
-      const button = mouseDown.currentTarget;
       const eyecon = button.firstElementChild;
       const parentDiv = divRef.current;
-      const inputElement = parentDiv.querySelector(`#${id}`);
+      const inputElement = parentDiv.querySelector("input");
 
-      eyecon?.classList.toggle("opacity-25");
-
-      if (inputElement !== null) {
-        const type = inputElement.getAttribute("type");
-        inputElement.setAttribute(
-          "type",
-          type === "text" ? "password" : "text",
-        );
+      if (button.classList.contains("opacity-100")) {
+        if (inputElement !== null) {
+          const type = inputElement.getAttribute("type");
+          inputElement.setAttribute(
+            "type",
+            type === "text" ? "password" : "text",
+          );
+        }
+        return eyecon?.classList.toggle("opacity-25");
       }
+      inputElement !== null && inputElement.focus();
     }
   }
 

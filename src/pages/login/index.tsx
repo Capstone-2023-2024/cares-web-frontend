@@ -80,7 +80,7 @@ const Login = () => {
   }, [currentUser, router]);
 
   return !loading ? (
-    <div className="animate-gradient relative min-h-screen bg-gradient-to-t from-slate-200 via-paper to-paper bg-[length:400%_400%]">
+    <div className="animate-gradient relative min-h-screen bg-gradient-to-t from-primary via-paper to-paper bg-[length:400%_400%]">
       <div className="animate-gradient absolute z-0 h-full w-screen bg-[url('/bg-login.png')] bg-cover bg-center" />
       <Header />
       <div className="relative flex h-full items-center justify-center">
