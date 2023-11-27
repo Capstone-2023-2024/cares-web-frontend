@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { useRouter } from "next/router";
-import React from "react";
+import React, { type MouseEvent, useRef, useState } from "react";
 import { imageDimension } from "@cares/utils/media";
 import { ICON } from "~/utils/media";
 import { projectName } from "@cares/utils/config";
@@ -9,10 +9,51 @@ import { useToggle } from "~/contexts/ToggleProvider";
 
 const Header = () => {
   const router = useRouter();
+  const pRef = useRef<HTMLDivElement | null>(null);
+  const [state, setState] = useState({
+    clientX: 0,
+    clientY: 0,
+  });
   const { toggleNav } = useToggle();
 
+  const pX = pRef.current?.offsetWidth ?? -1;
+  const pY = pRef.current?.offsetHeight ?? -1;
+  const poffX = pRef.current?.offsetLeft ?? -1;
+  const poffY = pRef.current?.offsetTop ?? -1;
+
+  function divMouseEvent() {
+    // pRef.current?.parentElement?.classList.toggle("bg-primary");
+    // pRef.current?.classList.toggle("bg-transparent");
+  }
+  function divMouseMove(event: MouseEvent<HTMLDivElement>) {
+    const mouse = event as unknown as MouseEvent;
+    const div = event.currentTarget;
+    const clientX = mouse.pageX - div.offsetLeft - poffX - pX / 2;
+    const clientY = mouse.pageY - div.offsetTop - poffY - pY / 2;
+
+    setState((prevState) => ({ ...prevState, clientX, clientY }));
+  }
+
   return (
-    <header className="relative z-10 mt-0 flex w-full justify-between bg-primary p-4 text-paper shadow-md">
+    <header
+      onMouseUp={divMouseEvent}
+      onMouseDown={divMouseEvent}
+      onMouseMove={divMouseMove}
+      className="relative z-10 mt-0 flex w-full justify-between overflow-hidden bg-primary p-4 text-paper shadow-md duration-300 ease-in-out hover:bg-transparent"
+    >
+      <div
+        className="absolute -z-10 h-48 w-48 rounded-full bg-primary"
+        ref={pRef}
+        style={{
+          mask: "linear-gradient(#000, #0005)",
+          top: state.clientX === 0 ? -window.innerWidth : 0,
+          left: state.clientY === 0 ? -window.innerHeight : 0,
+          transform: `translate(${state.clientX}px,${state.clientY}px)`,
+          WebkitMask: "linear-gradient(#000, #0005)",
+          transformOrigin: `${state.clientX}, ${state.clientY}`,
+          animationDuration: "300ms",
+        }}
+      />
       <button onClick={() => void router.push("/dashboard")} className="w-max">
         <Image
           alt="cares_ICON"

@@ -14,6 +14,14 @@
 
 - Optimize image by reducing size
 
+3. `UI`
+
+- Adjust hamburder visibility
+
+4. `Authentication`
+
+- Optimize handling login in login page
+
 ```
 const URL = "http://localhost:3000/api/file/upload";
 const OPTIONS = {
