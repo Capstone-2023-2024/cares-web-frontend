@@ -7,7 +7,7 @@ import DashboardProvider, { useDashboard } from "~/contexts/DashbroadProvider";
 
 const Dashboard = () => {
   const { currentUser } = useAuth();
-  const router = useRouter()
+  const router = useRouter();
 
   useEffect(() => {
     async function setup() {
@@ -43,68 +43,58 @@ const Content = () => {
 
   return (
     <Main>
-      <p className="mt-20 text-center"></p>
-      <h2 className="mb-4 text-center text-4xl font-bold">
-        Announcement Summary
-      </h2>
-      <p className="mt-20 text-center"></p>
-      <section className="grid grid-cols-2 gap-2 p-8">
-        {countData.length === 0 &&
-          new Array(4).fill(placeholder).map((v, index) => {
-            console.log(v);
+      <div className="h-screen">
+        <p className="mt-20 text-center"></p>
+        <h2 className="mb-4 text-center text-4xl font-bold">
+          Announcement Summary
+        </h2>
+        <p className="mt-20 text-center"></p>
+        <section className="grid grid-cols-2 gap-2 p-8">
+          {countData.length === 0 &&
+            new Array(4).fill(placeholder).map((v, index) => {
+              console.log(v);
+              return (
+                <div
+                  key={index}
+                  className="rounded-lg border border-primary p-20 text-center"
+                >
+                  <h3 className="font-bold capitalize">{`Fetching data...`}</h3>
+                  <div className="scale-50">
+                    <BoxContainer />
+                  </div>
+                </div>
+              );
+            })}
+          {countData.map(({ name, count }) => {
             return (
               <div
-                key={index}
-                className="rounded-lg border border-primary p-20 text-center"
+                key={name}
+                className="rounded-lg border border-primary p-2 text-center "
               >
-                <h3 className="font-bold capitalize">{`Fetching data...`}</h3>
-                <div className="scale-50">
-                  <BoxContainer />
-                </div>
+                <h3 className="font-bold capitalize">{`${name.replace(
+                  /_/g,
+                  " ",
+                )}(s):`}</h3>
+                <p>{count}</p>
               </div>
             );
           })}
-        {countData.map(({ name, count }) => {
-          return (
-            <div
-              key={name}
-              className="rounded-lg border border-primary p-2 text-center "
-            >
-              <h3 className="font-bold capitalize">{`${name.replace(
-                /_/g,
-                " "
-              )}(s):`}</h3>
-              <p>{count}</p>
-            </div>
-          );
-        })}
-        <br />
-        <br />
-        <br />
-        <br />
-        <br />
-        <br />
-        <br />
-        <br />
-        <br />
-        <br />
-        <br />
-        <br />
-      </section>
-      <div className=" flex flex-col items-center justify-center gap-2 capitalize">
-        <div className="rounded-2xl border border-green-500 p-2 px-20 capitalize text-black">
-          {permission !== null && <p>{`${permission} privileges`}</p>}
+        </section>
+        <div className=" flex flex-col items-center justify-center gap-2 capitalize">
+          <div className="rounded-2xl border border-green-500 p-2 px-20 capitalize text-black">
+            {permission !== null && <p>{`${permission} privileges`}</p>}
+          </div>
+          <p>
+            email:
+            <span className="font-bold lowercase">{` ${currentUser?.email}`}</span>
+          </p>
+          <button
+            className="rounded-2xl bg-red-600 p-2 px-10 capitalize text-white"
+            onClick={handleLogout}
+          >
+            logout
+          </button>
         </div>
-        <p>
-          email:
-          <span className="font-bold lowercase">{` ${currentUser?.email}`}</span>
-        </p>
-        <button
-          className="rounded-2xl bg-red-600 p-2 px-10 capitalize text-white"
-          onClick={handleLogout}
-        >
-          logout
-        </button>
       </div>
     </Main>
   );

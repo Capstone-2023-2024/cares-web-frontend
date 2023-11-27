@@ -36,7 +36,7 @@ function baseStyle({
 const Map = ({ month, year }: Omit<DateProps, "date">) => {
   const selectedMonth = currentMonth({ month, year });
   const maxDays = selectedMonth !== undefined ? selectedMonth.maxDays : -1;
-  const { value } = currentWeekDay({ date: new Date().getDate(), month, year });
+  const { value } = currentWeekDay({ date: 1, month, year });
   const dateMap = calendarArray({ ...value, maxDays });
   const { toggleCalendar, showCalendar } = useToggle();
   const { changeSelectedDateArray } = useDate();
@@ -96,6 +96,7 @@ const Map = ({ month, year }: Omit<DateProps, "date">) => {
         )[0];
         return (
           <button
+            key={index}
             disabled={!isOverNoValue || showCalendar}
             onMouseDown={(e) => handleMouseDown(e, currentDate)}
             onMouseUp={handleMouseUp}
@@ -103,7 +104,6 @@ const Map = ({ month, year }: Omit<DateProps, "date">) => {
             className={`${
               arrayContainsSelectedDate ? "shadow-md" : ""
             } sm:h-26 duration-300 ease-in-out`}
-            key={index}
           >
             <p
               className={`${baseStyle({
@@ -113,7 +113,7 @@ const Map = ({ month, year }: Omit<DateProps, "date">) => {
               })} ${
                 arrayContainsSelectedDate
                   ? "bg-blue-400 text-white"
-                  : "rounded-lg bg-gray-100"
+                  : "bg-gray-100 p-6"
               } ${currentDate > noValue ? "text-black" : ""} p-4`}
             >
               {currentDate}

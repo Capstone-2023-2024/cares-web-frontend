@@ -11,8 +11,8 @@ import { useAuth } from "~/contexts/AuthProvider";
 import { useDate } from "~/contexts/DateProvider";
 import { useToggle } from "~/contexts/ToggleProvider";
 import { db, storageRef } from "~/utils/firebase";
-import Button from "../../Button";
-import AnnouncementTypesSelection from "./AnnouncementTypesSelection";
+import Button from "../Button";
+import Selection from "../Selection";
 import type { InputRef, PostFormStateProps } from "./types";
 import { notification } from "~/pages/api/onesignal";
 import { env } from "~/env";
@@ -66,12 +66,11 @@ const PostForm = () => {
   function handleFilePick() {
     try {
       const inRef = inputRef.current;
-      if (inRef !== null) {
-        if (inRef.files !== null) {
-          const pickedFiles = [...inRef.files];
-          getImageArray(pickedFiles);
-          setState((prevState) => ({ ...prevState, files: pickedFiles }));
-        }
+      if (inRef?.files !== null) {
+        const pickedFiles = inRef?.files ? [...inRef?.files] : [];
+        console.log(state.files);
+        getImageArray(pickedFiles);
+        setState((prevState) => ({ ...prevState, files: pickedFiles }));
       }
     } catch (err) {
       console.log(err);
@@ -136,7 +135,9 @@ const PostForm = () => {
       try {
         event.preventDefault();
         const form: HTMLFormElement = event.currentTarget;
-        const textarea = form.querySelector("textarea");
+        const textarea = form.querySelector(
+          "#message",
+        ) as unknown as HTMLTextAreaElement;
         const markedDates = selectedDateArray.map(
           (value) =>
             `${year}-${formatDateOrMonth(month + 1)}-${formatDateOrMonth(
@@ -229,7 +230,7 @@ const PostForm = () => {
       <div className="absolute right-0 top-36 z-10 flex w-24 overflow-hidden rounded-xl bg-blue-400/40 px-4 py-2 text-white/40 duration-300 ease-in-out hover:bg-blue-400 hover:text-white">
         <label className="absolute inset-x-0 mx-auto w-2/3 self-center text-center text-xs">
           {state.files !== null && state.files.length > 0
-            ? "Add images"
+            ? "Rechoose images"
             : "Choose Images"}
         </label>
         <input
@@ -248,10 +249,10 @@ const PostForm = () => {
   };
   const renderSelectedImages = () => {
     return (
-      <div className="h-24 w-full overflow-x-auto">
+      <div className="flex h-24 w-full overflow-x-auto">
         {state.files?.map((value, i) => {
           return (
-            <div key={i} className="relative inline-table h-24 w-12">
+            <div key={i} className="relative inline-table h-24 w-36">
               <button
                 disabled={!showCalendar}
                 type="button"
@@ -286,7 +287,7 @@ const PostForm = () => {
       onSubmit={(e: React.MouseEvent<HTMLFormElement>) => {
         void handleSubmit(e);
       }}
-      className="mx-auto my-10 flex w-5/6 flex-col items-center justify-center gap-2 rounded-xl bg-primary/50 py-4"
+      className=" mx-auto my-8 flex w-5/6 flex-col items-center justify-center gap-2 rounded-xl bg-primary/50 py-4"
     >
       <p className="mt-8 flex items-center gap-2 text-2xl font-semibold uppercase">
         <span>
@@ -296,12 +297,22 @@ const PostForm = () => {
       </p>
       <p className="mt-4 text-center"></p>
       <div className="relative w-3/4">
-        <AnnouncementTypesSelection
-          disabled={!showCalendar}
+        <Selection
           value={state.type}
           onChange={handleTypeChange}
+          disabled={!showCalendar}
+          options={announcementType.map((props) => props.type)}
         />
         <textarea
+          disabled={!showCalendar}
+          value={state.title}
+          onChange={handleTitle}
+          className="w-full resize-none rounded-xl p-2"
+          rows={1}
+          placeholder="Enter title"
+        />
+        <textarea
+          id="message"
           required
           disabled={!showCalendar}
           value={state.message}
@@ -309,14 +320,6 @@ const PostForm = () => {
           className="w-full resize-none rounded-xl p-4 pb-16"
           placeholder={placeholderText}
         />
-        <textarea
-          disabled={!showCalendar}
-          value={state.title}
-          onChange={handleTitle}
-          className="w-full rounded-xl p-2"
-          placeholder="Enter title"
-        />
-        <p>{state.title}</p>
         {renderUploadButton()}
         {renderSelectedImages()}
       </div>

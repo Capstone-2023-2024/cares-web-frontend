@@ -1,13 +1,14 @@
+import { announcementType } from "@cares/utils/announcement";
 import { getImageFromStorage, imageDimension } from "@cares/utils/media";
 import { deleteDoc, doc } from "firebase/firestore";
 import Image from "next/image";
-import { useState } from "react";
-import Button from "~/components/Button";
+import { useRouter } from "next/router";
+import { useState, type ReactNode } from "react";
+import Selection from "~/components/Selection";
 import { useAnnouncement } from "~/contexts/AnnouncementProvider";
 import { env } from "~/env.js";
 import { db } from "~/utils/firebase";
 import { ICON } from "~/utils/media";
-import AnnouncementTypesSelection from "../PostForm/AnnouncementTypesSelection";
 import type { CardProps, DeleteProps, InitStateProps } from "./types";
 
 const MonthlyActivities = () => {
@@ -35,48 +36,41 @@ const MonthlyActivities = () => {
   }
 
   return (
-    <div className="relative">
-      <div className="flex items-center justify-around gap-2">
-        <div className="flex items-center justify-center">
-          <p className="text-lg capitalize">type: &nbsp;&nbsp;&nbsp;&nbsp;</p>
+    <div>
+      <div className="flex items-center justify-center">
+        <FilterContainer name="type">
           <div className="min-w-24 w-fit">
-            <AnnouncementTypesSelection
+            <Selection
               value={type}
+              options={announcementType.map((props) => props.type)}
               onChange={handleTypeChange}
             />
           </div>
-        </div>
-        <div className="flex items-center justify-center">
-          <p className="text-lg capitalize">order: &nbsp;&nbsp;&nbsp;&nbsp;</p>
+        </FilterContainer>
+        <FilterContainer name="order_by">
           <div className="min-w-24 w-fit">
-            <select
-              className="w-full rounded-lg bg-primary p-2 pl-16 pr-16 capitalize text-paper"
+            <Selection
               value={orderBy}
+              options={["asc", "desc"]}
               onChange={handleOrderBy}
-            >
-              <option value="asc">Ascending</option>
-              <option value="desc">Descending</option>
-            </select>
+            />
           </div>
-        </div>
-        <div className="flex items-center justify-center">
-          <p className="text-lg capitalize">
-            search by: &nbsp;&nbsp;&nbsp;&nbsp;
-          </p>
+        </FilterContainer>
+        <FilterContainer name="search_by">
           <div className="min-w-24 w-fit">
             <input
-              placeholder="Tag"
+              placeholder="Title"
               className="w-full rounded-lg border border-primary p-1 text-primary"
               value={tag}
               onChange={handleTag}
             />
           </div>
-        </div>
+        </FilterContainer>
+        {/* <Button type="button" onClick={toggleEdit}>
+          {<Image src="/pencil.png" alt="" {...imageDimension(ICON)} />}
+        </Button> */}
       </div>
-      <Button type="button" onClick={toggleEdit}>
-        {<Image src="/pencil.png" alt="" {...imageDimension(ICON)} />}
-      </Button>
-      <div className="mx-2 flex gap-2 overflow-x-auto rounded-xl bg-black/10 p-4">
+      <div className=" mx-2 flex gap-2 overflow-x-auto rounded-xl bg-black/10 p-4">
         {data.map((props, index) => {
           return <Card key={index} {...props} isEditing={state.isEditing} />;
         })}
@@ -94,10 +88,14 @@ const Card = ({
   photoUrlArray,
 }: CardProps) => {
   const newDate = new Date();
+  const router = useRouter();
   newDate.setTime(dateCreated);
   return (
-    <div className="flex min-w-max rounded-xl bg-primary/75 p-4">
-      <DeleteButton id={id} isEditing={isEditing} />
+    <button
+      onClick={() => void router.push(`announcements/${id}`)}
+      className=" flex min-w-max rounded-xl bg-primary p-4 text-black duration-300 ease-in-out hover:bg-secondary hover:text-paper"
+    >
+      {/* <DeleteButton id={id} isEditing={isEditing} /> */}
       <div>
         <Heading department={department} />
         <p className="flex flex-col p-2">
@@ -108,7 +106,7 @@ const Card = ({
       {photoUrlArray?.map((url, i) => {
         return <RenderPhoto key={i} photoUrl={url} />;
       })}
-    </div>
+    </button>
   );
 };
 
@@ -165,6 +163,21 @@ const DeleteButton = ({ isEditing, id }: DeleteProps) => {
     >
       del
     </button>
+  );
+};
+
+const FilterContainer = ({
+  children,
+  name,
+}: {
+  children: ReactNode;
+  name: string;
+}) => {
+  return (
+    <div className="flex w-max items-center justify-center gap-2 p-2">
+      <p className="text-sm capitalize">{name.replace(/_/g, " ")}:</p>
+      {children}
+    </div>
   );
 };
 

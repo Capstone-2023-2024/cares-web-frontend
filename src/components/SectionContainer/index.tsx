@@ -17,7 +17,7 @@ const SectionContainer = ({
 
   function handleState(
     key: keyof SectionContainerStateProps,
-    value: SectionContainerStateValue
+    value: SectionContainerStateValue,
   ) {
     setState((prevState) => ({ ...prevState, [key]: value }));
   }

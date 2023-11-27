@@ -16,7 +16,7 @@ const HeaderPath = (props: HeaderPathProps) => {
     <div
       className={`${
         moreThanOne ? "justify-between" : "justify-start"
-      } flex h-min w-full items-center bg-paper p-2 shadow-md`}
+      }  flex h-min w-full items-center bg-paper p-2 shadow-md`}
     >
       <div className="flex items-center justify-center">
         <Image

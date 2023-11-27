@@ -1,5 +1,5 @@
 import type { FirestoreDatabaseProps } from "@cares/types/document";
-import type { RoleProps } from "@cares/types/permission";
+import type { PermissionProps, RoleProps } from "@cares/types/permission";
 import type {
   AdviserInfoProps,
   ClassSectionProps,
@@ -7,6 +7,7 @@ import type {
   MayorInfoProps,
   StudentInfoProps,
 } from "@cares/types/user";
+import { announcementType } from "@cares/utils/announcement";
 import { setUpPrefix } from "@cares/utils/date";
 import {
   addDoc,
@@ -26,24 +27,19 @@ import {
   useEffect,
   useState,
   type ChangeEvent,
-  type HTMLAttributes,
-  type MouseEvent,
   type FormEvent,
+  type MouseEvent,
 } from "react";
 import ActionButton from "~/components/Actionbutton";
+import AddUser from "~/components/AddUser";
 import Main from "~/components/Main";
-import {
-  AccessLevelSelection,
-  AddUser,
-  RoleModal,
-} from "~/components/Permissions";
-import type { PermissionWithDateProps } from "~/components/Permissions/RoleModal/types";
-import RoleSelection from "~/components/Permissions/RoleSelection";
-import SectionContainer from "~/components/Permissions/SectionContainer";
-// import Selection from "~/components/Permissions/Selection";
+import RoleModal from "~/components/RoleModal";
+import SectionContainer from "~/components/SectionContainer";
+import Selection from "~/components/Selection";
 import { useAuth } from "~/contexts/AuthProvider";
 import { db, getCollection } from "~/utils/firebase";
 
+interface ReadPermissionProps extends PermissionProps, FirestoreDatabaseProps {}
 interface ReadStudentInfoProps
   extends StudentInfoProps,
     FirestoreDatabaseProps {}
@@ -125,7 +121,7 @@ const Permission = () => {
 
 interface StateProps {
   editRow: string;
-  permissionArray: PermissionWithDateProps[];
+  permissionArray: ReadPermissionProps[];
 }
 
 const AssignAdmin = () => {
@@ -163,13 +159,13 @@ const AssignAdmin = () => {
           ? event.target.value
           : (JSON.parse(event.target.value) as boolean);
       const role = { ...rest.role, [key]: holder };
-      const data: Omit<PermissionWithDateProps, "id"> = {
+      const data: PermissionProps = {
         ...rest,
         role,
         dateEdited: new Date().getTime(),
       };
       try {
-        await updateDoc(doc(getCollection("permission"), id), data);
+        await updateDoc(doc(getCollection("permission"), id), { ...data });
       } catch (err) {
         console.log(err);
       }
@@ -199,22 +195,26 @@ const AssignAdmin = () => {
             <td>{email}</td>
             {/** TITLE */}
             <td>
-              <RoleSelection
-                role={role}
+              <Selection
+                value={role.name}
+                options={announcementType.map((props) => props.type)}
                 disabled={!indexCondition}
-                handleRoleSelection={(event) =>
-                  void changeRoleFromServer(id, "name", event)
-                }
+                onChange={(e) => {
+                  const event = e as unknown as ChangeEvent<HTMLSelectElement>;
+                  void changeRoleFromServer(id, "name", event);
+                }}
               />
             </td>
             {/** PARTIAL */}
             <td>
-              <AccessLevelSelection
-                role={role}
+              <Selection
+                value={role.partial.toString()}
+                options={["true", "false"]}
                 disabled={!indexCondition}
-                handleAccessLevelSelection={(event) =>
-                  void changeRoleFromServer(id, "partial", event)
-                }
+                onChange={(e) => {
+                  const event = e as unknown as ChangeEvent<HTMLSelectElement>;
+                  void changeRoleFromServer(id, "partial", event);
+                }}
               />
             </td>
             {/** DATE CREATED */}
@@ -251,10 +251,10 @@ const AssignAdmin = () => {
     const unsub = onSnapshot(
       query(getCollection("permission"), orderBy("dateCreated", "desc")),
       (snapshot) => {
-        const permissionArray: PermissionWithDateProps[] = [];
+        const permissionArray: ReadPermissionProps[] = [];
         snapshot.forEach((doc) => {
           const id = doc.id;
-          const data = doc.data() as PermissionWithDateProps;
+          const data = doc.data() as PermissionProps;
           permissionArray.push({ ...data, id });
         });
         setState((prevState) => ({
@@ -806,19 +806,3 @@ const AssignMayor = () => {
 };
 
 export default Permission;
-
-interface SelectionProps<T> extends HTMLAttributes<HTMLSelectElement> {
-  value: T;
-  options: T[];
-  required?: boolean;
-}
-
-const Selection = ({ options, ...rest }: SelectionProps<string>) => {
-  return (
-    <select {...rest}>
-      {options.map((option, i) => {
-        return <option key={i}>{option}</option>;
-      })}
-    </select>
-  );
-};

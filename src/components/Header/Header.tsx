@@ -22,8 +22,16 @@ const Header = () => {
   const poffY = pRef.current?.offsetTop ?? -1;
 
   function divMouseEvent() {
-    // pRef.current?.parentElement?.classList.toggle("bg-primary");
-    // pRef.current?.classList.toggle("bg-transparent");
+    const parent = pRef.current?.parentElement;
+
+    if (parent !== null && parent !== undefined) {
+      const caresContainer = parent.querySelector("#cares-button");
+      caresContainer?.classList.toggle("text-paper");
+      caresContainer?.classList.toggle("text-primary");
+      caresContainer?.firstElementChild?.classList.toggle("brightness-0");
+      caresContainer?.firstElementChild?.classList.toggle("invert");
+      // pRef.current?.classList.toggle("bg-transparent");
+    }
   }
   function divMouseMove(event: MouseEvent<HTMLDivElement>) {
     const mouse = event as unknown as MouseEvent;
@@ -36,8 +44,8 @@ const Header = () => {
 
   return (
     <header
-      onMouseUp={divMouseEvent}
-      onMouseDown={divMouseEvent}
+      onMouseEnter={divMouseEvent}
+      onMouseLeave={divMouseEvent}
       onMouseMove={divMouseMove}
       className="relative z-10 mt-0 flex w-full justify-between overflow-hidden bg-primary p-4 text-paper shadow-md duration-300 ease-in-out hover:bg-transparent"
     >
@@ -54,11 +62,15 @@ const Header = () => {
           animationDuration: "300ms",
         }}
       />
-      <button onClick={() => void router.push("/dashboard")} className="w-max">
+      <button
+        id="cares-button"
+        onClick={() => void router.push("/dashboard")}
+        className="w-max text-paper"
+      >
         <Image
           alt="cares_ICON"
           src="/cares_ICON.png"
-          className="inline-block h-8 w-8 brightness-0 invert "
+          className="inline-block h-8 w-8 brightness-0 invert"
           {...imageDimension(ICON)}
         />
         <h1 className="inline-block p-2 align-middle text-lg font-bold uppercase">
