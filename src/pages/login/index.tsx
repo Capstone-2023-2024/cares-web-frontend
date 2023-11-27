@@ -1,7 +1,7 @@
 import { imageDimension } from "@cares/utils/media";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import Header from "~/components/Header/Header";
 import Loading from "~/components/Loading";
 import TextInput from "~/components/TextInput";
@@ -11,30 +11,49 @@ import { ICON } from "~/utils/media";
 interface InitialAuthProps {
   email: string;
   password: string;
+  clientX: number;
+  clientY: number;
   error: boolean;
 }
 
 const initialProps: InitialAuthProps = {
   email: "",
   password: "",
+  clientX: 0,
+  clientY: 0,
   error: false,
 };
 
 const Login = () => {
   const router = useRouter();
+  const pRef = useRef<HTMLParagraphElement | null>(null);
   const [state, setState] = useState(initialProps);
   const { currentUser, loading, emailAndPassSignin, signInWithGoogle } =
     useAuth();
 
-  function handleEmail(event: ChangeEvent<HTMLInputElement>) {
-    event.preventDefault();
-    const email = event.target.value;
-    setState((prevState) => ({ ...prevState, email }));
+  const pX = pRef.current?.offsetWidth ?? -1;
+  const pY = pRef.current?.offsetHeight ?? -1;
+  const poffX = pRef.current?.offsetLeft ?? -1;
+
+  const handleInput = (key: string) => (event: FormEvent<HTMLInputElement>) => {
+    const input = event.currentTarget as unknown as HTMLInputElement;
+    setState((prevState) => ({
+      ...prevState,
+      [key]: input.value,
+    }));
+  };
+
+  function divMouseLeave() {
+    setState((prevState) => ({ ...prevState, clientX: 0, clientY: 0 }));
   }
-  function handlePassword(event: ChangeEvent<HTMLInputElement>) {
-    event.preventDefault();
-    const password = event.target.value;
-    setState((prevState) => ({ ...prevState, password }));
+
+  function divMouseMove(event: FormEvent<HTMLDivElement>) {
+    const mouse = event as unknown as MouseEvent;
+    const div = event.currentTarget;
+    const clientX = mouse.pageX - div.offsetLeft - poffX - pX / 2;
+    const clientY = mouse.pageY - div.offsetTop - pY;
+
+    setState((prevState) => ({ ...prevState, clientX, clientY }));
   }
   async function handleSubmitEmailAndPassword(e: FormEvent<HTMLFormElement>) {
     try {
@@ -84,7 +103,28 @@ const Login = () => {
       <div className="animate-gradient absolute z-0 h-full w-screen bg-[url('/bg-login.png')] bg-cover bg-center" />
       <Header />
       <div className="relative flex h-full items-center justify-center">
-        <div className="absolute inset-y-0 z-10 mt-20 h-max w-4/5 rounded-lg bg-white p-8 shadow-xl transition duration-300 ease-in-out hover:shadow-2xl sm:w-96">
+        <div
+          onMouseMove={divMouseMove}
+          onMouseLeave={divMouseLeave}
+          className="relative inset-y-0 z-10 mt-20 h-max w-4/5 overflow-hidden rounded-lg bg-white p-8 shadow-sm duration-300 ease-in-out hover:bg-transparent hover:shadow-2xl sm:w-96"
+        >
+          <p
+            className="absolute -z-10 h-48 w-48 rounded-full bg-white text-transparent"
+            ref={pRef}
+            style={{
+              mask: "linear-gradient(#000, #0005)",
+              opacity: state.clientX === 0 ? 0 : 100,
+              top: state.clientX === 0 ? -window.innerWidth : 0,
+              left: state.clientY === 0 ? -window.innerHeight : 0,
+              transform: `translate(${state.clientX}px,${state.clientY}px)`,
+              WebkitMask: "linear-gradient(#000, #0005)",
+              transformOrigin: `${state.clientX}, ${state.clientY}`,
+              animationDuration: "300ms",
+              transitionTimingFunction: "ease",
+            }}
+          >
+            aaa
+          </p>
           <form
             onSubmit={(e) => void handleSubmitEmailAndPassword(e)}
             className="flex flex-col items-center gap-4"
@@ -99,7 +139,7 @@ const Login = () => {
               id="email"
               type="email"
               value={state.email}
-              onChange={handleEmail}
+              onChange={handleInput("email")}
             />
             <TextInput
               required
@@ -109,7 +149,7 @@ const Login = () => {
               id="password"
               type="password"
               value={state.password}
-              onChange={handlePassword}
+              onChange={handleInput("password")}
             />
             <p className="mt-4 text-center"></p>
             <button

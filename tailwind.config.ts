@@ -37,13 +37,13 @@ export default {
         },
         gradient: {
           "0%": {
-            backgroundPosition: "0% 50% translateX(0)",
+            backgroundPosition: "0% 50%",
           },
           "50%": {
-            backgroundPosition: "100% 50%",
+            backgroundPosition: "400% 50%",
           },
           "100%": {
-            backgroundPosition: "0% 50% translateX(300)",
+            backgroundPosition: "0% 50%",
           },
         },
       },
@@ -51,7 +51,7 @@ export default {
       animation: {
         "spin-slow": "spin 3s linear infinite",
         loading: "loading 1s ease-in-out infinite",
-        gradient: "gradient 8s ease infinite",
+        gradient: "gradient 8s infinite ease-in-out alternate",
       },
     },
   },
