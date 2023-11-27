@@ -1,4 +1,5 @@
 import type { FirestoreDatabaseProps } from "@cares/types/document";
+import type { RoleProps } from "@cares/types/permission";
 import type {
   AdviserInfoProps,
   ClassSectionProps,
@@ -6,25 +7,28 @@ import type {
   MayorInfoProps,
   StudentInfoProps,
 } from "@cares/types/user";
-import { roleOptions } from "@cares/utils/admin";
+import { setUpPrefix } from "@cares/utils/date";
 import {
   addDoc,
   and,
   collection,
   deleteDoc,
   doc,
-  getDoc,
   getDocs,
   onSnapshot,
   orderBy,
   query,
   updateDoc,
   where,
-  type DocumentData,
-  type DocumentReference,
 } from "firebase/firestore";
 import { useRouter } from "next/router";
-import { useEffect, useState, type ChangeEvent, type MouseEvent } from "react";
+import {
+  useEffect,
+  useState,
+  type ChangeEvent,
+  type HTMLAttributes,
+  type MouseEvent,
+} from "react";
 import ActionButton from "~/components/Actionbutton";
 import Main from "~/components/Main";
 import {
@@ -35,7 +39,7 @@ import {
 import type { PermissionWithDateProps } from "~/components/Permissions/RoleModal/types";
 import RoleSelection from "~/components/Permissions/RoleSelection";
 import SectionContainer from "~/components/Permissions/SectionContainer";
-import Selection from "~/components/Permissions/Selection";
+// import Selection from "~/components/Permissions/Selection";
 import { useAuth } from "~/contexts/AuthProvider";
 import { db, getCollection } from "~/utils/firebase";
 
@@ -61,42 +65,79 @@ interface AssignMayorStateProps extends ClassSectionProps {
   studentsWithSection: ReadStudentInfoProps[];
 }
 
+function handleEditedCreatedDates(created: number, edited?: number) {
+  const dateHolder = new Date();
+  const createdDate = new Date();
+  dateHolder.setTime(Number(edited));
+  createdDate.setTime(created);
+  const editedDate =
+    typeof edited === "number" ? setUpPrefix(dateHolder) : edited ?? "N/A";
+  return { createdDate, editedDate };
+}
+
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
+const sharedHeadings = ["date added", "date modified", "action"];
+const adviserMayorHeadings = [
+  "name",
+  "year level",
+  "section",
+  ...sharedHeadings,
+];
+
+const yearLevels = ["1st Year", "2nd Year", "3rd Year", "4th Year"];
+const sections = ["a", "b", "c", "d", "e", "f", "g"];
+
+const RenderTableHeadings = ({ headings }: { headings: string[] }) => (
+  <tr>
+    {headings.map((value) => {
+      return <th key={value}>{value}</th>;
+    })}
+  </tr>
+);
 
 const Permission = () => {
-  const { typeOfAccount } = useAuth();
+  const router = useRouter();
+  const { currentUser, typeOfAccount } = useAuth();
+
+  useEffect(() => {
+    try {
+      if (currentUser === null) {
+        return void router.push("/login");
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  }, [currentUser, router]);
+
   return (
     <Main>
       {typeOfAccount === "super_admin" && <AssignAdmin />}
-      {typeOfAccount === "program_chair" && <AssignAdviser />}
-      {typeOfAccount === "board_member" && <AssignMayor />}
+      {typeOfAccount === "program_chair" || <AssignAdviser />}
+      {typeOfAccount === "board_member" || <AssignMayor />}
     </Main>
   );
 };
 
-interface InitialStateProps {
+interface StateProps {
+  editRow: string;
   permissionArray: PermissionWithDateProps[];
-  toggleEdit: string;
 }
 
 const AssignAdmin = () => {
-  const initialProps: InitialStateProps = {
+  const adminHeadings = ["email", "title", "partial access", ...sharedHeadings];
+  const [state, setState] = useState<StateProps>({
+    editRow: "",
     permissionArray: [],
-    toggleEdit: "",
-  };
-  const router = useRouter();
-  const { currentUser } = useAuth();
-  const [state, setState] = useState(initialProps);
-  const isStateHasNoContent = state.permissionArray.length === 0;
+  });
 
-  function handleToggleEdit(value: string) {
-    state.toggleEdit.trim() === ""
-      ? setState((prevState) => ({ ...prevState, toggleEdit: value }))
-      : state.toggleEdit.trim() === value
-        ? setState((prevState) => ({ ...prevState, toggleEdit: "" }))
-        : setState((prevState) => ({ ...prevState, toggleEdit: value }));
+  function handleEditRow(value: string) {
+    state.editRow.trim() === ""
+      ? setState((prevState) => ({ ...prevState, editRow: value }))
+      : state.editRow.trim() === value
+        ? setState((prevState) => ({ ...prevState, editRow: "" }))
+        : setState((prevState) => ({ ...prevState, editRow: value }));
   }
   async function toggleDelete(value: string) {
     try {
@@ -105,114 +146,75 @@ const AssignAdmin = () => {
       console.log(err);
     }
   }
-  function handleRoleSelection(e: ChangeEvent<HTMLSelectElement>, id: string) {
-    e.preventDefault();
-    const roleTitle = e.target.value;
-    const role = roleOptions.filter(({ name }) => roleTitle === name)[0];
 
-    async function changeRole() {
-      try {
-        const docRef = doc(getCollection("permission"), id);
-        await updateDoc(docRef, {
-          role,
-          roleInString: role?.name,
-          dateEdited: new Date().getTime(),
-        });
-      } catch (err) {
-        const error = err as Error;
-        return console.log(error.message);
-      }
-    }
-
-    return void changeRole();
-  }
-  function handleAccessLevelSelection(
-    e: ChangeEvent<HTMLSelectElement>,
-    id: string,
-  ): void {
-    e.preventDefault();
-    const partial_access = JSON.parse(e.target.value) as boolean;
-
-    async function fetchRole(
-      partial_access: boolean,
-      docRef: DocumentReference<DocumentData, DocumentData>,
-    ) {
-      const permDoc = await getDoc(docRef);
-      const role = permDoc.data() as PermissionWithDateProps;
-      return role;
-    }
-
-    async function changeAccessLevel() {
-      try {
-        const docRef = doc(getCollection("permission"), id);
-        const role = await fetchRole(partial_access, docRef);
-        await updateDoc(docRef, {
+  const changeRole =
+    (docId: string, key: keyof RoleProps) =>
+    async (e: ChangeEvent<HTMLSelectElement>) => {
+      const result = state.permissionArray.filter(
+        (props) => docId === props.id,
+      );
+      if (result[0] !== undefined) {
+        const { id, ...rest } = result[0];
+        const holder =
+          key === "name"
+            ? e.target.value
+            : (JSON.parse(e.target.value) as boolean);
+        const role = { ...rest.role, [key]: holder };
+        const data: Omit<PermissionWithDateProps, "id"> = {
+          ...rest,
           role,
           dateEdited: new Date().getTime(),
-        });
-      } catch (err) {
-        const error = err as Error;
-        return console.log(error.message);
+        };
+        await updateDoc(doc(getCollection("permission"), id), data);
       }
-    }
+    };
 
-    return void changeAccessLevel();
-  }
-  const renderTableHeading = () => (
-    <tr>
-      <th>email</th>
-      <th>title</th>
-      <th>partial access</th>
-      <th>date added</th>
-      <th>date modified</th>
-      <th>actions</th>
-    </tr>
-  );
   const renderTableBody = () =>
     state.permissionArray.map(
-      ({ email, role, dateCreated, dateEdited, id }) => {
-        const date = () => new Date();
-        const added = date();
-        const modified = date();
-        added.setTime(dateCreated);
-        typeof dateEdited === "number" && modified.setTime(dateEdited);
-        const addedDateToString = added.toLocaleString();
-        const modifiedDateToString = modified.toLocaleString();
-        const indexCondition = state.toggleEdit === id;
+      ({ id, email, role, dateCreated, dateEdited }) => {
+        const { createdDate, editedDate } = handleEditedCreatedDates(
+          dateCreated,
+          dateEdited,
+        );
+
+        const indexCondition = state.editRow === id;
         const deleteConditionalStyle = indexCondition
           ? "bg-red-500 text-paper"
           : "bg-slate-200 text-slate-300";
-        const editConditionalStyle = isStateHasNoContent
-          ? "bg-slate-200 text-slate-400"
-          : "bg-primary/70 text-paper";
+        const editConditionalStyle =
+          state.permissionArray.length === 0
+            ? "bg-slate-200 text-slate-400"
+            : "bg-primary/70 text-paper";
 
         return (
           <tr key={id} className="border text-center odd:bg-slate-100">
+            {/** EMAIL */}
             <td>{email}</td>
+            {/** TITLE */}
             <td>
               <RoleSelection
                 role={role}
                 disabled={!indexCondition}
-                handleRoleSelection={(e) => handleRoleSelection(e, id)}
+                handleRoleSelection={() => void changeRole(id, "name")}
               />
             </td>
+            {/** PARTIAL */}
             <td>
               <AccessLevelSelection
                 role={role}
                 disabled={!indexCondition}
-                handleAccessLevelSelection={(e) =>
-                  handleAccessLevelSelection(e, id)
-                }
+                handleAccessLevelSelection={() => changeRole(id, "partial")}
               />
             </td>
+            {/** DATE CREATED */}
             <td>
-              <p className="text-sm">{addedDateToString}</p>
+              <p className="text-sm">{setUpPrefix(createdDate)}</p>
             </td>
+            {/** DATE MODIFIED */}
             <td>
-              <p className="text-sm">
-                {dateEdited === null ? "N/A" : modifiedDateToString}
-              </p>
+              <p className="text-sm">{editedDate}</p>
             </td>
+            {/** ACTIONS */}
             <td className="flex flex-row items-center justify-center">
               <button
                 className={`${deleteConditionalStyle} rounded-xl p-2 capitalize duration-300 ease-in-out`}
@@ -222,8 +224,8 @@ const AssignAdmin = () => {
                 delete
               </button>
               <button
-                onClick={() => handleToggleEdit(id)}
-                disabled={isStateHasNoContent}
+                onClick={() => handleEditRow(id)}
+                disabled={state.permissionArray.length === 0}
                 className={`${editConditionalStyle} rounded-xl p-2 capitalize shadow-sm duration-300 ease-in-out`}
               >
                 edit
@@ -235,33 +237,23 @@ const AssignAdmin = () => {
     );
 
   useEffect(() => {
-    async function setup() {
-      const unsub = onSnapshot(
-        query(getCollection("permission"), orderBy("dateAdded", "desc")),
-        (snapshot) => {
-          const permissionArray: PermissionWithDateProps[] = [];
-          snapshot.forEach((doc) => {
-            const id = doc.id;
-            const data = doc.data() as PermissionWithDateProps;
-            permissionArray.push({ ...data, id });
-          });
-          setState((prevState) => ({
-            ...prevState,
-            permissionArray,
-          }));
-        },
-      );
-      try {
-        if (currentUser === null) {
-          return await router.push("/login");
-        }
-        return unsub;
-      } catch (err) {
-        console.log(err);
-      }
-    }
-    return void setup();
-  }, [currentUser, router]);
+    const unsub = onSnapshot(
+      query(getCollection("permission"), orderBy("dateCreated", "desc")),
+      (snapshot) => {
+        const permissionArray: PermissionWithDateProps[] = [];
+        snapshot.forEach((doc) => {
+          const id = doc.id;
+          const data = doc.data() as PermissionWithDateProps;
+          permissionArray.push({ ...data, id });
+        });
+        setState((prevState) => ({
+          ...prevState,
+          permissionArray,
+        }));
+      },
+    );
+    return unsub;
+  }, []);
 
   return (
     <SectionContainer extensionName="admins & faculty">
@@ -271,7 +263,9 @@ const AssignAdmin = () => {
         </AddUser>
         <div>
           <table className="mt-10 w-full">
-            <thead className="capitalize">{renderTableHeading()}</thead>
+            <thead className="capitalize">
+              <RenderTableHeadings headings={adminHeadings} />
+            </thead>
             <tbody>{renderTableBody()}</tbody>
           </table>
         </div>
@@ -281,25 +275,18 @@ const AssignAdmin = () => {
 };
 
 const AssignAdviser = () => {
-  const yearLevels = ["1st Year", "2nd Year", "3rd Year", "4th Year"];
-  const sections = ["a", "b", "c", "d", "e", "f", "g"];
-  const collectionPath = "advisers";
   const initState: AssignAdviserStateProps = {
     adviser: [],
     faculty: [],
-    yearLevel: "1st Year",
     section: "a",
+    yearLevel: "1st Year",
     selectedFaculty: null,
   };
   const [state, setState] = useState(initState);
 
-  function handleSelectedFaculty(event: ChangeEvent<HTMLSelectElement>) {
-    const selectedFaculty = event.target.value;
-    setState((prevState) => ({ ...prevState, selectedFaculty }));
-  }
   async function handleRevoke(id: string) {
     try {
-      await deleteDoc(doc(collection(db, "advisers"), id));
+      await deleteDoc(doc(getCollection("adviser"), id));
     } catch (err) {
       console.log(err);
     }
@@ -311,7 +298,7 @@ const AssignAdviser = () => {
         const section = state.section;
         const upperCaseSection = section.toUpperCase();
         const yearNumber = state.yearLevel.charAt(0);
-        const adviserColRef = collection(db, collectionPath);
+        const adviserColRef = getCollection("adviser");
         const formattedSection = `${yearNumber}${upperCaseSection}`;
 
         if (typeof state.selectedFaculty === "string") {
@@ -358,7 +345,11 @@ const AssignAdviser = () => {
     }
   }
   const renderFaculty = () => (
-    <select required defaultValue="" onChange={handleSelectedFaculty}>
+    <select
+      required
+      defaultValue=""
+      onChange={handleChangeEvent("selectedFaculty")}
+    >
       <option disabled value="">
         --
       </option>
@@ -371,23 +362,18 @@ const AssignAdviser = () => {
       })}
     </select>
   );
-  function handleYearLevel(event: ChangeEvent<HTMLSelectElement>) {
-    const yearLevel = event.target.value;
-    setState((prevState) => ({ ...prevState, yearLevel }));
-  }
-  function handleSection(event: ChangeEvent<HTMLSelectElement>) {
-    const section = event.target.value;
-    if (typeof section !== "string") {
-      setState((prevState) => ({ ...prevState, section }));
-    }
-  }
+  const handleChangeEvent =
+    (key: keyof typeof state) => (event: ChangeEvent<HTMLSelectElement>) => {
+      setState((prevState) => ({ ...prevState, [key]: event.target.value }));
+    };
+
   const renderYearLevel = () => (
     <div className="flex items-center justify-center gap-2">
       <p className="w-24">Year Level:</p>
       <Selection
         value={state.yearLevel}
-        onChange={handleYearLevel}
-        array={yearLevels}
+        onChange={handleChangeEvent("yearLevel")}
+        options={yearLevels}
       />
     </div>
   );
@@ -396,54 +382,76 @@ const AssignAdviser = () => {
       <p className="w-24">Section:</p>
       <Selection
         value={state.section ?? ""}
-        onChange={handleSection}
-        array={sections}
+        onChange={handleChangeEvent("section")}
+        options={sections}
       />
     </div>
   );
-  const renderHeadings = () => (
-    <tr className="border p-2">
-      <th className="border p-2">
-        <p>email</p>
-      </th>
-      <th className="border p-2">
-        <p>year level</p>
-      </th>
-      <th className="border p-2">
-        <p>section</p>
-      </th>
-      <th className="border p-2">
-        <p>action</p>
-      </th>
-    </tr>
-  );
+
+  const handleChangeFromServer =
+    ({ id }: { id: string }) =>
+    async (event: ChangeEvent<HTMLSelectElement>) => {
+      try {
+        const select = event.currentTarget;
+        const key =
+          select.options[0]?.value.length === 1 ? "section" : "yearLevel";
+        const data = {
+          dateEdited: new Date().getTime(),
+          [key]: event.target.value,
+        };
+        await updateDoc(doc(getCollection("adviser"), id), data);
+      } catch (err) {
+        console.log(err);
+      }
+    };
+
   const renderAdvisers = () =>
-    state.adviser.map(({ id, section, yearLevel, name, email }) => {
-      return (
-        <tr key={id} className="border p-2">
-          <td className="border p-2">
-            <p>{name ? name : email}</p>
-          </td>
-          <td className="border p-2">
-            <p>{yearLevel}</p>
-          </td>
-          <td className="border p-2 capitalize">
-            <p>{section}</p>
-          </td>
-          <td className="flex justify-center">
-            <ActionButton
-              onClick={() => void handleRevoke(id)}
-              text="revoke"
-              color="red"
-            />
-          </td>
-        </tr>
-      );
-    });
+    state.adviser.map(
+      ({ id, section, yearLevel, name, email, dateCreated, dateEdited }) => {
+        const { createdDate, editedDate } = handleEditedCreatedDates(
+          dateCreated,
+          dateEdited,
+        );
+
+        return (
+          <tr key={id} className="border p-2">
+            <td className="border p-2">
+              <p>{email}</p>
+            </td>
+            <td className="border p-2">
+              <p>{name ?? "N/A"}</p>
+            </td>
+            <td className="border p-2">
+              <Selection
+                options={yearLevels}
+                onChange={void handleChangeFromServer({ id })}
+                value={yearLevel}
+              />
+            </td>
+            <td className="border p-2 capitalize">
+              <Selection
+                options={sections}
+                onChange={void handleChangeFromServer({ id })}
+                value={section ?? "a"}
+              />
+            </td>
+            <td>{setUpPrefix(createdDate)}</td>
+            <td>{editedDate}</td>
+            <td className="flex justify-center">
+              <ActionButton
+                onClick={() => void handleRevoke(id)}
+                text="revoke"
+                color="red"
+              />
+            </td>
+          </tr>
+        );
+      },
+    );
 
   useEffect(() => {
-    const adviserColRef = collection(db, collectionPath);
-    const facultyColRef = collection(db, "permission");
+    const adviserColRef = getCollection("adviser");
+    const facultyColRef = getCollection("permission");
 
     function getAdviser() {
       return onSnapshot(query(adviserColRef), (snapshot) => {
@@ -457,18 +465,15 @@ const AssignAdviser = () => {
       });
     }
     function getFaculty() {
-      return onSnapshot(
-        query(facultyColRef, where("roleInString", "==", "faculty")),
-        (snapshot) => {
-          const faculty: ReadFacultyInfoProps[] = [];
-          snapshot.forEach((doc) => {
-            const id = doc.id;
-            const data = doc.data() as FacultyInfoProps;
-            faculty.push({ ...data, id });
-          });
-          setState((prevState) => ({ ...prevState, faculty }));
-        },
-      );
+      return onSnapshot(query(facultyColRef), (snapshot) => {
+        const faculty: ReadFacultyInfoProps[] = [];
+        snapshot.forEach((doc) => {
+          const id = doc.id;
+          const data = doc.data() as FacultyInfoProps;
+          faculty.push({ ...data, id });
+        });
+        setState((prevState) => ({ ...prevState, faculty }));
+      });
     }
 
     return () => {
@@ -478,7 +483,7 @@ const AssignAdviser = () => {
   }, []);
 
   return (
-    <SectionContainer extensionName={collectionPath}>
+    <SectionContainer extensionName={"advisers"}>
       <>
         <AddUser>
           <div>
@@ -495,7 +500,11 @@ const AssignAdviser = () => {
         </AddUser>
         <section>
           <table className="mx-auto w-5/6 border p-2">
-            <thead className="capitalize">{renderHeadings()}</thead>
+            <thead className="capitalize">
+              <RenderTableHeadings
+                headings={["email", ...adviserMayorHeadings]}
+              />
+            </thead>
             <tbody>{renderAdvisers()}</tbody>
           </table>
         </section>
@@ -504,8 +513,6 @@ const AssignAdviser = () => {
   );
 };
 const AssignMayor = () => {
-  const yearLevels = ["1st Year", "2nd Year", "3rd Year", "4th Year"];
-  const sections = ["a", "b", "c", "d", "e", "f", "g"];
   const initState: AssignMayorStateProps = {
     mayors: [],
     section: "a",
@@ -540,15 +547,15 @@ const AssignMayor = () => {
     const localSelected = studentsWithSection.filter(
       (student) => selectedMayor === student.studentNo,
     )[0];
-    const mayorColRef = collection(db, "mayor");
+    const mayorColRef = getCollection("mayor");
     const formattedSection = `${yearLevel.charAt(0)}${section?.toUpperCase()}`;
     const mayorInfo: Omit<MayorInfoProps, "id"> = {
       name: localSelected?.name ?? "",
       email: localSelected?.email ?? "",
+      section: section ?? "a",
+      yearLevel,
       studentNo: selectedMayor ?? "",
       dateCreated: new Date().getTime(),
-      yearLevel,
-      section: section ?? 'a',
     };
 
     try {
@@ -574,9 +581,6 @@ const AssignMayor = () => {
         return alert(`There is already a mayor in ${formattedSection}`);
       }
       await addDoc(mayorColRef, mayorInfo);
-      await updateDoc(doc(collection(db, "student"), mayorInfo.studentNo), {
-        recipient: "bm",
-      });
       setState((prevState) => ({
         ...prevState,
         yearLevel: initState.yearLevel,
@@ -587,37 +591,34 @@ const AssignMayor = () => {
       console.log(err);
     }
   }
-  function handleYearLevel(event: ChangeEvent<HTMLSelectElement>) {
-    const yearLevel = event.target.value;
-    setState((prevState) => ({ ...prevState, yearLevel }));
-  }
-  function handleSection(event: ChangeEvent<HTMLSelectElement>) {
-    const section = event.target.value as ClassSectionProps["section"];
-    setState((prevState) => ({ ...prevState, section }));
-  }
-  const renderHeadings = () => (
-    <tr className="border p-2">
-      <th className="border p-2">
-        <p>name</p>
-      </th>
-      <th className="border p-2">
-        <p>year level</p>
-      </th>
-      <th className="border p-2">
-        <p>section</p>
-      </th>
-      <th className="border p-2">
-        <p>action</p>
-      </th>
-    </tr>
-  );
+  const handleChangeEvent =
+    (key: keyof typeof state) => (event: ChangeEvent<HTMLSelectElement>) => {
+      setState((prevState) => ({ ...prevState, [key]: event.target.value }));
+    };
+  const handleChangeFromServer =
+    ({ id }: { id: string }) =>
+    async (event: ChangeEvent<HTMLSelectElement>) => {
+      try {
+        const select = event.currentTarget;
+        const key =
+          select.options[0]?.value.length === 1 ? "section" : "yearLevel";
+        const data = {
+          dateEdited: new Date().getTime(),
+          [key]: event.target.value,
+        };
+        await updateDoc(doc(getCollection("mayor"), id), data);
+      } catch (err) {
+        console.log(err);
+      }
+    };
+
   const renderYearLevel = () => (
     <div className="flex items-center justify-center gap-2">
       <p className="w-24">Year Level:</p>
       <Selection
+        options={yearLevels}
         value={state.yearLevel}
-        onChange={handleYearLevel}
-        array={yearLevels}
+        onChange={handleChangeEvent("yearLevel")}
       />
     </div>
   );
@@ -625,9 +626,9 @@ const AssignMayor = () => {
     <div className="flex items-center justify-center gap-2">
       <p className="w-24">Section:</p>
       <Selection
+        options={sections}
         value={state.section ?? "a"}
-        onChange={handleSection}
-        array={sections}
+        onChange={handleChangeEvent("section")}
       />
     </div>
   );
@@ -645,29 +646,54 @@ const AssignMayor = () => {
       })}
     </select>
   );
+
   const renderMayors = () =>
-    state.mayors.map(({ id, studentNo, section, yearLevel, name }) => {
-      return (
-        <tr key={studentNo} className="border p-2">
-          <td className="border p-2">
-            <p>{name}</p>
-          </td>
-          <td className="border p-2">
-            <p>{yearLevel}</p>
-          </td>
-          <td className="border p-2 capitalize">
-            <p>{section}</p>
-          </td>
-          <td className="flex justify-center">
-            <ActionButton
-              onClick={() => void handleRevoke(id, studentNo)}
-              text="revoke"
-              color="red"
-            />
-          </td>
-        </tr>
-      );
-    });
+    state.mayors.map(
+      ({
+        id,
+        studentNo,
+        section,
+        yearLevel,
+        name,
+        dateCreated,
+        dateEdited,
+      }) => {
+        const { createdDate, editedDate } = handleEditedCreatedDates(
+          dateCreated,
+          dateEdited,
+        );
+        return (
+          <tr key={studentNo} className="border p-2">
+            <td className="border p-2">
+              <p>{name}</p>
+            </td>
+            <td className="border p-2">
+              <Selection
+                options={yearLevels}
+                onChange={void handleChangeFromServer({ id })}
+                value={yearLevel}
+              />
+            </td>
+            <td className="border p-2 capitalize">
+              <Selection
+                options={sections}
+                onChange={void handleChangeFromServer({ id })}
+                value={section ?? "a"}
+              />
+            </td>
+            <td>{setUpPrefix(createdDate)}</td>
+            <td>{editedDate}</td>
+            <td className="flex justify-center">
+              <ActionButton
+                onClick={() => void handleRevoke(id, studentNo)}
+                text="revoke"
+                color="red"
+              />
+            </td>
+          </tr>
+        );
+      },
+    );
 
   useEffect(() => {
     const studentColRef = collection(db, "student");
@@ -692,8 +718,9 @@ const AssignMayor = () => {
     }
     return getStudentWithSection();
   }, [state.yearLevel, state.section]);
+
   useEffect(() => {
-    const mayorColRef = collection(db, "mayor");
+    const mayorColRef = getCollection("mayor");
 
     function getMayors() {
       return onSnapshot(query(mayorColRef), (snapshot) => {
@@ -731,7 +758,9 @@ const AssignMayor = () => {
         </AddUser>
         <section>
           <table className="mx-auto w-5/6 border p-2">
-            <thead className="capitalize">{renderHeadings()}</thead>
+            <thead className="capitalize">
+              <RenderTableHeadings headings={adviserMayorHeadings} />
+            </thead>
             <tbody>{renderMayors()}</tbody>
           </table>
         </section>
@@ -741,3 +770,19 @@ const AssignMayor = () => {
 };
 
 export default Permission;
+
+interface SelectionProps<T> extends HTMLAttributes<HTMLSelectElement> {
+  value: T;
+  options: T[];
+  required?: boolean;
+}
+
+const Selection = ({ options, ...rest }: SelectionProps<string>) => {
+  return (
+    <select {...rest}>
+      {options.map((option, i) => {
+        return <option key={i}>{option}</option>;
+      })}
+    </select>
+  );
+};

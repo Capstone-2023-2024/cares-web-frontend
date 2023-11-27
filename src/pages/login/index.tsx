@@ -26,7 +26,7 @@ const initialProps: InitialAuthProps = {
 
 const Login = () => {
   const router = useRouter();
-  const pRef = useRef<HTMLParagraphElement | null>(null);
+  const pRef = useRef<HTMLDivElement | null>(null);
   const [state, setState] = useState(initialProps);
   const { currentUser, loading, emailAndPassSignin, signInWithGoogle } =
     useAuth();
@@ -113,8 +113,8 @@ const Login = () => {
           onMouseLeave={divMouseLeave}
           className="relative inset-y-0 z-10 mt-20 h-max w-4/5 overflow-hidden rounded-lg bg-white p-8 shadow-sm duration-300 ease-in-out hover:bg-transparent hover:shadow-2xl sm:w-96"
         >
-          <p
-            className="absolute -z-10 h-48 w-48 rounded-full bg-white text-transparent ease-in-out"
+          <div
+            className="absolute -z-10 h-48 w-48 rounded-full bg-white ease-in-out"
             ref={pRef}
             style={{
               mask: "linear-gradient(#000, #0005)",
@@ -125,9 +125,7 @@ const Login = () => {
               transformOrigin: `${state.clientX}, ${state.clientY}`,
               animationDuration: "300ms",
             }}
-          >
-            aaa
-          </p>
+          />
           <form
             onSubmit={(e) => void handleSubmitEmailAndPassword(e)}
             className="flex flex-col items-center gap-4"
@@ -158,14 +156,14 @@ const Login = () => {
             <button
               id="submit"
               type="submit"
-              className={`rounded-lg bg-primary px-20 py-3 text-white shadow-md duration-300 ease-in-out ease-in-out hover:scale-105 hover:bg-secondary active:bg-paper active:text-primary`}
+              className=" w-max rounded-lg bg-primary px-20 py-3 text-white shadow-md duration-300 ease-in-out hover:scale-105 hover:bg-secondary active:bg-paper active:text-primary sm:w-64"
             >
               Login
             </button>
             <p className="mt-0 text-center">or</p>
             <button
               type="button"
-              className="flex transform items-center justify-between gap-2 rounded-lg bg-white px-6 py-2 shadow-md duration-300 duration-300 ease-in-out ease-in-out hover:scale-105 hover:bg-blue-500 hover:text-paper hover:text-white active:bg-secondary active:text-paper"
+              className="flex w-max transform items-center justify-between gap-2 rounded-lg bg-white px-6 py-2 shadow-md duration-300 ease-in-out hover:scale-105 hover:bg-blue-500 hover:text-paper active:bg-secondary active:text-paper sm:w-64"
               onClick={() => void handleGoogleSignIn()}
             >
               <div className="rounded-full bg-white p-1">

@@ -44,10 +44,11 @@ const Complaints = () => {
     message: "",
     collectionReference: null,
   };
-  const { currentUser } = useAuth();
+  const { currentUser, typeOfAccount } = useAuth();
   const [state, setState] = useState(initialState);
   const studentNoSelected = state.collectionReference?.substring(8, 18);
 
+  console.log({ typeOfAccount });
   function handleChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
     setState((prevState) => ({ ...prevState, message: e.target.value }));
   }
@@ -229,7 +230,7 @@ const Complaints = () => {
   useEffect(() => {
     const unsub = onSnapshot(
       query(
-        collection(db, "student"),
+        collection(db, "complaints"),
         where("recipient", "==", "bm"),
         limit(6),
       ),

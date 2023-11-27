@@ -5,9 +5,7 @@ const AccessLevelSelection = ({
   handleAccessLevelSelection,
   ...rest
 }: AccessLevelProps) => {
-  const selectionConditionalStyle = `${
-    String(role.partial) === "true" ? "text-green-500" : "text-red-500"
-  } ${disabledStyle()}`;
+  const selectionConditionalStyle = `${disabledStyle()}`;
 
   function disabledStyle() {
     return rest.disabled ? "appearance-none" : "";
@@ -21,9 +19,16 @@ const AccessLevelSelection = ({
         value={String(role.partial)}
         className={`${selectionConditionalStyle} w-40 rounded-xl border border-gray-300 p-2 capitalize duration-300 ease-in-out`}
         onChange={handleAccessLevelSelection}
+        onMouseOver={(e) => {
+          console.log(e.target);
+        }}
       >
-        <option value={String(true)}>{String(true)}</option>
-        <option value={String(false)}>{String(false)}</option>
+        <option className="text-yellow-500" value={String(true)}>
+          {String(true)}
+        </option>
+        <option className="text-blue-500" value={String(false)}>
+          {String(false)}
+        </option>
       </select>
     </div>
   );
