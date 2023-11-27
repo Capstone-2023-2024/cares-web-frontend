@@ -15,6 +15,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   onSnapshot,
   orderBy,
@@ -37,6 +38,7 @@ import RoleModal from "~/components/RoleModal";
 import SectionContainer from "~/components/SectionContainer";
 import Selection from "~/components/Selection";
 import { useAuth } from "~/contexts/AuthProvider";
+import { handleEditedCreatedDates } from "~/utils/date";
 import { db, getCollection } from "~/utils/firebase";
 
 interface ReadPermissionProps extends PermissionProps, FirestoreDatabaseProps {}
@@ -60,16 +62,6 @@ interface AssignMayorStateProps extends ClassSectionProps {
   mayors: ReadMayorInfoProps[];
   selectedMayor: string | null;
   studentsWithSection: ReadStudentInfoProps[];
-}
-
-function handleEditedCreatedDates(created: number, edited?: number) {
-  const dateHolder = new Date();
-  const createdDate = new Date();
-  dateHolder.setTime(Number(edited));
-  createdDate.setTime(created);
-  const editedDate =
-    typeof edited === "number" ? setUpPrefix(dateHolder) : edited ?? "N/A";
-  return { createdDate, editedDate };
 }
 
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
@@ -176,7 +168,9 @@ const AssignAdmin = () => {
     state.permissionArray.map(
       ({ id, email, role, dateCreated, dateEdited }) => {
         const { createdDate, editedDate } = handleEditedCreatedDates(
+          /*eslint-disable-next-line @typescript-eslint/no-unsafe-argument*/
           dateCreated,
+          /*eslint-disable-next-line @typescript-eslint/no-unsafe-argument*/
           dateEdited,
         );
 
@@ -219,7 +213,9 @@ const AssignAdmin = () => {
             </td>
             {/** DATE CREATED */}
             <td>
-              <p className="text-sm">{setUpPrefix(createdDate)}</p>
+              <p className="text-sm">
+                {setUpPrefix(createdDate).replace(/,/, "")}
+              </p>
             </td>
             {/** DATE MODIFIED */}
             <td>
@@ -423,17 +419,19 @@ const AssignAdviser = () => {
     id: string;
     event: FormEvent<HTMLSelectElement>;
   }) {
-    try {
-      const select = event.currentTarget;
-      const key =
-        select.options[0]?.value.length === 1 ? "section" : "yearLevel";
-      const data = {
-        dateEdited: new Date().getTime(),
-        [key]: select.value,
-      };
-      await updateDoc(doc(getCollection("adviser"), id), data);
-    } catch (err) {
-      console.log(err);
+    if (confirm("Are you sure you want to change this field?")) {
+      try {
+        const select = event.currentTarget;
+        const key =
+          select.options[0]?.value.length === 1 ? "section" : "yearLevel";
+        const data = {
+          dateEdited: new Date().getTime(),
+          [key]: select.value,
+        };
+        await updateDoc(doc(getCollection("adviser"), id), data);
+      } catch (err) {
+        console.log(err);
+      }
     }
   }
 
@@ -467,7 +465,7 @@ const AssignAdviser = () => {
                 value={section ?? "a"}
               />
             </td>
-            <td>{setUpPrefix(createdDate)}</td>
+            <td>{setUpPrefix(createdDate).replace(/,/, "")}</td>
             <td>{editedDate}</td>
             <td className="flex justify-center">
               <ActionButton
@@ -574,6 +572,7 @@ const AssignMayor = () => {
       console.log(err);
     }
   }
+  console.log(state.selectedMayor);
   async function handleClassMayor() {
     const { yearLevel, section, selectedMayor, studentsWithSection } = state;
     const localSelected = studentsWithSection.filter(
@@ -634,17 +633,38 @@ const AssignMayor = () => {
     id: string;
     event: FormEvent<HTMLSelectElement>;
   }) {
-    try {
-      const select = event.currentTarget;
-      const key =
-        select.options[0]?.value.length === 1 ? "section" : "yearLevel";
-      const data = {
-        dateEdited: new Date().getTime(),
-        [key]: select.value,
-      };
-      await updateDoc(doc(getCollection("mayor"), id), data);
-    } catch (err) {
-      console.log(err);
+    if (confirm("Are you sure you want to change this field?")) {
+      try {
+        const select = event.currentTarget;
+        const key =
+          select.options[0]?.value.length === 1 ? "section" : "yearLevel";
+        const data = {
+          dateEdited: new Date().getTime(),
+          [key]: select.value,
+        };
+
+        const editMayorInfo = await getDoc(doc(getCollection("student"), id));
+        const result = await getDocs(
+          query(
+            getCollection("student"),
+            where("email", "==", editMayorInfo.data()?.email),
+          ),
+        );
+        const mayorProps = result.docs[0]?.data() as MayorInfoProps;
+
+        key === "section" &&
+          result.docs[0] &&
+          (await updateDoc(
+            doc(getCollection("student"), mayorProps.studentNo),
+            {
+              dateEdited: new Date().getTime(),
+              section: select.value,
+            },
+          ));
+        await updateDoc(doc(getCollection("mayor"), id), data);
+      } catch (err) {
+        console.log(err);
+      }
     }
   }
 
@@ -717,7 +737,7 @@ const AssignMayor = () => {
                 value={section ?? "a"}
               />
             </td>
-            <td>{setUpPrefix(createdDate)}</td>
+            <td>{setUpPrefix(createdDate).replace(/,/, "")}</td>
             <td>{editedDate}</td>
             <td className="flex justify-center">
               <ActionButton

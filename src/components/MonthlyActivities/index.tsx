@@ -1,24 +1,15 @@
 import { announcementType } from "@cares/utils/announcement";
 import { getImageFromStorage, imageDimension } from "@cares/utils/media";
-import { deleteDoc, doc } from "firebase/firestore";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import Selection from "~/components/Selection";
 import { useAnnouncement } from "~/contexts/AnnouncementProvider";
 import { env } from "~/env.js";
-import { db } from "~/utils/firebase";
 import { ICON } from "~/utils/media";
-import type { CardProps, DeleteProps, InitStateProps } from "./types";
+import type { CardProps } from "./types";
 
 const MonthlyActivities = () => {
-  const initState: InitStateProps = {
-    title: "",
-    toggle: false,
-    message: "",
-    isEditing: false,
-    photoUrlArray: [],
-  };
   const {
     tag,
     type,
@@ -28,12 +19,6 @@ const MonthlyActivities = () => {
     handleOrderBy,
     handleTypeChange,
   } = useAnnouncement();
-  const [state, setState] = useState(initState);
-
-  function toggleEdit() {
-    const isEditing = !state.isEditing;
-    setState((prevState) => ({ ...prevState, isEditing }));
-  }
 
   return (
     <div>
@@ -72,7 +57,7 @@ const MonthlyActivities = () => {
       </div>
       <div className=" mx-2 flex gap-2 overflow-x-auto rounded-xl bg-black/10 p-4">
         {data.map((props, index) => {
-          return <Card key={index} {...props} isEditing={state.isEditing} />;
+          return <Card key={index} {...props} />;
         })}
       </div>
     </div>
@@ -82,7 +67,6 @@ const MonthlyActivities = () => {
 const Card = ({
   id,
   dateCreated,
-  isEditing,
   department,
   message,
   photoUrlArray,
@@ -139,30 +123,6 @@ const RenderPhoto = ({ photoUrl }: { photoUrl?: string }) => {
         {...imageDimension(120)}
       />
     </div>
-  );
-};
-
-const DeleteButton = ({ isEditing, id }: DeleteProps) => {
-  async function handleDelete(
-    event: React.MouseEvent<HTMLButtonElement>,
-    id: string,
-  ) {
-    event.preventDefault();
-    await deleteDoc(doc(db, `announcement/${id}`));
-  }
-
-  return (
-    <button
-      disabled={!isEditing}
-      className={`${
-        isEditing ? "bg-red-500 text-white" : "bg-primary text-black/40"
-      } px-1 capitalize duration-300 ease-in-out`}
-      onClick={(e) => {
-        void handleDelete(e, id ?? "");
-      }}
-    >
-      del
-    </button>
   );
 };
 

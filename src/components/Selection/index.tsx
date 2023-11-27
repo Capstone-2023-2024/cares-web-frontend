@@ -4,7 +4,11 @@ const Selection = ({ options, ...rest }: SelectionProps<string>) => {
   return (
     <select
       {...rest}
-      className="w-full min-w-max rounded-lg bg-primary p-2 capitalize text-paper"
+      className={`${
+        rest.disabled
+          ? "bg-slate-200 text-slate-300"
+          : "cursor-pointer bg-primary text-paper hover:bg-secondary"
+      } w-full min-w-max rounded-lg p-2 capitalize duration-300 ease-in-out`}
     >
       {options.map((option, i) => {
         return <option key={i}>{option.replace(/_/g, " ")}</option>;

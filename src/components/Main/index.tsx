@@ -41,9 +41,9 @@ const Main = ({ children, withPathName, ...rest }: MainType) => {
       {typeOfAccount !== null && (
         <div className="flex flex-1">
           <Nav />
-          <div className="w-full flex-1 sm:w-3/4">
+          <div className="h-full min-h-screen w-full flex-1 sm:w-3/4">
             {withPathName && <HeaderPath {...rest} />}
-            <div className="">{children}</div>
+            {children}
           </div>
         </div>
       )}

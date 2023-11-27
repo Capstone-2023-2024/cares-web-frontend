@@ -32,13 +32,16 @@ function baseStyle({
   if (currentDate === noValue) return `${style} text-transparent`;
   return `${style}`;
 }
+interface MapProps extends Omit<DateProps, "date"> {
+  showCalendar?: boolean;
+}
 
-const Map = ({ month, year }: Omit<DateProps, "date">) => {
+const Map = ({ month, year, showCalendar }: MapProps) => {
   const selectedMonth = currentMonth({ month, year });
   const maxDays = selectedMonth !== undefined ? selectedMonth.maxDays : -1;
   const { value } = currentWeekDay({ date: 1, month, year });
   const dateMap = calendarArray({ ...value, maxDays });
-  const { toggleCalendar, showCalendar } = useToggle();
+  const { toggleCalendar } = useToggle();
   const { changeSelectedDateArray } = useDate();
   const [selectedDates, setSelectedDates] = useState<number[]>([]);
   const [isSelectionEnable, setEnableSelection] = useState<boolean>(false);
@@ -62,7 +65,6 @@ const Map = ({ month, year }: Omit<DateProps, "date">) => {
   function handleMouseUp(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
     setEnableSelection(false);
-    console.log(selectedDates);
     changeSelectedDateArray(selectedDates);
     setSelectedDates([]);
     toggleCalendar();
@@ -113,8 +115,12 @@ const Map = ({ month, year }: Omit<DateProps, "date">) => {
               })} ${
                 arrayContainsSelectedDate
                   ? "bg-blue-400 text-white"
-                  : "bg-gray-100 p-6"
-              } ${currentDate > noValue ? "text-black" : ""} p-4`}
+                  : "bg-gray-100"
+              } ${
+                currentDate > noValue
+                  ? "text-black hover:bg-primary hover:text-white"
+                  : ""
+              } ease p-6 duration-300`}
             >
               {currentDate}
             </p>

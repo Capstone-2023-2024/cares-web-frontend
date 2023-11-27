@@ -11,7 +11,7 @@ const Nav = () => {
     <nav
       className={`${
         showNav ? "fixed inset-y-0 right-0 z-30" : "hidden sm:inline-block"
-      } w-1/4 flex-1 bg-secondary p-2 text-paper`}
+      } w-1/4 flex-1 bg-secondary p-2 text-paper sm:w-2/4`}
     >
       {showNav ? (
         <div className="relative p-2">

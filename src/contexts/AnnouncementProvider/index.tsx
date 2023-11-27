@@ -83,13 +83,13 @@ const AnnouncementProvider = ({ children }: AnnouncementProviderProps) => {
       collection(db, "announcement"),
       and(
         where("type", "==", state.type),
-        where("tags", "array-contains", state.tag.toLowerCase()),
+        where("title", "==", state.tag.toLowerCase()),
       ),
       orderBy("dateCreated", state.orderBy),
       limit(limitNumber),
     );
     const unsub = onSnapshot(
-      state.type === "university_memorandum" && state.tag.trim() !== ""
+      state.tag.trim() !== ""
         ? memoWithTagsQuery
         : state.type === "university_memorandum" && state.tag.trim() === ""
           ? memoQuery

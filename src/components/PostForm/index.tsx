@@ -1,6 +1,5 @@
 import type { AnnouncementProps } from "@cares/types/announcement";
 import { announcementType } from "@cares/utils/announcement";
-import { formatDateOrMonth } from "@cares/utils/date";
 import { getImageFromStorage, imageDimension } from "@cares/utils/media";
 import { addDoc, collection } from "firebase/firestore";
 import { uploadBytes } from "firebase/storage";
@@ -10,12 +9,13 @@ import type { AnnouncementStateProps } from "~/contexts/AnnouncementProvider/typ
 import { useAuth } from "~/contexts/AuthProvider";
 import { useDate } from "~/contexts/DateProvider";
 import { useToggle } from "~/contexts/ToggleProvider";
+import { env } from "~/env";
+import { notification } from "~/pages/api/onesignal";
+import { markedDatesHandler } from "~/utils/date";
 import { db, storageRef } from "~/utils/firebase";
 import Button from "../Button";
 import Selection from "../Selection";
 import type { InputRef, PostFormStateProps } from "./types";
-import { notification } from "~/pages/api/onesignal";
-import { env } from "~/env";
 
 const PostForm = () => {
   const { currentUser } = useAuth();
@@ -138,12 +138,7 @@ const PostForm = () => {
         const textarea = form.querySelector(
           "#message",
         ) as unknown as HTMLTextAreaElement;
-        const markedDates = selectedDateArray.map(
-          (value) =>
-            `${year}-${formatDateOrMonth(month + 1)}-${formatDateOrMonth(
-              value,
-            )}`,
-        );
+        const markedDates = markedDatesHandler(selectedDateArray, year, month);
 
         if (textarea !== null && state.title.trim() !== "") {
           const photoUrl: string[] = [];
@@ -197,8 +192,8 @@ const PostForm = () => {
               },
             ],
             name: state.title,
-            include_external_user_ids: ["carranzagcarlo@gmail.com"],
-            // included_segments: ["Student and Faculty"],
+            // include_external_user_ids: ["carranzagcarlo@gmail.com"],
+            included_segments: ["Total Subscriptions"],
             // filters: [
             //   { field: "tag", key: "role", value: "student", relation: "=" },
             // ],

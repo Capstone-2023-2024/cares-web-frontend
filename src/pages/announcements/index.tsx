@@ -81,7 +81,7 @@ const Announcements = () => {
           <PostForm />
         </div>
         <div className={showCalendar ? "hidden" : "block"}>
-          <Calendar />
+          <Calendar showCalendar={showCalendar} />
         </div>
       </div>
       <div className="overflow-x-auto">

@@ -5,6 +5,8 @@ import type {
   SectionContainerStateValue,
 } from "./types";
 import PermissionCategoryButton from "../PermissionCategoryButton";
+import Image from "next/image";
+import { imageDimension } from "@cares/utils/media";
 
 const SectionContainer = ({
   children,
@@ -27,10 +29,19 @@ const SectionContainer = ({
   }
 
   return (
-    <section className="h-fit w-full  p-2 text-center">
+    <section className="h-fit w-full p-2 text-center">
       <PermissionCategoryButton onClick={toggleContainer}>
         <h2 className="text-xl font-bold uppercase">{extensionName}</h2>
-        <p>{state.toggleContainer ? "up" : "down"}</p>
+        <button>
+          <Image
+            alt=""
+            src="/down.png"
+            className={`${
+              state.toggleContainer ? "rotate-180" : "rotate-360"
+            } h-8 w-8 invert duration-300 ease-in-out hover:scale-110`}
+            {...imageDimension(48)}
+          />
+        </button>
       </PermissionCategoryButton>
       <div className="overflow-y-auto">{state.toggleContainer && children}</div>
     </section>

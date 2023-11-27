@@ -36,7 +36,11 @@ interface WebButtonProps {
 }
 
 interface NotificationProps {
-  included_segments?: ("Student and Faculty" | "Subscribed Users")[];
+  included_segments?: (
+    | "Student and Faculty"
+    | "Subscribed Users"
+    | "Total Subscriptions"
+  )[];
   filters?: (FilterProps | OperatorProps)[];
   contents?: MessageProps;
   headings?: MessageProps;

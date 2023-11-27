@@ -4,9 +4,9 @@ import { validateEmail } from "@cares/utils/validation";
 import { addDoc, getDocs, query, where } from "firebase/firestore";
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import { getCollection } from "~/utils/firebase";
-import AccessLevelSelection from "../AccessLevelSelection";
 import RoleSelection from "../RoleSelection";
 import type { PermissionWithDateProps } from "./types";
+import Selection from "../Selection";
 
 const RoleModal = () => {
   const initialRole: RoleProps = { name: "super_admin", partial: false };
@@ -85,9 +85,10 @@ const RoleModal = () => {
           />
           &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
           <h2>Partial Access: </h2>
-          <AccessLevelSelection
-            role={state.role}
-            handleAccessLevelSelection={handleAccessLevelSelection}
+          <Selection
+            value={state.role.partial.toString()}
+            options={["true", "false"]}
+            onChange={handleAccessLevelSelection}
           />
         </div>
         <input
