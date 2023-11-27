@@ -1,9 +1,6 @@
 import type { PollEventProps, PollProps } from "@cares/types/poll";
 import { currentMonth } from "@cares/utils/date";
-import {
-  addDoc,
-  collection
-} from "firebase/firestore";
+import { addDoc, collection } from "firebase/firestore";
 import React, { useState, type FormEvent } from "react";
 import Main from "~/components/Main";
 import { useAuth } from "~/contexts/AuthProvider";
@@ -28,6 +25,7 @@ const Content = () => {
     question: "",
     text: "",
     days: null,
+    comments: [],
   };
   const { currentUser } = useAuth();
   const [state, setState] = useState(initState);
@@ -38,6 +36,7 @@ const Content = () => {
     state: state.state,
     question: state.question,
     options: state.options,
+    comments: [],
     dateCreated: new Date().getTime(),
   };
   const month = new Date().getMonth();
