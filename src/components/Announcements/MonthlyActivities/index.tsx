@@ -134,6 +134,7 @@ const RenderPhoto = ({ photoUrl }: { photoUrl?: string }) => {
             ? getImageFromStorage({
                 imageName: photoUrl,
                 storageBucket: env.NEXT_PUBLIC_FIRESTORE_STORAGE_BUCKET,
+                ref: "images",
               })
             : "/Image.png"
         }

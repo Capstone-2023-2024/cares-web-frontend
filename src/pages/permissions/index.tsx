@@ -28,6 +28,7 @@ import {
   type ChangeEvent,
   type HTMLAttributes,
   type MouseEvent,
+  type FormEvent,
 } from "react";
 import ActionButton from "~/components/Actionbutton";
 import Main from "~/components/Main";
@@ -114,8 +115,10 @@ const Permission = () => {
   return (
     <Main>
       {typeOfAccount === "super_admin" && <AssignAdmin />}
-      {typeOfAccount === "program_chair" || <AssignAdviser />}
-      {typeOfAccount === "board_member" || <AssignMayor />}
+      {(typeOfAccount === "program_chair" ||
+        typeOfAccount === "super_admin") && <AssignAdviser />}
+      {(typeOfAccount === "board_member" ||
+        typeOfAccount === "super_admin") && <AssignMayor />}
     </Main>
   );
 };
@@ -147,27 +150,31 @@ const AssignAdmin = () => {
     }
   }
 
-  const changeRole =
-    (docId: string, key: keyof RoleProps) =>
-    async (e: ChangeEvent<HTMLSelectElement>) => {
-      const result = state.permissionArray.filter(
-        (props) => docId === props.id,
-      );
-      if (result[0] !== undefined) {
-        const { id, ...rest } = result[0];
-        const holder =
-          key === "name"
-            ? e.target.value
-            : (JSON.parse(e.target.value) as boolean);
-        const role = { ...rest.role, [key]: holder };
-        const data: Omit<PermissionWithDateProps, "id"> = {
-          ...rest,
-          role,
-          dateEdited: new Date().getTime(),
-        };
+  async function changeRoleFromServer(
+    docId: string,
+    key: keyof RoleProps,
+    event: ChangeEvent<HTMLSelectElement>,
+  ) {
+    const result = state.permissionArray.filter((props) => docId === props.id);
+    if (result[0] !== undefined) {
+      const { id, ...rest } = result[0];
+      const holder =
+        key === "name"
+          ? event.target.value
+          : (JSON.parse(event.target.value) as boolean);
+      const role = { ...rest.role, [key]: holder };
+      const data: Omit<PermissionWithDateProps, "id"> = {
+        ...rest,
+        role,
+        dateEdited: new Date().getTime(),
+      };
+      try {
         await updateDoc(doc(getCollection("permission"), id), data);
+      } catch (err) {
+        console.log(err);
       }
-    };
+    }
+  }
 
   const renderTableBody = () =>
     state.permissionArray.map(
@@ -195,7 +202,9 @@ const AssignAdmin = () => {
               <RoleSelection
                 role={role}
                 disabled={!indexCondition}
-                handleRoleSelection={() => void changeRole(id, "name")}
+                handleRoleSelection={(event) =>
+                  void changeRoleFromServer(id, "name", event)
+                }
               />
             </td>
             {/** PARTIAL */}
@@ -203,7 +212,9 @@ const AssignAdmin = () => {
               <AccessLevelSelection
                 role={role}
                 disabled={!indexCondition}
-                handleAccessLevelSelection={() => changeRole(id, "partial")}
+                handleAccessLevelSelection={(event) =>
+                  void changeRoleFromServer(id, "partial", event)
+                }
               />
             </td>
             {/** DATE CREATED */}
@@ -388,22 +399,43 @@ const AssignAdviser = () => {
     </div>
   );
 
-  const handleChangeFromServer =
-    ({ id }: { id: string }) =>
-    async (event: ChangeEvent<HTMLSelectElement>) => {
-      try {
-        const select = event.currentTarget;
-        const key =
-          select.options[0]?.value.length === 1 ? "section" : "yearLevel";
-        const data = {
-          dateEdited: new Date().getTime(),
-          [key]: event.target.value,
-        };
-        await updateDoc(doc(getCollection("adviser"), id), data);
-      } catch (err) {
-        console.log(err);
-      }
-    };
+  // const handleChangeFromServer =
+  //   ({ id }: { id: string }) =>
+  //   async (event: ChangeEvent<HTMLSelectElement>) => {
+  //     try {
+  //       const select = event.currentTarget;
+  //       const key =
+  //         select.options[0]?.value.length === 1 ? "section" : "yearLevel";
+  //       const data = {
+  //         dateEdited: new Date().getTime(),
+  //         [key]: event.target.value,
+  //       };
+  //       await updateDoc(doc(getCollection("adviser"), id), data);
+  //     } catch (err) {
+  //       console.log(err);
+  //     }
+  //   };
+
+  async function handleChangeFromServer({
+    id,
+    event,
+  }: {
+    id: string;
+    event: FormEvent<HTMLSelectElement>;
+  }) {
+    try {
+      const select = event.currentTarget;
+      const key =
+        select.options[0]?.value.length === 1 ? "section" : "yearLevel";
+      const data = {
+        dateEdited: new Date().getTime(),
+        [key]: select.value,
+      };
+      await updateDoc(doc(getCollection("adviser"), id), data);
+    } catch (err) {
+      console.log(err);
+    }
+  }
 
   const renderAdvisers = () =>
     state.adviser.map(
@@ -424,14 +456,14 @@ const AssignAdviser = () => {
             <td className="border p-2">
               <Selection
                 options={yearLevels}
-                onChange={void handleChangeFromServer({ id })}
+                onChange={(event) => void handleChangeFromServer({ id, event })}
                 value={yearLevel}
               />
             </td>
             <td className="border p-2 capitalize">
               <Selection
                 options={sections}
-                onChange={void handleChangeFromServer({ id })}
+                onChange={(event) => void handleChangeFromServer({ id, event })}
                 value={section ?? "a"}
               />
             </td>
@@ -595,22 +627,26 @@ const AssignMayor = () => {
     (key: keyof typeof state) => (event: ChangeEvent<HTMLSelectElement>) => {
       setState((prevState) => ({ ...prevState, [key]: event.target.value }));
     };
-  const handleChangeFromServer =
-    ({ id }: { id: string }) =>
-    async (event: ChangeEvent<HTMLSelectElement>) => {
-      try {
-        const select = event.currentTarget;
-        const key =
-          select.options[0]?.value.length === 1 ? "section" : "yearLevel";
-        const data = {
-          dateEdited: new Date().getTime(),
-          [key]: event.target.value,
-        };
-        await updateDoc(doc(getCollection("mayor"), id), data);
-      } catch (err) {
-        console.log(err);
-      }
-    };
+  async function handleChangeFromServer({
+    id,
+    event,
+  }: {
+    id: string;
+    event: FormEvent<HTMLSelectElement>;
+  }) {
+    try {
+      const select = event.currentTarget;
+      const key =
+        select.options[0]?.value.length === 1 ? "section" : "yearLevel";
+      const data = {
+        dateEdited: new Date().getTime(),
+        [key]: select.value,
+      };
+      await updateDoc(doc(getCollection("mayor"), id), data);
+    } catch (err) {
+      console.log(err);
+    }
+  }
 
   const renderYearLevel = () => (
     <div className="flex items-center justify-center gap-2">
@@ -670,14 +706,14 @@ const AssignMayor = () => {
             <td className="border p-2">
               <Selection
                 options={yearLevels}
-                onChange={void handleChangeFromServer({ id })}
+                onChange={(event) => void handleChangeFromServer({ id, event })}
                 value={yearLevel}
               />
             </td>
             <td className="border p-2 capitalize">
               <Selection
                 options={sections}
-                onChange={void handleChangeFromServer({ id })}
+                onChange={(event) => void handleChangeFromServer({ id, event })}
                 value={section ?? "a"}
               />
             </td>

@@ -178,6 +178,7 @@ const PostForm = () => {
           const storageName = getImageFromStorage({
             imageName: name?.[0] ?? "",
             storageBucket: env.NEXT_PUBLIC_FIRESTORE_STORAGE_BUCKET,
+            ref: "images",
           });
           const result = await notification({
             contents: {
