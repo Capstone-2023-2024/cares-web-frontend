@@ -42,11 +42,10 @@ const Login = () => {
       [key]: input.value,
     }));
   };
-
-  function divMouseLeave() {
-    setState((prevState) => ({ ...prevState, clientX: 0, clientY: 0 }));
+  function divMouseEvent() {
+    pRef.current?.classList.toggle("bg-white");
+    pRef.current?.classList.toggle("bg-primary");
   }
-
   function divMouseMove(event: FormEvent<HTMLDivElement>) {
     const mouse = event as unknown as MouseEvent;
     const div = event.currentTarget;
@@ -54,6 +53,10 @@ const Login = () => {
     const clientY = mouse.pageY - div.offsetTop - pY;
 
     setState((prevState) => ({ ...prevState, clientX, clientY }));
+  }
+
+  function divMouseLeave() {
+    setState((prevState) => ({ ...prevState, clientX: 0, clientY: 0 }));
   }
   async function handleSubmitEmailAndPassword(e: FormEvent<HTMLFormElement>) {
     try {
@@ -99,28 +102,28 @@ const Login = () => {
   }, [currentUser, router]);
 
   return !loading ? (
-    <div className="animate-gradient relative min-h-screen bg-gradient-to-t from-primary via-paper to-paper bg-[length:400%_400%]">
-      <div className="animate-gradient absolute z-0 h-full w-screen bg-[url('/bg-login.png')] bg-cover bg-center" />
+    <div className="animate-gradient-sm sm:animate-gradient-md md:animate-gradient-lg relative min-h-screen bg-gradient-to-t from-primary via-paper to-paper bg-[length:400%_400%]">
+      <div className="animate-gradient-sm sm:animate-gradient-md md:animate-gradient-lg absolute z-0 h-full w-screen bg-[url('/bg-login.png')] bg-cover bg-center" />
       <Header />
       <div className="relative flex h-full items-center justify-center">
         <div
+          onMouseUp={divMouseEvent}
+          onMouseDown={divMouseEvent}
           onMouseMove={divMouseMove}
           onMouseLeave={divMouseLeave}
           className="relative inset-y-0 z-10 mt-20 h-max w-4/5 overflow-hidden rounded-lg bg-white p-8 shadow-sm duration-300 ease-in-out hover:bg-transparent hover:shadow-2xl sm:w-96"
         >
           <p
-            className="absolute -z-10 h-48 w-48 rounded-full bg-white text-transparent"
+            className="absolute -z-10 h-48 w-48 rounded-full bg-white text-transparent ease-in-out"
             ref={pRef}
             style={{
               mask: "linear-gradient(#000, #0005)",
-              opacity: state.clientX === 0 ? 0 : 100,
               top: state.clientX === 0 ? -window.innerWidth : 0,
               left: state.clientY === 0 ? -window.innerHeight : 0,
               transform: `translate(${state.clientX}px,${state.clientY}px)`,
               WebkitMask: "linear-gradient(#000, #0005)",
               transformOrigin: `${state.clientX}, ${state.clientY}`,
               animationDuration: "300ms",
-              transitionTimingFunction: "ease",
             }}
           >
             aaa

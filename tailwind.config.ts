@@ -51,7 +51,9 @@ export default {
       animation: {
         "spin-slow": "spin 3s linear infinite",
         loading: "loading 1s ease-in-out infinite",
-        gradient: "gradient 8s infinite ease-in-out alternate",
+        "gradient-sm": "gradient 30s infinite linear forwards",
+        "gradient-md": "gradient 23s infinite ease-in-out alternate",
+        "gradient-lg": "gradient 15s infinite ease-in-out alternate",
       },
     },
   },
