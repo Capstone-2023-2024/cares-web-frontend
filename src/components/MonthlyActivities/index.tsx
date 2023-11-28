@@ -69,7 +69,7 @@ const Card = ({
   dateCreated,
   department,
   message,
-  photoUrlArray,
+  photoUrls,
 }: CardProps) => {
   const newDate = new Date();
   const router = useRouter();
@@ -87,7 +87,7 @@ const Card = ({
           <span className="text-xs">{`Date Created: ${newDate.toLocaleString()}`}</span>
         </p>
       </div>
-      {photoUrlArray?.map((url, i) => {
+      {photoUrls?.map((url, i) => {
         return <RenderPhoto key={i} photoUrl={url} />;
       })}
     </button>
