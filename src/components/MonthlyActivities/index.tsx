@@ -64,13 +64,7 @@ const MonthlyActivities = () => {
   );
 };
 
-const Card = ({
-  id,
-  dateCreated,
-  department,
-  message,
-  photoUrls,
-}: CardProps) => {
+const Card = ({ id, title, dateCreated, department, photoUrls }: CardProps) => {
   const newDate = new Date();
   const router = useRouter();
   newDate.setTime(dateCreated);
@@ -83,7 +77,7 @@ const Card = ({
       <div>
         <Heading department={department} />
         <p className="flex flex-col p-2">
-          {message.substring(0, 24)}
+          {title}
           <span className="text-xs">{`Date Created: ${newDate.toLocaleString()}`}</span>
         </p>
       </div>

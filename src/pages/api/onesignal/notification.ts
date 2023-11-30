@@ -39,6 +39,7 @@ interface NotificationProps {
   included_segments?: (
     | "Student and Faculty"
     | "Subscribed Users"
+    | "Cares Mobile Users"
     | "Total Subscriptions"
   )[];
   filters?: (FilterProps | OperatorProps)[];

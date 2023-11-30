@@ -29,8 +29,13 @@ const PostForm = () => {
     state: "unpinned",
     department: "cics",
     dateCreated: new Date().getTime(),
-    markedDates: [],
     endDate: 0,
+    markedDates: {
+      color: "blue",
+      // dotColor: "",
+      textColor: "white",
+      calendar: [],
+    },
   };
   const [state, setState] = useState(initState);
   const { toggleCalendar } = useToggle();
@@ -112,25 +117,8 @@ const PostForm = () => {
       console.log(err);
     }
   }
+  /** TODO: Optimize this madness */
   async function handleSubmit(event: React.MouseEvent<HTMLFormElement>) {
-    /** If it returns -1, the value passed is undefined,
-     *  It will automatically parse 4 length string to year,
-     *  so only pass stringed numbers here
-     */
-    function stringedNumDateFormatter(value?: string) {
-      const lengthOfYear = 4;
-      if (value !== undefined) {
-        if (value.length === lengthOfYear) {
-          const year = JSON.parse(value) as number;
-          return year;
-        }
-        const getCharacter = value.startsWith("0") ? value.substring(1) : value;
-        const numberify = JSON.parse(getCharacter) as number;
-        return numberify;
-      }
-      return -1;
-    }
-
     if (typeOfAccount !== null) {
       try {
         event.preventDefault();
@@ -138,26 +126,20 @@ const PostForm = () => {
         const textarea = form.querySelector(
           "#message",
         ) as unknown as HTMLTextAreaElement;
-        const markedDates = markedDatesHandler(selectedDateArray, year, month);
 
         if (textarea !== null && state.title.trim() !== "") {
-          const photoUrl: string[] = [];
+          const photoUrls: string[] = [];
           state.files?.map(async (props) => {
-            photoUrl.push(props.name);
+            photoUrls.push(props.name);
             await uploadImage(props);
           });
-          const newDate = new Date();
-          const lastMarkedDate = markedDates[markedDates.length - 1];
-          const targetCharacter = "-";
-          const first = lastMarkedDate?.indexOf(targetCharacter);
-          const last = lastMarkedDate?.lastIndexOf(targetCharacter);
-          const year = lastMarkedDate?.substring(0, first);
-          const month = lastMarkedDate?.substring((first ?? 0) + 1, last);
-          const date = lastMarkedDate?.substring((last ?? 0) + 1);
-
-          newDate.setFullYear(stringedNumDateFormatter(year));
-          newDate.setMonth(stringedNumDateFormatter(month));
-          newDate.setDate(stringedNumDateFormatter(date));
+          const selectedArrLength = selectedDateArray.length;
+          const lastValueInSelectedArray =
+            selectedDateArray[selectedArrLength - 1] ?? -1;
+          const endDate = new Date();
+          endDate.setDate(lastValueInSelectedArray);
+          endDate.setFullYear(year);
+          endDate.setMonth(month);
 
           const announcement: AnnouncementProps = {
             postedBy: state.postedBy,
@@ -167,9 +149,15 @@ const PostForm = () => {
             message: textarea.value,
             department: "cics",
             dateCreated: new Date().getTime(),
-            endDate: newDate.getTime(),
-            markedDates,
+            endDate: endDate.getTime(),
+            markedDates: markedDatesHandler(
+              selectedDateArray,
+              year,
+              month,
+              state.markedDates,
+            ),
           };
+
           const name = state.files?.map((props) => props.name);
           const storageName = getImageFromStorage({
             imageName: name?.[0] ?? "",
@@ -193,10 +181,7 @@ const PostForm = () => {
             ],
             name: state.title,
             // include_external_user_ids: ["carranzagcarlo@gmail.com"],
-            included_segments: ["Total Subscriptions"],
-            // filters: [
-            //   { field: "tag", key: "role", value: "student", relation: "=" },
-            // ],
+            included_segments: ["Cares Mobile Users"],
             big_picture: storageName,
             priority: 10,
           });
@@ -206,7 +191,7 @@ const PostForm = () => {
             collection(db, "announcement"),
             state.files === null
               ? { ...announcement }
-              : { ...announcement, photoUrl },
+              : { ...announcement, photoUrls },
           );
 
           changeSelectedDateArray([]);

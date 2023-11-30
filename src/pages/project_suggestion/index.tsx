@@ -20,12 +20,14 @@ const ProjectSuggestion = () => {
 const Content = () => {
   const initState: PollProps = {
     type: "poll",
-    state: "unpublished",
-    options: [],
-    question: "",
     text: "",
     days: null,
+    state: "unpublished",
+    postedBy: "",
+    options: [],
+    question: "",
     comments: [],
+    dateCreated: NaN,
   };
   const { currentUser } = useAuth();
   const [state, setState] = useState(initState);

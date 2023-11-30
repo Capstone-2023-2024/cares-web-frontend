@@ -1,8 +1,9 @@
 import type { MutableRefObject } from "react";
-import type { AnnouncementProps } from "@cares/types/announcement";
+import type { AnnouncementProps, MarkedDatesProps } from "@cares/types/announcement";
 
-interface PostFormStateProps extends AnnouncementProps {
+interface PostFormStateProps extends Omit<AnnouncementProps, 'markedDates'> {
   files: File[] | null;
+  markedDates: MarkedDatesProps
 }
 interface TypesOfAnnouncementProps extends Pick<AnnouncementProps, "type"> {
   name: string;

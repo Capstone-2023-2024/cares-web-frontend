@@ -1,6 +1,5 @@
 import type { AnnouncementProps } from "@cares/types/announcement";
 import { announcementType } from "@cares/utils/announcement";
-import { setUpPrefix } from "@cares/utils/date";
 import { imageDimension } from "@cares/utils/media";
 import { doc, updateDoc } from "firebase/firestore";
 import Image from "next/image";
@@ -13,7 +12,6 @@ import Selection from "~/components/Selection";
 import TextInput from "~/components/TextInput";
 import { useAnnouncement } from "~/contexts/AnnouncementProvider";
 import { useDate } from "~/contexts/DateProvider";
-import { handleEditedCreatedDates, markedDatesHandler } from "~/utils/date";
 import { getCollection } from "~/utils/firebase";
 
 const AnnouncementWithId = () => {
@@ -50,13 +48,14 @@ const AnnouncementWithId = () => {
   useEffect(() => {
     if (selectedDateArray.length > 0) {
       const date = new Date();
-      const year = date.getFullYear();
-      const month = date.getMonth();
+      // const year = date.getFullYear();
+      // const month = date.getMonth();
       const length = selectedDateArray.length;
       const INDEX = length - 1;
       date.setDate(selectedDateArray[INDEX] ?? 1);
       void updateDoc(docRef, {
-        markedDates: markedDatesHandler(selectedDateArray, year, month),
+        markedDates: {},
+        // markedDatesHandler(selectedDateArray, year, month),
         dateEdited: new Date().getTime(),
         endDate: date.getTime(),
       });
@@ -84,26 +83,26 @@ const AnnouncementWithId = () => {
           message,
           postedBy,
           department,
-          markedDates,
-          dateCreated,
-          dateEdited,
+          // markedDates,
+          // dateCreated,
+          // dateEdited,
         }) => {
           const date = new Date();
-          const { createdDate, editedDate } = handleEditedCreatedDates(
-            dateCreated,
-            dateEdited,
-          );
+          // const { createdDate, editedDate } = handleEditedCreatedDates(
+          //   dateCreated,
+          //   dateEdited,
+          // );
 
           date.setTime(endDate);
-          const datesHolder = [
-            { heading: "Current marked dates:", text: markedDates.toString() },
-            {
-              heading: "Date Created:",
-              text: setUpPrefix(createdDate).replace(/,/, ""),
-            },
-            { heading: "Date edited:", text: editedDate.replace(/,/, "") },
-            { heading: "End date:", text: setUpPrefix(date).replace(/,/, "") },
-          ];
+          // const datesHolder = [
+          //   { heading: "Current marked dates:", text: markedDates.toString() },
+          //   {
+          //     heading: "Date Created:",
+          //     text: setUpPrefix(createdDate).replace(/,/, ""),
+          //   },
+          //   { heading: "Date edited:", text: editedDate.replace(/,/, "") },
+          //   { heading: "End date:", text: setUpPrefix(date).replace(/,/, "") },
+          // ];
 
           return (
             <div
@@ -196,7 +195,7 @@ const AnnouncementWithId = () => {
                 <Calendar />
                 <div className="w-max rounded-lg bg-secondary p-4 text-paper shadow-sm">
                   <p className="font-semibold">Dates Info:</p>
-                  {datesHolder.map(({ heading, text }, index) => {
+                  {/* {datesHolder.map(({ heading, text }, index) => {
                     return (
                       <DateContainer
                         key={index}
@@ -204,7 +203,7 @@ const AnnouncementWithId = () => {
                         text={text}
                       />
                     );
-                  })}
+                  })} */}
                 </div>
               </section>
             </div>
@@ -215,19 +214,19 @@ const AnnouncementWithId = () => {
   );
 };
 
-const DateContainer = ({
-  heading,
-  text,
-}: {
-  heading: string;
-  text: string;
-}) => {
-  return (
-    <div className="flex w-2/3 min-w-max items-center justify-between gap-2">
-      <p>{heading}</p>
-      <p>{text}</p>
-    </div>
-  );
-};
+// const DateContainer = ({
+//   heading,
+//   text,
+// }: {
+//   heading: string;
+//   text: string;
+// }) => {
+//   return (
+//     <div className="flex w-2/3 min-w-max items-center justify-between gap-2">
+//       <p>{heading}</p>
+//       <p>{text}</p>
+//     </div>
+//   );
+// };
 
 export default AnnouncementWithId;

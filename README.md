@@ -22,6 +22,10 @@
 
 - Optimize handling login in login page
 
+5. `Admin`
+
+- Assign sections for each year level
+
 ```
 const URL = "http://localhost:3000/api/file/upload";
 const OPTIONS = {
