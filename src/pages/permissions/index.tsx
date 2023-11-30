@@ -7,6 +7,7 @@ import type {
   MayorInfoProps,
   StudentInfoProps,
 } from "@cares/types/user";
+import { roleOptions } from "@cares/utils/admin";
 import { announcementType } from "@cares/utils/announcement";
 import { setUpPrefix } from "@cares/utils/date";
 import {
@@ -191,7 +192,7 @@ const AssignAdmin = () => {
             <td>
               <Selection
                 value={role.name}
-                options={announcementType.map((props) => props.type)}
+                options={roleOptions.map((props) => props.name)}
                 disabled={!indexCondition}
                 onChange={(e) => {
                   const event = e as unknown as ChangeEvent<HTMLSelectElement>;

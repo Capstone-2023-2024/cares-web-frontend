@@ -1,7 +1,7 @@
 import type { AnnouncementProps } from "@cares/types/announcement";
 import { announcementType } from "@cares/utils/announcement";
 import { imageDimension } from "@cares/utils/media";
-import { doc, updateDoc } from "firebase/firestore";
+import { deleteDoc, doc, updateDoc } from "firebase/firestore";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { useEffect, type ChangeEvent, type FormEvent } from "react";
@@ -66,7 +66,7 @@ const AnnouncementWithId = () => {
   }, [selectedDateArray, docRef]);
 
   if (result.length === 0) {
-    alert("Announcement doesn't exist");
+    // alert("Announcement doesn't exist");
     void router.push("/announcements");
     return <Loading />;
   }
@@ -114,6 +114,15 @@ const AnnouncementWithId = () => {
               <section className="relative z-10 flex flex-col items-center justify-center gap-4">
                 <div className="mt-20 grid w-2/3 min-w-max gap-2 rounded-lg bg-primary/50 p-8 text-white shadow-sm ">
                   <div className="relative flex flex-col items-center justify-evenly gap-2 p-6 font-semibold">
+                    <button
+                      onClick={() => {
+                        void deleteDoc(docRef);
+                        void router.push("/announcements");
+                      }}
+                      className="absolute -left-10 -top-10 h-8 w-8 text-secondary"
+                    >
+                      delete
+                    </button>
                     <button
                       onClick={() => {
                         const newState =
