@@ -65,20 +65,58 @@ const Content = () => {
                 </div>
               );
             })}
-          {countData.map(({ name, count }) => {
-            return (
-              <div
-                key={name}
-                className="rounded-lg border border-primary p-2 text-center "
-              >
-                <h3 className="font-bold capitalize">{`${name.replace(
-                  /_/g,
-                  " ",
-                )}(s):`}</h3>
-                <p>{count}</p>
-              </div>
-            );
-          })}
+          {countData
+            .filter((props) => props.type === "announcement")
+            .map(({ name, count }) => {
+              return (
+                <div
+                  key={name}
+                  className="rounded-lg border border-primary p-2 text-center "
+                >
+                  <h3 className="font-bold capitalize">{`${name.replace(
+                    /_/g,
+                    " ",
+                  )}(s):`}</h3>
+                  <p>{count}</p>
+                </div>
+              );
+            })}
+        </section>
+        <h2 className="mb-4 text-center text-4xl font-bold">Users Summary</h2>
+        <p className="mt-20 text-center"></p>
+        <section className="grid grid-cols-2 gap-2 p-8">
+          {countData.length === 0 &&
+            new Array(1).fill(placeholder).map((v, index) => {
+              console.log(v);
+              return (
+                <div
+                  key={index}
+                  className="rounded-lg border border-primary p-20 text-center"
+                >
+                  <h3 className="font-bold capitalize">{`Fetching data...`}</h3>
+                  <div className="scale-50">
+                    <BoxContainer />
+                  </div>
+                </div>
+              );
+            })}
+          {countData
+            .filter((props) => props.type !== "announcement")
+            .map(({ name, count }) => {
+              return (
+                <div
+                  key={name}
+                  className="rounded-lg border border-primary p-2 text-center "
+                >
+                  <h3 className="font-bold capitalize">{`${
+                    name === "permission"
+                      ? "admin & faculty"
+                      : name.replace(/_/g, " ")
+                  }(s):`}</h3>
+                  <p>{count}</p>
+                </div>
+              );
+            })}
         </section>
         <div className=" flex flex-col items-center justify-center gap-2 capitalize">
           <div className="rounded-2xl border border-green-500 p-2 px-20 capitalize text-black">

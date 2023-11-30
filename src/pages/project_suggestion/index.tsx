@@ -1,8 +1,20 @@
-import type { PollEventProps, PollProps } from "@cares/types/poll";
+import {
+  ReadPollEventProps,
+  type PollEventProps,
+  type PollProps,
+} from "@cares/types/poll";
 import { currentMonth } from "@cares/utils/date";
-import { addDoc, collection } from "firebase/firestore";
-import React, { useState, type FormEvent } from "react";
+import {
+  addDoc,
+  arrayUnion,
+  collection,
+  doc,
+  onSnapshot,
+  updateDoc,
+} from "firebase/firestore";
+import React, { useState, type FormEvent, useEffect } from "react";
 import Main from "~/components/Main";
+import TickingClock from "~/components/TickingClock";
 import { useAuth } from "~/contexts/AuthProvider";
 import ProjectProvider from "~/contexts/ProjectProvider";
 import { db } from "~/utils/firebase";
@@ -29,6 +41,7 @@ const Content = () => {
     comments: [],
     dateCreated: NaN,
   };
+  const [pollState, setPollState] = useState<ReadPollEventProps[]>([]);
   const { currentUser } = useAuth();
   const [state, setState] = useState(initState);
   const daysInMilliseconds = 86400000;
@@ -76,6 +89,22 @@ const Content = () => {
     }
   }
 
+  useEffect(() => {
+    const unsub = onSnapshot(
+      collection(db, "project_suggestion"),
+      (snapshot) => {
+        const pollsHolder: ReadPollEventProps[] = [];
+        snapshot.forEach((snap) => {
+          const id = snap.id;
+          const data = snap.data() as PollEventProps;
+          pollsHolder.push({ id, ...data });
+        });
+        setPollState(pollsHolder);
+      },
+    );
+    return unsub;
+  }, []);
+
   return (
     <div className="h-screen">
       <h1 className="p-4 text-center text-xl font-semibold">
@@ -109,6 +138,7 @@ const Content = () => {
               })}
             </select>
           </div>
+          <input onChange={() => console.log("first")} />
           <textarea
             required
             placeholder="enter a poll question to get consensus from"
@@ -119,7 +149,7 @@ const Content = () => {
           <button
             type="submit"
             className={`${
-              state.question.trim() === ""
+              state.question.trim() === "" || state.options.length === 0
                 ? " bg-slate-200 text-slate-300"
                 : "bg-primary text-paper"
             } rounded-lg p-2 capitalize shadow-sm`}
@@ -128,13 +158,13 @@ const Content = () => {
             submit
           </button>
         </form>
-        <PollsContainer />
+        <PollsContainer pollState={pollState} />
       </div>
     </div>
   );
 };
 
-const PollsContainer = () => {
+const PollsContainer = ({ pollState }: { pollState: ReadPollEventProps[] }) => {
   // interface PollsContainerStateProps extends Partial<PollProps>, Partial<FirestoreDatabaseProps> {
   // }
   // const { polls } = useProject();
@@ -212,9 +242,60 @@ const PollsContainer = () => {
   //     console.log(err);
   //   }
   // }
-
   return (
-    <div className="grid grid-cols-2 items-start">
+    <div className="grid-cols-flow grid h-96 items-start gap-6 overflow-y-auto">
+      {[...pollState].map(({ id, comments, options, ...rest }) => {
+        return (
+          <div key={id} className="rounded-lg p-4 shadow-sm">
+            <div className="flex items-center justify-center gap-2">
+              <div className="grid gap-2">
+                <h1>{rest.question}</h1>
+                <p>{rest.postedBy}</p>
+              </div>
+              <TickingClock
+                expiration={rest.dateOfExpiration}
+                title="Time remaining"
+              />
+            </div>
+            <section className="flex flex-col items-start gap-2 rounded-lg bg-primary/20 p-2 shadow-sm">
+              <h2 className="front-semibold text-lg text-black">
+                Click a comment to add to the current poll options
+              </h2>
+              {comments?.map(({ value, commenter }, index) => {
+                return (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      const values = options.filter(
+                        (props) => value === props.value,
+                      );
+                      if (values.length === 0) {
+                        return void updateDoc(
+                          doc(collection(db, "project_suggestion"), id),
+                          {
+                            options: arrayUnion({
+                              index: options.length,
+                              value,
+                              vote: 0,
+                            }),
+                          },
+                        );
+                      }
+                      alert("This option already exists in the poll!");
+                    }}
+                    className="relative mx-auto w-96 scale-90 rounded-lg bg-primary p-2 text-paper shadow-sm hover:scale-95 hover:bg-secondary"
+                  >
+                    <p className="flex flex-col items-center justify-center">
+                      {value}
+                      <span>{`commenter: ${commenter}`}</span>
+                    </p>
+                  </button>
+                );
+              })}
+            </section>
+          </div>
+        );
+      })}
       {/* {state.target !== undefined && (
         <section className="fixed inset-0 z-30 h-full min-h-screen bg-paper/95">
           <button
