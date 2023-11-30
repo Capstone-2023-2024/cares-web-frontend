@@ -78,7 +78,7 @@ const Content = () => {
 
   return (
     <div className="h-screen">
-      <h1 className="p-4 text-center text-xl font-semibold">
+      <h1 className="p-4 mt-10 text-center text-3xl font-semibold">
         {`Event Suggestions for the month of ${currentMonth({
           month,
           year,
@@ -89,13 +89,14 @@ const Content = () => {
           onSubmit={(e) => void handleSubmit(e)}
           className="flex h-full flex-col items-center justify-center gap-2"
         >
-          <div className="flex-row items-center justify-center">
-            <label htmlFor="expiration" className="p-2 text-primary">
+          <div className="flex-row items-center my-5 border-2 bg-gray-500 border-black justify-center">
+            <label htmlFor="expiration" className="p-2 text-white">
               Days of availability:
             </label>
             <select
               required
-              className="p-2"
+              className="mx-2 h-8
+              my-4 border-2 border-black"
               id="expiration"
               value={state.days ?? 1}
               onChange={handleDays}
@@ -109,20 +110,22 @@ const Content = () => {
               })}
             </select>
           </div>
+          <div className="bg-red-400 rounded-3xl border-black border-2 w-1/2 h-48 ">
           <textarea
             required
             placeholder="enter a poll question to get consensus from"
-            className="resize-none rounded-lg border p-4 capitalize shadow-sm"
+            className="resize-none text-center text-black bg-zinc-300 rounded-3xl p-4 capitalize w-full h-full"
             value={state.question}
             onChange={handleQuestion}
           />
+          </div>
           <button
             type="submit"
             className={`${
               state.question.trim() === ""
-                ? " bg-slate-200 text-slate-300"
-                : "bg-primary text-paper"
-            } rounded-lg p-2 capitalize shadow-sm`}
+                ? " bg-green-200 text-gray-400"
+                : "bg-green-500 text-paper"
+            } rounded-lg p-2 my-5 capitalize shadow-sm`}
             disabled={state.question.trim() === ""}
           >
             submit
