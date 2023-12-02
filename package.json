@@ -19,6 +19,7 @@
     "tls": false
   },
   "dependencies": {
+    "@cares/utils": "file:../../libs/typescript/lib/src/utils",
     "@fortawesome/free-solid-svg-icons": "^6.4.2",
     "@fortawesome/react-fontawesome": "^0.2.0",
     "@t3-oss/env-nextjs": "^0.3.1",
@@ -38,14 +39,14 @@
     "@typescript-eslint/parser": "6.0.0",
     "autoprefixer": "^10.4.14",
     "axios": "^1.6.2",
-    "cares-common": "file:../../libs/typescript/dist/src/utils",
+    "dotenv": "^16.3.1",
     "eslint": "^8.54.0",
     "eslint-config-next": "^14.0.3",
     "postcss": "^8.4.21",
     "prettier": "^3.1.0",
     "prettier-plugin-tailwindcss": "^0.5.7",
     "sharp": "^0.32.5",
-    "tailwindcss": "^3.3.5",
+    "tailwindcss": "^3.3.2",
     "tailwindcss-animated": "^1.0.1",
     "typescript": "^5.3.2"
   }

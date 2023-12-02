@@ -2,6 +2,8 @@
  * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially useful
  * for Docker builds.
  */
+import dotenv from "dotenv";
+dotenv.config({ path: "../../../.env" });
 await import("./src/env.js");
 
 /** @type {import("next").NextConfig} */
@@ -18,10 +20,13 @@ const config = {
           //   value: "*",
           //   // value: "https://cares-web.vercel.app",
           // }, // replace this your actual origin
-          { key: "Access-Control-Allow-Methods", value: "GET,DELETE,PATCH,POST,PUT" },
+          {
+            key: "Access-Control-Allow-Methods",
+            value: "GET,DELETE,PATCH,POST,PUT",
+          },
           {
             key: "Access-Control-Allow-Headers",
-            value:"Authorization",
+            value: "Authorization",
           },
         ],
       },
