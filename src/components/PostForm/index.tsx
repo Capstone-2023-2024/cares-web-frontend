@@ -1,6 +1,6 @@
-import type { AnnouncementProps } from "@cares/types/announcement";
-import { announcementType } from "@cares/utils/announcement";
-import { getImageFromStorage, imageDimension } from "@cares/utils/media";
+import type { AnnouncementProps } from "@cares/common/types/announcement";
+import { announcementType } from "@cares/common/utils/announcement";
+import { getImageFromStorage, imageDimension } from "@cares/common/utils/media";
 import { addDoc, collection } from "firebase/firestore";
 import { uploadBytes } from "firebase/storage";
 import Image from "next/image";

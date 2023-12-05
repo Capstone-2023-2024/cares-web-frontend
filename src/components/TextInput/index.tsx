@@ -2,7 +2,7 @@ import { useRef } from "react";
 import type { FocusEvent, MouseEvent } from "react";
 import type { TextInputProps } from "./type";
 import Image from "next/image";
-import { imageDimension } from "@cares/utils/media";
+import { imageDimension } from "@cares/common/utils/media";
 
 /** Add the styles array unto the base style before modifying it in `inputFocusEvent` */
 function addClassListToBaseStyle(baseStyle: string, classList: string[]) {

@@ -2,7 +2,7 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { useAuth } from "~/contexts/AuthProvider";
-import { projectName } from "@cares/utils/config";
+import { projectName } from "@cares/common/utils/config";
 import Header from "../Header/Header";
 import HeaderPath from "../HeaderPath";
 import Nav from "../Nav/Nav";

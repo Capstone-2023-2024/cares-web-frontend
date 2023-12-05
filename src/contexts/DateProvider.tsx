@@ -1,33 +1,33 @@
-import { weekNames } from "@cares/utils/date"
-import { createContext, useContext, useState, type ReactNode } from "react"
+import { weekNames } from "@cares/common/utils/date";
+import { createContext, useContext, useState, type ReactNode } from "react";
 
 interface initialDateType {
-  date: number
-  month: number
-  year: number
-  weekName?: (typeof weekNames)[number]
-  selectedDateArray: number[]
+  date: number;
+  month: number;
+  year: number;
+  weekName?: (typeof weekNames)[number];
+  selectedDateArray: number[];
 }
 interface DateContextType extends initialDateType {
-  changeDate: (date: number) => void
-  changeMonth: (month: number) => void
-  changeYear: (year: number) => void
-  changeWeek: (weekName: typeof weekNames) => void
-  changeSelectedDateArray: (dateArray: number[]) => void
+  changeDate: (date: number) => void;
+  changeMonth: (month: number) => void;
+  changeYear: (year: number) => void;
+  changeWeek: (weekName: typeof weekNames) => void;
+  changeSelectedDateArray: (dateArray: number[]) => void;
 }
 interface DateProviderType {
-  children: ReactNode
+  children: ReactNode;
 }
 
-const initDate = new Date()
-const day = initDate.getDay()
+const initDate = new Date();
+const day = initDate.getDay();
 const initialDate: initialDateType = {
   date: initDate.getDate(),
   month: initDate.getMonth(),
   year: initDate.getFullYear(),
   weekName: weekNames[day],
   selectedDateArray: [],
-}
+};
 
 const DateContext = createContext<DateContextType>({
   ...initialDate,
@@ -36,10 +36,10 @@ const DateContext = createContext<DateContextType>({
   changeYear: () => null,
   changeWeek: () => null,
   changeSelectedDateArray: () => null,
-})
+});
 
 const DateProvider = ({ children }: DateProviderType) => {
-  const [state, setState] = useState(initialDate)
+  const [state, setState] = useState(initialDate);
 
   const values = {
     ...state,
@@ -48,33 +48,33 @@ const DateProvider = ({ children }: DateProviderType) => {
     changeYear,
     changeWeek,
     changeSelectedDateArray,
-  }
+  };
 
   function handleState(
     name: keyof initialDateType,
-    value: number | typeof weekNames | number[]
+    value: number | typeof weekNames | number[],
   ) {
-    setState((previousState) => ({ ...previousState, [name]: value }))
+    setState((previousState) => ({ ...previousState, [name]: value }));
   }
   function changeDate(date: number) {
-    handleState("date", date)
+    handleState("date", date);
   }
   function changeMonth(month: number) {
-    handleState("month", month)
+    handleState("month", month);
   }
   function changeYear(year: number) {
-    handleState("year", year)
+    handleState("year", year);
   }
   function changeWeek(weekName: typeof weekNames) {
-    handleState("weekName", weekName)
+    handleState("weekName", weekName);
   }
   function changeSelectedDateArray(dateArray: number[]) {
-    handleState("selectedDateArray", dateArray)
+    handleState("selectedDateArray", dateArray);
   }
 
-  return <DateContext.Provider value={values}>{children}</DateContext.Provider>
-}
+  return <DateContext.Provider value={values}>{children}</DateContext.Provider>;
+};
 
-export type { initialDateType, DateContextType, DateProviderType }
-export const useDate = () => useContext(DateContext)
-export default DateProvider
+export type { initialDateType, DateContextType, DateProviderType };
+export const useDate = () => useContext(DateContext);
+export default DateProvider;

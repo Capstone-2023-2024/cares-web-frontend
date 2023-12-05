@@ -1,4 +1,4 @@
-import { currentMonth } from "@cares/utils/date";
+import { currentMonth } from "@cares/common/utils/date";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 import MonthlyActivities from "~/components/MonthlyActivities";

@@ -1,6 +1,6 @@
-import type { ComplaintBaseProps } from "@cares/types/complaint";
-import type { FirestoreDatabaseProps } from "@cares/types/document";
-import type { StudentInfoProps } from "@cares/types/user";
+import type { ComplaintBaseProps } from "@cares/common/types/complaint";
+import type { FirestoreDatabaseProps } from "@cares/common/types/document";
+import type { StudentInfoProps } from "@cares/common/types/user";
 import {
   addDoc,
   collection,
@@ -92,7 +92,7 @@ const Complaints = () => {
   }
   async function handleTurnOver() {
     const recipient =
-      currentUser?.email === "bm@cares.com"
+      currentUser?.email === "bm@cares/common.com"
         ? "program_chair"
         : "department_head";
     const concerns: ComplaintBaseProps = {

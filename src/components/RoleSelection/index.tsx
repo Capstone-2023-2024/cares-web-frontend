@@ -1,4 +1,4 @@
-import { roleOptions } from "@cares/utils/admin";
+import { roleOptions } from "@cares/common/utils/admin";
 import type { RoleSelectionProps } from "./types";
 
 const RoleSelection = ({

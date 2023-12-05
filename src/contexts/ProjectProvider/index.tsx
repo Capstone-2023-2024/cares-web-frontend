@@ -1,60 +1,60 @@
-import { collection, limit, onSnapshot, query } from "firebase/firestore"
+import { collection, limit, onSnapshot, query } from "firebase/firestore";
 import {
   createContext,
   useContext,
   useEffect,
   useState,
   type ReactNode,
-} from "react"
-import { db } from "../../utils/firebase"
-import type { PollProps } from "@cares/types/poll"
+} from "react";
+import { db } from "../../utils/firebase";
+import type { PollProps } from "@cares/common/types/poll";
 
 interface PollStateProps extends Pick<PollProps, "state"> {
-  polls: PollProps[]
+  polls: PollProps[];
 }
 // interface PollContextProps extends PollStateProps {}
 
 const initState: PollStateProps = {
   polls: [],
   state: "unpublished",
-}
+};
 
 const ProjectContext = createContext<PollStateProps>({
   ...initState,
-})
+});
 
 const ProjectProvider = ({ children }: { children: ReactNode }) => {
-  const [state, setState] = useState(initState)
+  const [state, setState] = useState(initState);
 
   useEffect(() => {
-    const limitNumber = 15
+    const limitNumber = 15;
     const pollQuery = query(
       collection(db, "project_suggestion"),
-      limit(limitNumber)
-    )
+      limit(limitNumber),
+    );
     const unsub = onSnapshot(pollQuery, (snapshot) => {
-      const polls: PollProps[] = []
+      const polls: PollProps[] = [];
       snapshot.docs.forEach((doc) => {
-        const id = doc.id
-        const data = doc.data() as Omit<PollProps, "id">
+        const id = doc.id;
+        const data = doc.data() as Omit<PollProps, "id">;
         const holder = {
           ...data,
           id,
-        }
-        polls.push(holder)
-      })
-      setState((prevState) => ({ ...prevState, polls }))
-    })
-    return unsub
-  }, [])
+        };
+        polls.push(holder);
+      });
+      setState((prevState) => ({ ...prevState, polls }));
+    });
+    return unsub;
+  }, []);
 
   return (
     <ProjectContext.Provider value={{ ...state }}>
       {children}
     </ProjectContext.Provider>
-  )
-}
+  );
+};
 
-export type { PollStateProps }
-export const useProject = () => useContext(ProjectContext)
-export default ProjectProvider
+export type { PollStateProps };
+export const useProject = () => useContext(ProjectContext);
+export default ProjectProvider;

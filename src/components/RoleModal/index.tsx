@@ -1,6 +1,6 @@
-import type { RoleProps } from "@cares/types/permission";
-import { roleOptions } from "@cares/utils/admin";
-import { validateEmail } from "@cares/utils/validation";
+import type { RoleProps } from "@cares/common/types/permission";
+import { roleOptions } from "@cares/common/utils/admin";
+import { validateEmail } from "@cares/common/utils/validation";
 import { addDoc, getDocs, query, where } from "firebase/firestore";
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import { getCollection } from "~/utils/firebase";

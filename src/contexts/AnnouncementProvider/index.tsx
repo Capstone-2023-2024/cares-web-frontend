@@ -1,4 +1,4 @@
-import type { AnnouncementProps } from "@cares/types/announcement";
+import type { AnnouncementProps } from "@cares/common/types/announcement";
 import {
   and,
   collection,

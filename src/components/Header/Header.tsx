@@ -1,9 +1,9 @@
 import Image from "next/image";
 import { useRouter } from "next/router";
 import React, { type MouseEvent, useRef, useState } from "react";
-import { imageDimension } from "@cares/utils/media";
+import { imageDimension } from "@cares/common/utils/media";
 import { ICON } from "~/utils/media";
-import { projectName } from "@cares/utils/config";
+import { projectName } from "@cares/common/utils/config";
 import Nav from "../Nav/Nav";
 import { useToggle } from "~/contexts/ToggleProvider";
 

@@ -19,7 +19,7 @@
     "tls": false
   },
   "dependencies": {
-    "@cares/utils": "file:../../libs/typescript/lib/src/utils",
+    "@cares/common": "file:../../libs/@cares/common/lib/src",
     "@fortawesome/free-solid-svg-icons": "^6.4.2",
     "@fortawesome/react-fontawesome": "^0.2.0",
     "@t3-oss/env-nextjs": "^0.3.1",

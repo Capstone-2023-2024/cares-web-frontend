@@ -8,8 +8,8 @@ import React, {
 import type {
   ComplaintBaseProps,
   ComplaintProps,
-} from "@cares/types/complaint";
-import type { FirestoreDatabaseProps } from "@cares/types/document";
+} from "@cares/common/types/complaint";
+import type { FirestoreDatabaseProps } from "@cares/common/types/document";
 
 interface ReadComplaintBaseProps
   extends ComplaintBaseProps,

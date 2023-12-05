@@ -1,10 +1,10 @@
-import type { FirestoreDatabaseProps } from "@cares/types/document";
+import type { FirestoreDatabaseProps } from "@cares/common/types/document";
 import type {
   AdviserInfoProps,
   ClassSectionProps,
   CurrentUserRoleType,
   StudentInfoProps,
-} from "@cares/types/user";
+} from "@cares/common/types/user";
 import {
   addDoc,
   and,

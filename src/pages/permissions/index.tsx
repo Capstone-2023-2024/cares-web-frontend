@@ -1,15 +1,17 @@
-import type { FirestoreDatabaseProps } from "@cares/types/document";
-import type { PermissionProps, RoleProps } from "@cares/types/permission";
+import type { FirestoreDatabaseProps } from "@cares/common/types/document";
+import type {
+  PermissionProps,
+  RoleProps,
+} from "@cares/common/types/permission";
 import type {
   AdviserInfoProps,
   ClassSectionProps,
   FacultyInfoProps,
   MayorInfoProps,
   StudentInfoProps,
-} from "@cares/types/user";
-import { roleOptions } from "@cares/utils/admin";
-import { announcementType } from "@cares/utils/announcement";
-import { setUpPrefix } from "@cares/utils/date";
+} from "@cares/common/types/user";
+import { roleOptions } from "@cares/common/utils/admin";
+import { setUpPrefix } from "@cares/common/utils/date";
 import {
   addDoc,
   and,

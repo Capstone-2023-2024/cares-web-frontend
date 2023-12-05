@@ -6,7 +6,7 @@ import type {
 } from "./types";
 import PermissionCategoryButton from "../PermissionCategoryButton";
 import Image from "next/image";
-import { imageDimension } from "@cares/utils/media";
+import { imageDimension } from "@cares/common/utils/media";
 
 const SectionContainer = ({
   children,

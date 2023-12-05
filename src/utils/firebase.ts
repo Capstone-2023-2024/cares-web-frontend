@@ -1,4 +1,4 @@
-import type { CollectionPathType } from "@cares/types/firebase";
+import type { CollectionPathType } from "@cares/common/types/firebase";
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { collection, getFirestore } from "firebase/firestore";

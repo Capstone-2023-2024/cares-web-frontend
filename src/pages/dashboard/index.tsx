@@ -68,12 +68,13 @@ const Content = () => {
           {countData
             .filter((props) => props.type === "announcement")
             .map(({ name, count }) => {
+              const stringifyName = name as string;
               return (
                 <div
-                  key={name}
+                  key={stringifyName}
                   className="rounded-lg border border-primary p-2 text-center "
                 >
-                  <h3 className="font-bold capitalize">{`${name.replace(
+                  <h3 className="font-bold capitalize">{`${stringifyName.replace(
                     /_/g,
                     " ",
                   )}(s):`}</h3>
@@ -103,15 +104,16 @@ const Content = () => {
           {countData
             .filter((props) => props.type !== "announcement")
             .map(({ name, count }) => {
+              const stringifyName = name as string;
               return (
                 <div
-                  key={name}
+                  key={stringifyName}
                   className="rounded-lg border border-primary p-2 text-center "
                 >
                   <h3 className="font-bold capitalize">{`${
-                    name === "permission"
+                    stringifyName === "permission"
                       ? "admin & faculty"
-                      : name.replace(/_/g, " ")
+                      : stringifyName.replace(/_/g, " ")
                   }(s):`}</h3>
                   <p>{count}</p>
                 </div>

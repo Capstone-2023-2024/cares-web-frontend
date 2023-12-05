@@ -1,6 +1,6 @@
-import type { ComplaintProps } from "@cares/types/complaint";
-import type { CurrentUserRoleType } from "@cares/types/user";
-import { recipientEscalation } from "@cares/utils/validation";
+import type { ComplaintProps } from "@cares/common/types/complaint";
+import type { CurrentUserRoleType } from "@cares/common/types/user";
+import { recipientEscalation } from "@cares/common/utils/validation";
 import {
   addDoc,
   collection,

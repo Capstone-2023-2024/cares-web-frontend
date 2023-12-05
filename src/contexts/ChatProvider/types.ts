@@ -1,27 +1,27 @@
-import type { ReactNode } from "react"
-import type { FirestoreDatabaseProps } from "@cares/types/document"
+import type { ReactNode } from "react";
+import type { FirestoreDatabaseProps } from "@cares/common/types/document";
 
 interface InitialProps {
-  people: Omit<PeopleProps, "id">[]
-  registered: Omit<RegisteredPeopleProps, "id">[]
+  people: Omit<PeopleProps, "id">[];
+  registered: Omit<RegisteredPeopleProps, "id">[];
 }
-type StateType = InitialProps["people"] | InitialProps["registered"]
+type StateType = InitialProps["people"] | InitialProps["registered"];
 interface PeopleProps extends FirestoreDatabaseProps {
-  dateUpdated: number
+  dateUpdated: number;
 }
 
 interface ChatContextProps extends InitialProps {
-  arbitrary?: () => Promise<void>
+  arbitrary?: () => Promise<void>;
 }
 
 interface ChatProviderProps {
-  children: ReactNode
+  children: ReactNode;
 }
 
 interface RegisteredPeopleProps extends FirestoreDatabaseProps {
-  displayName: string
-  email: string
-  photoUrl: string
+  displayName: string;
+  email: string;
+  photoUrl: string;
 }
 
 export type {
@@ -31,4 +31,4 @@ export type {
   ChatContextProps,
   ChatProviderProps,
   RegisteredPeopleProps,
-}
+};

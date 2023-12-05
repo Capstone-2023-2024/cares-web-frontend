@@ -1,5 +1,5 @@
-import { announcementType } from "@cares/utils/announcement";
-import { getImageFromStorage, imageDimension } from "@cares/utils/media";
+import { announcementType } from "@cares/common/utils/announcement";
+import { getImageFromStorage, imageDimension } from "@cares/common/utils/media";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { type ReactNode } from "react";

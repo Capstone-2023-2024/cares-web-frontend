@@ -1,6 +1,6 @@
 import type { ChangeEvent, ReactNode } from "react";
-import type { AnnouncementProps } from "@cares/types/announcement";
-import type { FirestoreDatabaseProps } from "@cares/types/document";
+import type { AnnouncementProps } from "@cares/common/types/announcement";
+import type { FirestoreDatabaseProps } from "@cares/common/types/document";
 
 interface ReadAnnouncementProps
   extends AnnouncementProps,

@@ -1,4 +1,4 @@
-import { imageDimension } from "@cares/utils/media";
+import { imageDimension } from "@cares/common/utils/media";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { useEffect, useRef, useState, type FormEvent } from "react";
@@ -102,8 +102,8 @@ const Login = () => {
   }, [currentUser, router]);
 
   return !loading ? (
-    <div className="animate-gradient-sm sm:animate-gradient-md md:animate-gradient-lg relative min-h-screen bg-gradient-to-t from-primary via-paper to-paper bg-[length:400%_400%]">
-      <div className="animate-gradient-sm sm:animate-gradient-md md:animate-gradient-lg absolute z-0 h-full w-screen bg-[url('/bg-login.png')] bg-cover bg-center" />
+    <div className="relative min-h-screen animate-gradient-sm bg-gradient-to-t from-primary via-paper to-paper bg-[length:400%_400%] sm:animate-gradient-md md:animate-gradient-lg">
+      <div className="absolute z-0 h-full w-screen animate-gradient-sm bg-[url('/bg-login.png')] bg-cover bg-center sm:animate-gradient-md md:animate-gradient-lg" />
       <Header />
       <div className="relative flex h-full items-center justify-center">
         <div

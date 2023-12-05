@@ -118,6 +118,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     const unsub = onAuthStateChanged(auth, (user) => {
       handleState("loading", true);
       handleState("currentUser", user);
+      console.log(user);
       function extractAccounts() {
         if (user !== null) {
           try {

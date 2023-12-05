@@ -1,6 +1,6 @@
-import type { MarkedDatesProps } from "@cares/types/announcement";
-import { formatDateOrMonth, setUpPrefix } from "@cares/utils/date";
-import { removeObjectWithType } from "@cares/utils/validation";
+import type { MarkedDatesProps } from "@cares/common/types/announcement";
+import { formatDateOrMonth, setUpPrefix } from "@cares/common/utils/date";
+import { removeObjectWithType } from "@cares/common/utils/validation";
 
 function handleEditedCreatedDates(created: number, edited?: number) {
   const dateHolder = new Date();
