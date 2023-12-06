@@ -25,6 +25,7 @@ export const env = createEnv({
     NEXT_PUBLIC_FIRESTORE_MEASUREMENT_ID: z.string(),
     NEXT_PUBLIC_ONESIGNAL_APP_ID: z.string(),
     NEXT_PUBLIC_ONESIGNAL_REST_API_KEY: z.string(),
+    NEXT_PUBLIC_ONESIGNAL_DEFAULT_ANDROID_CHANNEL_ID: z.string(),
   },
 
   /**
@@ -48,6 +49,8 @@ export const env = createEnv({
     NEXT_PUBLIC_ONESIGNAL_APP_ID: process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID,
     NEXT_PUBLIC_ONESIGNAL_REST_API_KEY:
       process.env.NEXT_PUBLIC_ONESIGNAL_REST_API_KEY,
+    NEXT_PUBLIC_ONESIGNAL_DEFAULT_ANDROID_CHANNEL_ID:
+      process.env.NEXT_PUBLIC_ONESIGNAL_DEFAULT_ANDROID_CHANNEL_ID,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation.

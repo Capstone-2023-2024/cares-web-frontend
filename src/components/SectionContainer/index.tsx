@@ -30,9 +30,9 @@ const SectionContainer = ({
 
   return (
     <section className="h-fit w-full p-2 text-center">
-      <PermissionCategoryButton onClick={toggleContainer}>
+      <PermissionCategoryButton>
         <h2 className="text-xl font-bold uppercase">{extensionName}</h2>
-        <button>
+        <button onClick={toggleContainer}>
           <Image
             alt=""
             src="/down.png"

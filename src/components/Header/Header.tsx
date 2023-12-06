@@ -69,7 +69,7 @@ const Header = () => {
       >
         <Image
           alt="cares._icon"
-          src="/cares_icon.png"
+          src="/cares_icon1.png"
           className="inline-block h-8 w-8 brightness-0 invert"
           {...imageDimension(ICON)}
         />

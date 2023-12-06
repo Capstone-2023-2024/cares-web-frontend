@@ -372,6 +372,7 @@ const AssignAdviser = () => {
       })}
     </select>
   );
+  console.log(state.faculty);
   const handleChangeEvent =
     (key: keyof typeof state) => (event: ChangeEvent<HTMLSelectElement>) => {
       setState((prevState) => ({ ...prevState, [key]: event.target.value }));
@@ -397,23 +398,6 @@ const AssignAdviser = () => {
       />
     </div>
   );
-
-  // const handleChangeFromServer =
-  //   ({ id }: { id: string }) =>
-  //   async (event: ChangeEvent<HTMLSelectElement>) => {
-  //     try {
-  //       const select = event.currentTarget;
-  //       const key =
-  //         select.options[0]?.value.length === 1 ? "section" : "yearLevel";
-  //       const data = {
-  //         dateEdited: new Date().getTime(),
-  //         [key]: event.target.value,
-  //       };
-  //       await updateDoc(doc(getCollection("adviser"), id), data);
-  //     } catch (err) {
-  //       console.log(err);
-  //     }
-  //   };
 
   async function handleChangeFromServer({
     id,
@@ -486,33 +470,25 @@ const AssignAdviser = () => {
     const adviserColRef = getCollection("adviser");
     const facultyColRef = getCollection("permission");
 
-    function getAdviser() {
-      return onSnapshot(query(adviserColRef), (snapshot) => {
-        const adviser: ReadAdviserInfoProps[] = [];
-        snapshot.forEach((doc) => {
-          const id = doc.id;
-          const data = doc.data() as AdviserInfoProps;
-          adviser.push({ ...data, id });
-        });
-        setState((prevState) => ({ ...prevState, adviser }));
+    onSnapshot(query(adviserColRef), (snapshot) => {
+      const adviser: ReadAdviserInfoProps[] = [];
+      snapshot.forEach((doc) => {
+        const id = doc.id;
+        const data = doc.data() as AdviserInfoProps;
+        adviser.push({ ...data, id });
       });
-    }
-    function getFaculty() {
-      return onSnapshot(query(facultyColRef), (snapshot) => {
-        const faculty: ReadFacultyInfoProps[] = [];
-        snapshot.forEach((doc) => {
-          const id = doc.id;
-          const data = doc.data() as FacultyInfoProps;
-          faculty.push({ ...data, id });
-        });
-        setState((prevState) => ({ ...prevState, faculty }));
-      });
-    }
+      setState((prevState) => ({ ...prevState, adviser }));
+    });
 
-    return () => {
-      getAdviser();
-      getFaculty();
-    };
+    return onSnapshot(query(facultyColRef), (snapshot) => {
+      const faculty: ReadFacultyInfoProps[] = [];
+      snapshot.forEach((doc) => {
+        const id = doc.id;
+        const data = doc.data() as FacultyInfoProps;
+        faculty.push({ ...data, id });
+      });
+      setState((prevState) => ({ ...prevState, faculty }));
+    });
   }, []);
 
   return (

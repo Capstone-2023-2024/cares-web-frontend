@@ -51,9 +51,6 @@ const MonthlyActivities = () => {
             />
           </div>
         </FilterContainer>
-        {/* <Button type="button" onClick={toggleEdit}>
-          {<Image src="/pencil.png" alt="" {...imageDimension(ICON)} />}
-        </Button> */}
       </div>
       <div className=" mx-2 flex gap-2 overflow-x-auto rounded-xl bg-black/10 p-4">
         {data.map((props, index) => {
@@ -73,7 +70,6 @@ const Card = ({ id, title, dateCreated, department, photoUrls }: CardProps) => {
       onClick={() => void router.push(`announcements/${id}`)}
       className=" flex min-w-max rounded-xl bg-primary p-4 text-black duration-300 ease-in-out hover:bg-secondary hover:text-paper"
     >
-      {/* <DeleteButton id={id} isEditing={isEditing} /> */}
       <div>
         <Heading department={department} />
         <p className="flex flex-col p-2">
@@ -81,16 +77,21 @@ const Card = ({ id, title, dateCreated, department, photoUrls }: CardProps) => {
           <span className="text-xs">{`Date Created: ${newDate.toLocaleString()}`}</span>
         </p>
       </div>
-      {photoUrls?.map((url, i) => {
-        return <RenderPhoto key={i} photoUrl={url} />;
-      })}
+      {photoUrls?.length !== undefined && (
+        <RenderPhoto photoUrl={photoUrls[0]} />
+      )}
     </button>
   );
 };
 
 const Heading = ({ department }: { department: string }) => (
   <div className="flex w-full min-w-max items-center justify-around">
-    <Image src="/CICS.png" alt="" {...imageDimension(ICON * 2)} />
+    <Image
+      src="/cares_icon.png"
+      alt=""
+      className="brightness-0 invert"
+      {...imageDimension(ICON * 2)}
+    />
     <h2 className="flex flex-col text-center font-bold uppercase">
       <span>{department}</span>department
     </h2>

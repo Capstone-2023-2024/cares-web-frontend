@@ -50,10 +50,12 @@ interface NotificationProps {
   /** Photo preview */
   big_picture?: string;
   priority?: number;
+  android_channel_id?: string;
   include_external_user_ids?: string[];
+  include_player_ids?: string[];
 }
 
-/** `name` is the title of the notification, `englishContent` is the `en` in `contents` object, `included_segments` are the target @Check: https://documentation.onesignal.com/docs/segmentation */
+/** `name` is the title of the notification, `englishContent` is the `en` in `contents` object, `included_segments` are the target `external_id` is linked to student number @Check: https://documentation.onesignal.com/docs/segmentation*/
 export default async function handler({ ...rest }: NotificationProps) {
   const options = {
     method: "POST",

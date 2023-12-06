@@ -15,6 +15,7 @@ import { markedDatesHandler } from "~/utils/date";
 import { db, storageRef } from "~/utils/firebase";
 import Button from "../Button";
 import Selection from "../Selection";
+import UploadButton from "../UploadButton";
 import type { InputRef, PostFormStateProps } from "./types";
 
 const PostForm = () => {
@@ -50,37 +51,35 @@ const PostForm = () => {
         ? "Tell the details for the recognition"
         : "Create a summary of the University Memorandum";
 
-  function previewImage(file: File, index: number) {
-    const oFReader = new FileReader();
-    oFReader.readAsDataURL(file);
-    oFReader.onload = (oFREvent) => {
-      const result = oFREvent.target?.result;
-      if (result !== null && result !== undefined) {
-        const imageContainer = document.getElementById(
-          `${imagePrefix}${index}`,
-        ) as HTMLImageElement;
-        return (imageContainer.src = result as string);
-      }
-    };
-  }
-  function getImageArray(files: File[]) {
-    files.forEach((file, index) => {
-      previewImage(file, index);
-    });
-  }
   function handleFilePick() {
     try {
-      const inRef = inputRef.current;
-      if (inRef?.files !== null) {
-        const pickedFiles = inRef?.files ? [...inRef?.files] : [];
-        console.log(state.files);
-        getImageArray(pickedFiles);
-        setState((prevState) => ({ ...prevState, files: pickedFiles }));
+      const reference = inputRef.current;
+      if (reference?.files !== null) {
+        const pickedFiles = reference?.files ? [...reference?.files] : [];
+        pickedFiles.forEach((file, index) => {
+          const oFReader = new FileReader();
+          oFReader.readAsDataURL(file);
+          oFReader.onload = (oFREvent) => {
+            const result = oFREvent.target?.result;
+            if (result !== null && result !== undefined) {
+              const src = result as string;
+              const image = document.querySelector<HTMLImageElement>(
+                `#${imagePrefix}${index}`,
+              );
+              image ? (image.src = src) : null;
+            }
+          };
+        });
+        setState((prevState) => ({
+          ...prevState,
+          files: pickedFiles,
+        }));
       }
     } catch (err) {
       console.log(err);
     }
   }
+
   function handleMessage(event: ChangeEvent<HTMLTextAreaElement>) {
     const message = event.target.value;
     setState((prevState) => ({ ...prevState, message }));
@@ -118,147 +117,135 @@ const PostForm = () => {
     }
   }
   /** TODO: Optimize this madness */
-  async function handleSubmit(event: React.MouseEvent<HTMLFormElement>) {
-    if (typeOfAccount !== null) {
+  function handleSubmit(event: React.MouseEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form: HTMLFormElement = event.currentTarget;
+    const textarea = form.querySelector(
+      "#message",
+    ) as unknown as HTMLTextAreaElement;
+    const noTitleNoMessage = textarea === null && state.title.trim() === "";
+
+    if (typeOfAccount === null) {
+      return alert("You do not have the permission to do this action");
+    }
+    if (noTitleNoMessage) {
+      return alert("Please enter a title");
+    }
+    async function upload() {
       try {
-        event.preventDefault();
-        const form: HTMLFormElement = event.currentTarget;
-        const textarea = form.querySelector(
-          "#message",
-        ) as unknown as HTMLTextAreaElement;
+        const photoUrls: string[] = [];
+        state.files?.map(async (props) => {
+          photoUrls.push(props.name);
+          await uploadImage(props);
+        });
+        const selectedArrLength = selectedDateArray.length;
+        const lastValueInSelectedArray =
+          selectedDateArray[selectedArrLength - 1] ?? -1;
+        const endDate = new Date();
+        endDate.setDate(lastValueInSelectedArray);
+        endDate.setFullYear(year);
+        endDate.setMonth(month);
 
-        if (textarea !== null && state.title.trim() !== "") {
-          const photoUrls: string[] = [];
-          state.files?.map(async (props) => {
-            photoUrls.push(props.name);
-            await uploadImage(props);
-          });
-          const selectedArrLength = selectedDateArray.length;
-          const lastValueInSelectedArray =
-            selectedDateArray[selectedArrLength - 1] ?? -1;
-          const endDate = new Date();
-          endDate.setDate(lastValueInSelectedArray);
-          endDate.setFullYear(year);
-          endDate.setMonth(month);
+        const announcement: AnnouncementProps = {
+          postedBy: state.postedBy,
+          type: state.type,
+          title: state.title,
+          state: state.state,
+          message: textarea.value,
+          department: "cics",
+          dateCreated: new Date().getTime(),
+          endDate: endDate.getTime(),
+          markedDates: markedDatesHandler(
+            selectedDateArray,
+            year,
+            month,
+            state.markedDates,
+          ),
+        };
 
-          const announcement: AnnouncementProps = {
-            postedBy: state.postedBy,
-            type: state.type,
-            title: state.title,
-            state: state.state,
-            message: textarea.value,
-            department: "cics",
-            dateCreated: new Date().getTime(),
-            endDate: endDate.getTime(),
-            markedDates: markedDatesHandler(
-              selectedDateArray,
-              year,
-              month,
-              state.markedDates,
-            ),
-          };
-
-          const name = state.files?.map((props) => props.name);
-          const storageName = getImageFromStorage({
-            imageName: name?.[0] ?? "",
-            storageBucket: env.NEXT_PUBLIC_FIRESTORE_STORAGE_BUCKET,
-            ref: "images",
-          });
-          const result = await notification({
-            contents: {
-              en: state.message,
+        const name = state.files?.map((props) => props.name);
+        const storageName = getImageFromStorage({
+          imageName: name?.[0] ?? "",
+          storageBucket: env.NEXT_PUBLIC_FIRESTORE_STORAGE_BUCKET,
+          ref: "images",
+        });
+        const notifResult = await notification({
+          contents: {
+            en: state.message,
+          },
+          headings: {
+            en: state.title,
+          },
+          web_buttons: [
+            {
+              id: "pick",
+              text: "Pick",
+              icon: "",
+              url: "",
             },
-            headings: {
-              en: state.title,
-            },
-            web_buttons: [
-              {
-                id: "pick",
-                text: "Pick",
-                icon: "",
-                url: "",
-              },
-            ],
-            name: state.title,
-            // include_external_user_ids: ["carranzagcarlo@gmail.com"],
-            included_segments: ["Cares Mobile Users"],
-            big_picture: storageName,
-            priority: 10,
-          });
-          console.log(result.data);
+          ],
+          name: state.title,
+          android_channel_id:
+            env.NEXT_PUBLIC_ONESIGNAL_DEFAULT_ANDROID_CHANNEL_ID,
+          included_segments: ["Cares Mobile Users"],
+          big_picture: storageName,
+          priority: 10,
+        });
+        console.log({ notifResult });
 
-          await addDoc(
-            collection(db, "announcement"),
-            state.files === null
-              ? { ...announcement }
-              : { ...announcement, photoUrls },
-          );
+        await addDoc(
+          collection(db, "announcement"),
+          state.files === null
+            ? { ...announcement }
+            : { ...announcement, photoUrls },
+        );
 
-          changeSelectedDateArray([]);
-          toggleCalendar();
-          return setState(initState);
-        }
-        return alert("Please enter a title");
+        changeSelectedDateArray([]);
+        toggleCalendar();
+        setState(initState);
       } catch (err) {
         return console.log(err);
       }
     }
-    alert("You do not have the permission to do this action");
+    return void upload();
   }
-  const renderUploadButton = () => {
-    return (
-      <div className="absolute right-0 top-36 z-10 flex w-24 overflow-hidden rounded-xl bg-blue-400/40 px-4 py-2 text-white/40 duration-300 ease-in-out hover:bg-blue-400 hover:text-white">
-        <label className="absolute inset-x-0 mx-auto w-2/3 self-center text-center text-xs">
-          {state.files !== null && state.files.length > 0
-            ? "Rechoose images"
-            : "Choose Images"}
-        </label>
-        <input
-          multiple
-          type="file"
-          ref={inputRef}
-          disabled={!showCalendar}
-          onChange={handleFilePick}
-          accept=".jpg, .jpeg, .png"
-          className={`${
-            !showCalendar ? "" : "cursor-pointer"
-          } h-full w-full scale-150 opacity-0`}
-        />
-      </div>
-    );
-  };
-  const renderSelectedImages = () => {
-    return (
-      <div className="flex h-24 w-full overflow-x-auto">
-        {state.files?.map((value, i) => {
-          return (
-            <div key={i} className="relative inline-table h-24 w-36">
-              <button
-                disabled={!showCalendar}
-                type="button"
-                onClick={() =>
-                  handleRemoveFromArray({
-                    array: state.files ?? [],
-                    index: i,
-                  })
-                }
-                className="absolute right-0 top-0 rounded-full bg-primary/70 px-2 py-1 text-xs text-paper"
-              >
-                x
-              </button>
-              {/*eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                alt=""
-                id={`${imagePrefix}${i.toString()}`}
-                className="h-auto w-auto"
-                {...value}
-              />
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
+
+  const renderSelectedImages = () => (
+    <div className="flex h-24 w-full overflow-x-auto">
+      {state.files?.map((value, index) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(value);
+        console.log({ reader });
+        return (
+          <div key={index} className="relative inline-table h-24 w-36">
+            <button
+              disabled={!showCalendar}
+              type="button"
+              onClick={() =>
+                handleRemoveFromArray({
+                  array: state.files ?? [],
+                  index,
+                })
+              }
+              className="absolute right-0 top-0 rounded-full bg-primary/70 px-2 py-1 text-xs text-paper"
+            >
+              x
+            </button>
+            {/*eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              alt=""
+              src=""
+              id={`${imagePrefix}${index.toString()}`}
+              className="h-auto w-auto"
+              {...imageDimension(48)}
+            />
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  console.log(inputRef.current);
 
   return (
     <form
@@ -300,7 +287,11 @@ const PostForm = () => {
           className="w-full resize-none rounded-xl p-4 pb-16"
           placeholder={placeholderText}
         />
-        {renderUploadButton()}
+        <UploadButton
+          ref={inputRef}
+          disabled={!showCalendar}
+          onChange={handleFilePick}
+        />
         {renderSelectedImages()}
       </div>
       <Button

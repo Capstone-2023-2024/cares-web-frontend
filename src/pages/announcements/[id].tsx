@@ -1,6 +1,7 @@
 import type { AnnouncementProps } from "@cares/common/types/announcement";
 import { announcementType } from "@cares/common/utils/announcement";
-import { imageDimension } from "@cares/common/utils/media";
+import { setUpPrefix } from "@cares/common/utils/date";
+import { getImageFromStorage, imageDimension } from "@cares/common/utils/media";
 import { deleteDoc, doc, updateDoc } from "firebase/firestore";
 import Image from "next/image";
 import { useRouter } from "next/router";
@@ -12,6 +13,8 @@ import Selection from "~/components/Selection";
 import TextInput from "~/components/TextInput";
 import { useAnnouncement } from "~/contexts/AnnouncementProvider";
 import { useDate } from "~/contexts/DateProvider";
+import { env } from "~/env";
+import { handleEditedCreatedDates, markedDatesHandler } from "~/utils/date";
 import { getCollection } from "~/utils/firebase";
 
 const AnnouncementWithId = () => {
@@ -48,14 +51,19 @@ const AnnouncementWithId = () => {
   useEffect(() => {
     if (selectedDateArray.length > 0) {
       const date = new Date();
-      // const year = date.getFullYear();
-      // const month = date.getMonth();
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const markedDates = markedDatesHandler(selectedDateArray, year, month, {
+        textColor: "blue",
+        dotColor: "blue",
+        color: "blue",
+        calendar: [],
+      });
       const length = selectedDateArray.length;
       const INDEX = length - 1;
       date.setDate(selectedDateArray[INDEX] ?? 1);
       void updateDoc(docRef, {
-        markedDates: {},
-        // markedDatesHandler(selectedDateArray, year, month),
+        markedDates,
         dateEdited: new Date().getTime(),
         endDate: date.getTime(),
       });
@@ -83,26 +91,32 @@ const AnnouncementWithId = () => {
           message,
           postedBy,
           department,
-          // markedDates,
-          // dateCreated,
-          // dateEdited,
+          markedDates,
+          dateCreated,
+          dateEdited,
+          photoUrls,
         }) => {
           const date = new Date();
-          // const { createdDate, editedDate } = handleEditedCreatedDates(
-          //   dateCreated,
-          //   dateEdited,
-          // );
-
           date.setTime(endDate);
-          // const datesHolder = [
-          //   { heading: "Current marked dates:", text: markedDates.toString() },
-          //   {
-          //     heading: "Date Created:",
-          //     text: setUpPrefix(createdDate).replace(/,/, ""),
-          //   },
-          //   { heading: "Date edited:", text: editedDate.replace(/,/, "") },
-          //   { heading: "End date:", text: setUpPrefix(date).replace(/,/, "") },
-          // ];
+          const { createdDate, editedDate } = handleEditedCreatedDates(
+            dateCreated,
+            dateEdited,
+          );
+          const arrayMarkedDates = Object.keys(markedDates)
+            .sort((a, b) => a.localeCompare(b))
+            .map((props) => props.split("-")[2]);
+          const datesHolder = [
+            {
+              heading: "Current marked dates:",
+              text: arrayMarkedDates.toString(),
+            },
+            {
+              heading: "Date Created:",
+              text: setUpPrefix(createdDate).replace(/,/, ""),
+            },
+            { heading: "Date edited:", text: editedDate.replace(/,/, "") },
+            { heading: "End date:", text: setUpPrefix(date).replace(/,/, "") },
+          ];
 
           return (
             <div
@@ -114,15 +128,6 @@ const AnnouncementWithId = () => {
               <section className="relative z-10 flex flex-col items-center justify-center gap-4">
                 <div className="mt-20 grid w-2/3 min-w-max gap-2 rounded-lg bg-primary/50 p-8 text-white shadow-sm ">
                   <div className="relative flex flex-col items-center justify-evenly gap-2 p-6 font-semibold">
-                    <button
-                      onClick={() => {
-                        void deleteDoc(docRef);
-                        void router.push("/announcements");
-                      }}
-                      className="absolute -left-10 -top-10 h-8 w-8 text-secondary"
-                    >
-                      delete
-                    </button>
                     <button
                       onClick={() => {
                         const newState =
@@ -200,11 +205,71 @@ const AnnouncementWithId = () => {
                       }
                     />
                   </div>
+                  <div>
+                    <button
+                      className="scale-90 rounded-lg bg-secondary p-2 capitalize duration-300 ease-in-out hover:scale-95"
+                      onClick={() => console.log("add image")}
+                    >
+                      add image
+                    </button>
+                    <section className="grid h-48 grid-cols-3 overflow-y-auto">
+                      {photoUrls?.map((photoUrl, i) => {
+                        const url = getImageFromStorage({
+                          imageName: photoUrl,
+                          storageBucket:
+                            env.NEXT_PUBLIC_FIRESTORE_STORAGE_BUCKET,
+                          ref: "images",
+                        });
+                        return (
+                          <div key={i} className="relative h-auto w-auto">
+                            <button
+                              className="absolute right-2 top-2 rounded-lg bg-red-500 p-1"
+                              onClick={() =>
+                                void updateDoc(docRef, {
+                                  photoUrls: photoUrls.filter(
+                                    (props) => props !== photoUrl,
+                                  ),
+                                })
+                              }
+                            >
+                              <p className="text-sm text-paper">remove</p>
+                            </button>
+                            <Image
+                              src={url}
+                              className="h-full w-full"
+                              alt="announcement_photo"
+                              {...imageDimension(48)}
+                            />
+                          </div>
+                        );
+                      })}
+                    </section>
+                  </div>
+                  <button
+                    onClick={() => {
+                      void deleteDoc(docRef);
+                      void router.push("/announcements");
+                    }}
+                    className="mx-auto w-max scale-90 rounded-lg bg-secondary p-2 shadow-sm hover:scale-95 hover:bg-primary"
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <Image
+                        className="h-8 w-8 invert"
+                        src={"/delete.png"}
+                        alt="delete_icon"
+                        {...imageDimension(48)}
+                      />
+                      <p>Delete</p>
+                    </div>
+                  </button>
                 </div>
-                <Calendar />
+                <div>
+                  <p className="text-lg font-semibold">Edit marked dates:</p>
+                  <Calendar />
+                </div>
                 <div className="w-max rounded-lg bg-secondary p-4 text-paper shadow-sm">
                   <p className="font-semibold">Dates Info:</p>
-                  {/* {datesHolder.map(({ heading, text }, index) => {
+                  {datesHolder.map(({ heading, text }, index) => {
                     return (
                       <DateContainer
                         key={index}
@@ -212,7 +277,7 @@ const AnnouncementWithId = () => {
                         text={text}
                       />
                     );
-                  })} */}
+                  })}
                 </div>
               </section>
             </div>
@@ -223,19 +288,19 @@ const AnnouncementWithId = () => {
   );
 };
 
-// const DateContainer = ({
-//   heading,
-//   text,
-// }: {
-//   heading: string;
-//   text: string;
-// }) => {
-//   return (
-//     <div className="flex w-2/3 min-w-max items-center justify-between gap-2">
-//       <p>{heading}</p>
-//       <p>{text}</p>
-//     </div>
-//   );
-// };
+const DateContainer = ({
+  heading,
+  text,
+}: {
+  heading: string;
+  text: string;
+}) => {
+  return (
+    <div className="flex w-2/3 min-w-max items-center justify-between gap-2">
+      <p>{heading}</p>
+      <p>{text}</p>
+    </div>
+  );
+};
 
 export default AnnouncementWithId;
