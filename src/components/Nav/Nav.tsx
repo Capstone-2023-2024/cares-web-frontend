@@ -30,7 +30,7 @@ const Nav = () => {
       <ul className="m-0 list-none p-0 duration-300 ease-in-out">
         {/* <Path pathname="about" /> */}
         <Path iconSrc="/megaphone.png" pathname="announcements" />
-        <Path iconSrc="/question.png" pathname="complaints" />
+        <Path iconSrc="/question.png" pathname="grievance_management" />
         <Path iconSrc="/dashboard.png" pathname="dashboard" />
         <Path iconSrc="/hierarchy.png" pathname="permissions" />
         <Path iconSrc="/suggestion.png" pathname="project_suggestion" />

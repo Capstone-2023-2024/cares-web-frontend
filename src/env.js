@@ -1,7 +1,7 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
-export const env = createEnv({
+const env = createEnv({
   /**
    * Specify your server-side environment variables schema here. This way you can ensure the app
    * isn't built with invalid env vars.
@@ -26,6 +26,7 @@ export const env = createEnv({
     NEXT_PUBLIC_ONESIGNAL_APP_ID: z.string(),
     NEXT_PUBLIC_ONESIGNAL_REST_API_KEY: z.string(),
     NEXT_PUBLIC_ONESIGNAL_DEFAULT_ANDROID_CHANNEL_ID: z.string(),
+    NEXT_PUBLIC_ONESIGNAL_ANNOUNCEMENT_CHANNEL_ID: z.string(),
   },
 
   /**
@@ -51,6 +52,8 @@ export const env = createEnv({
       process.env.NEXT_PUBLIC_ONESIGNAL_REST_API_KEY,
     NEXT_PUBLIC_ONESIGNAL_DEFAULT_ANDROID_CHANNEL_ID:
       process.env.NEXT_PUBLIC_ONESIGNAL_DEFAULT_ANDROID_CHANNEL_ID,
+    NEXT_PUBLIC_ONESIGNAL_ANNOUNCEMENT_CHANNEL_ID:
+      process.env.NEXT_PUBLIC_ONESIGNAL_ANNOUNCEMENT_CHANNEL_ID,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation.
@@ -63,3 +66,5 @@ export const env = createEnv({
    */
   // emptyStringAsUndefined: true,
 });
+
+export { env };

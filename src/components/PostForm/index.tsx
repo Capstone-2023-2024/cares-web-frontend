@@ -10,7 +10,7 @@ import { useAuth } from "~/contexts/AuthProvider";
 import { useDate } from "~/contexts/DateProvider";
 import { useToggle } from "~/contexts/ToggleProvider";
 import { env } from "~/env";
-import { notification } from "~/pages/api/onesignal";
+import { notification } from "~/utils/notification";
 import { markedDatesHandler } from "~/utils/date";
 import { db, storageRef } from "~/utils/firebase";
 import Button from "../Button";
@@ -101,9 +101,6 @@ const PostForm = () => {
       return setState((prevState) => ({ ...prevState, files }));
     }
   }
-  function handleTitle(event: ChangeEvent<HTMLTextAreaElement>) {
-    setState((prevState) => ({ ...prevState, title: event.target.value }));
-  }
   function handleTypeChange(event: ChangeEvent<HTMLSelectElement>) {
     const type = event.target.value as AnnouncementStateProps["type"];
     setState((prevState) => ({ ...prevState, type }));
@@ -169,7 +166,10 @@ const PostForm = () => {
           storageBucket: env.NEXT_PUBLIC_FIRESTORE_STORAGE_BUCKET,
           ref: "images",
         });
-        const notifResult = await notification({
+        {
+          /*eslint-disable @typescript-eslint/no-unsafe-assignment */
+        }
+        const response = await notification({
           contents: {
             en: state.message,
           },
@@ -185,14 +185,12 @@ const PostForm = () => {
             },
           ],
           name: state.title,
-          android_channel_id:
-            env.NEXT_PUBLIC_ONESIGNAL_DEFAULT_ANDROID_CHANNEL_ID,
+          android_channel_id: env.NEXT_PUBLIC_ONESIGNAL_ANNOUNCEMENT_CHANNEL_ID,
           included_segments: ["Cares Mobile Users"],
           big_picture: storageName,
           priority: 10,
         });
-        console.log({ notifResult });
-
+        console.log(response);
         await addDoc(
           collection(db, "announcement"),
           state.files === null
@@ -273,7 +271,12 @@ const PostForm = () => {
         <textarea
           disabled={!showCalendar}
           value={state.title}
-          onChange={handleTitle}
+          onChange={(event) =>
+            setState((prevState) => ({
+              ...prevState,
+              title: event.target.value,
+            }))
+          }
           className="w-full resize-none rounded-xl p-2"
           rows={1}
           placeholder="Enter title"
